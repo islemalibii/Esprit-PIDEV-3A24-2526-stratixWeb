@@ -49,6 +49,8 @@ class ParticipationService
                 <p>À bientôt!</p>
             ");
 
+            $email->getHeaders()->addTextHeader('X-Transport', 'event');
+
             $this->eventMailer->send($email);
 
         return ['success' => true, 'message' => 'Participation confirmée! Un email vous a été envoyé.'];
@@ -80,6 +82,8 @@ class ParticipationService
                 <br>
                 <p>Nous espérons vous voir à un prochain événement!</p>
             ");
+
+            $email->getHeaders()->addTextHeader('X-Transport', 'event');
 
             $this->eventMailer->send($email);
 
