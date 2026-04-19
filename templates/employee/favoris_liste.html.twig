@@ -1,0 +1,119 @@
+{% extends 'employee/base_employee.html.twig' %}
+
+{% block title %}STRATIX - Mes Favoris{% endblock %}
+
+{% block employee_content %}
+{# On utilise la même structure de container que dans ta liste de projets pour garder la sidebar alignée #}
+<main id="content" class="content py-4">
+    <div class="container-fluid px-4">
+        
+        {# --- EN-TÊTE --- #}
+        <div class="mb-4 d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: #64748b; font-size: 24px;">Mes Projets Favoris</h2>
+                <p style="color: #94a3b8; font-size: 14px;">
+                    Retrouvez ici les projets que vous avez marqués comme prioritaires (Total : {{ favoris|length }})
+                </p>
+            </div>
+            
+            {# BOUTON DE RETOUR : Assure-toi que cette route correspond à ton espace employé #}
+            <a href="{{ path('app_projet_employee_index') }}" class="btn btn-outline-secondary shadow-sm px-3 fw-bold rounded-3">
+    <i class="ti ti-arrow-left me-1"></i> Retour aux projets
+</a>
+        </div>
+
+        {# --- GRILLE DES FAVORIS --- #}
+        <div class="row g-4" id="favorisContainer">
+            {% for f in favoris %}
+                <div class="col-md-6 col-lg-4 projet-card" id="favori-row-{{ f.projet.id }}">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 transition-card bg-white position-relative">
+                        <div class="card-body p-4 d-flex flex-column">
+                            
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <span class="badge rounded-pill px-3 py-2" 
+                                      style="background-color: #dcfce7; color: #166534; border: 1px solid rgba(0,0,0,0.05);">
+                                    {{ f.projet.statut }}
+                                </span>
+
+                                <a href="{{ path('projet_toggle_favori', {'id': f.projet.id}) }}" 
+                                   class="js-favori-btn text-decoration-none" 
+                                   data-id="{{ f.projet.id }}">
+                                    <i class="ti ti-heart-filled text-danger" style="font-size: 1.4rem; cursor: pointer;"></i>
+                                </a>
+                            </div>
+
+                            <h5 class="fw-bold text-dark mb-2">{{ f.projet.nom }}</h5>
+                            <p class="text-muted small mb-4">
+                                {{ f.projet.description|slice(0, 80) }}...
+                            </p>
+
+                            <div class="p-3 rounded-3 mb-4 mt-auto" style="background-color: #f8fafc;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="ti ti-crown text-warning me-2"></i>
+                                    <span class="small text-truncate"><strong>Resp :</strong> {{ f.projet.responsable.prenom }} {{ f.projet.responsable.nom }}</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="ti ti-calendar-event text-primary me-2"></i>
+                                    <span class="small text-muted">Ajouté le {{ f.dateAjout|date('d/m/Y') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{{ path('app_projet_employe_show', {'id': f.projet.id}) }}" 
+                                   class="btn btn-light border flex-grow-1 rounded-3 fw-bold text-muted small">
+                                    Détails
+                                </a>
+                                <a href="{{ path('app_projet_chat', {'id': f.projet.id}) }}" 
+                                   class="btn btn-primary flex-grow-1 rounded-3 fw-bold small">
+                                    <i class="ti ti-messages me-1"></i> Chat
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted">
+                        <i class="ti ti-heart-off fs-1 mb-2 d-block"></i>
+                        Vous n'avez pas encore de favoris.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+<style>
+    .transition-card { 
+        transition: all 0.3s ease; 
+        border: 1px solid #f1f5f9 !important;
+    }
+    .transition-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important; 
+    }
+    .btn-primary { background-color: #3b82f6; border: none; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.js-favori-btn').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const projetId = this.dataset.id;
+            const card = document.getElementById('favori-row-' + projetId);
+            
+            fetch(this.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.isFavorite) {
+                        card.style.transform = "scale(0.9)";
+                        card.style.opacity = "0";
+                        setTimeout(() => card.remove(), 300);
+                    }
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -2,153 +2,68 @@
 
 namespace App\Entity;
 
+use App\Repository\TacheRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
-use App\Repository\TacheRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TacheRepository::class)]
-#[ORM\Table(name: 'tache')]
 class Tache
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column]
     private ?int $id = null;
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function setId(int $id): self
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le titre est obligatoire")]
+    #[Assert\Length(min: 3, minMessage: "Le titre doit contenir au moins 3 caractères")]
     private ?string $titre = null;
 
-    public function getTitre(): ?string
-    {
-        return $this->titre;
-    }
-
-    public function setTitre(?string $titre): self
-    {
-        $this->titre = $titre;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\NotBlank(message: "La description est obligatoire")]
     private ?string $description = null;
 
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): self
-    {
-        $this->description = $description;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'date', nullable: true)]
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Assert\NotBlank(message: "La deadline est obligatoire")]
     private ?\DateTimeInterface $deadline = null;
 
-    public function getDeadline(): ?\DateTimeInterface
-    {
-        return $this->deadline;
-    }
-
-    public function setDeadline(?\DateTimeInterface $deadline): self
-    {
-        $this->deadline = $deadline;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "Le statut est obligatoire")]
     private ?string $statut = null;
 
-    public function getStatut(): ?string
-    {
-        return $this->statut;
-    }
-
-    public function setStatut(?string $statut): self
-    {
-        $this->statut = $statut;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $employe_id = null;
-
-    public function getEmploye_id(): ?int
-    {
-        return $this->employe_id;
-    }
-
-    public function setEmploye_id(?int $employe_id): self
-    {
-        $this->employe_id = $employe_id;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $projet_id = null;
-
-    public function getProjet_id(): ?int
-    {
-        return $this->projet_id;
-    }
-
-    public function setProjet_id(?int $projet_id): self
-    {
-        $this->projet_id = $projet_id;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: "La priorité est obligatoire")]
     private ?string $priorite = null;
 
-    public function getPriorite(): ?string
-    {
-        return $this->priorite;
-    }
+    #[ORM\Column(nullable: true)]
+    #[Assert\NotBlank(message: "L'employé est obligatoire")]
+    private ?int $employeId = null;
 
-    public function setPriorite(?string $priorite): self
-    {
-        $this->priorite = $priorite;
-        return $this;
-    }
+    #[ORM\Column(nullable: true)]
+    private ?int $projetId = null;
 
-    public function getEmployeId(): ?int
-    {
-        return $this->employe_id;
-    }
-
-    public function setEmployeId(?int $employe_id): static
-    {
-        $this->employe_id = $employe_id;
-
-        return $this;
-    }
-
-    public function getProjetId(): ?int
-    {
-        return $this->projet_id;
-    }
-
-    public function setProjetId(?int $projet_id): static
-    {
-        $this->projet_id = $projet_id;
-
-        return $this;
-    }
-
+    // Getters et Setters
+    public function getId(): ?int { return $this->id; }
+    
+    public function getTitre(): ?string { return $this->titre; }
+    public function setTitre(string $titre): self { $this->titre = $titre; return $this; }
+    
+    public function getDescription(): ?string { return $this->description; }
+    public function setDescription(?string $description): self { $this->description = $description; return $this; }
+    
+    public function getDeadline(): ?\DateTimeInterface { return $this->deadline; }
+    public function setDeadline(?\DateTimeInterface $deadline): self { $this->deadline = $deadline; return $this; }
+    
+    public function getStatut(): ?string { return $this->statut; }
+    public function setStatut(string $statut): self { $this->statut = $statut; return $this; }
+    
+    public function getPriorite(): ?string { return $this->priorite; }
+    public function setPriorite(string $priorite): self { $this->priorite = $priorite; return $this; }
+    
+    public function getEmployeId(): ?int { return $this->employeId; }
+    public function setEmployeId(?int $employeId): self { $this->employeId = $employeId; return $this; }
+    
+    public function getProjetId(): ?int { return $this->projetId; }
+    public function setProjetId(?int $projetId): self { $this->projetId = $projetId; return $this; }
 }

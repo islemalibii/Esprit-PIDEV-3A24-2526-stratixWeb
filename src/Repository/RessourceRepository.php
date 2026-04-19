@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Ressource;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Repository\ImportLogRepository;
 
 /**
  * @extends ServiceEntityRepository<Ressource>

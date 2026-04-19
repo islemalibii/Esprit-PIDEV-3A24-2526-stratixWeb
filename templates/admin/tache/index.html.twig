@@ -1,182 +1,346 @@
-{% extends 'admin/base_admin.html.twig' %}
+{% extends 'base.html.twig' %}
 
-{% block title %}Liste des Tâches{% endblock %}
+{% block title %}Gestion des Tâches{% endblock %}
 
-{% block admin_content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="fas fa-tasks"></i> Gestion des Tâches</h1>
-    <a href="{{ path('app_tache_new') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Nouvelle tâche
-    </a>
+{% block body %}
+<main id="content" class="content py-4">
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tasks"></i> Gestion des Tâches</h1>
+        <div>
+            <!-- BOUTON STATISTIQUES -->
+            <button onclick="toggleStats()" class="btn btn-info me-2" id="statsBtn">
+                <i class="fas fa-chart-line"></i> Afficher Statistiques
+            </button>
+            <a href="/api/export/taches" class="btn btn-danger me-2" target="_blank">
+                <i class="fas fa-file-pdf"></i> Exporter PDF
+            </a>
+            <a href="{{ path('app_tache_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nouvelle tâche
+            </a>
+        </div>
+    </div>
+
+    <!-- SECTION STATISTIQUES (cachée par défaut) -->
+    <div id="statsSection" style="display: none;">
+        <!-- Statistiques principales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body text-center">
+                        <h2 class="display-4">{{ total|default(taches|length) }}</h2>
+                        <h5>📊 Total tâches</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h2 class="display-4">{{ en_cours|default(0) }}</h2>
+                        <h5>⚡ En cours</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body text-center">
+                        <h2 class="display-4">{{ terminees|default(0) }}</h2>
+                        <h5>✅ Terminées</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body text-center">
+                        <h2 class="display-4">{{ a_faire|default(0) }}</h2>
+                        <h5>📌 À faire</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-chart-pie"></i> Répartition par Statut
+                    </div>
+                    <div class="card-body text-center">
+                        <canvas id="statutChart" width="300" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-chart-bar"></i> Répartition par Priorité
+                    </div>
+                    <div class="card-body text-center">
+                        <canvas id="prioriteChart" width="300" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taux de complétion -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-trophy"></i> Taux de Complétion
+                    </div>
+                    <div class="card-body text-center">
+                        <h1 class="display-1 text-success">{{ taux_completion|default(0) }}%</h1>
+                        <div class="progress mt-3" style="height: 30px;">
+                            <div class="progress-bar bg-success progress-bar-striped" style="width: {{ taux_completion|default(0) }}%">
+                                {{ taux_completion|default(0) }}%
+                            </div>
+                        </div>
+                        <p class="mt-3">
+                            <i class="fas fa-check-circle text-success"></i> {{ terminees|default(0) }} / {{ total|default(0) }} tâches terminées
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher une tâche...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="statutFilter" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="A_FAIRE">📌 À faire</option>
+                        <option value="EN_COURS">⚡ En cours</option>
+                        <option value="TERMINEE">✅ Terminée</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="priorityFilter" class="form-select">
+                        <option value="">Priorité</option>
+                        <option value="HAUTE">🔴 Haute</option>
+                        <option value="MOYENNE">🟡 Moyenne</option>
+                        <option value="BASSE">🟢 Basse</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button onclick="resetFilters()" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-undo-alt"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des tâches -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Titre</th>
+                            <th>Description</th>
+                            <th>Deadline</th>
+                            <th>Statut</th>
+                            <th>Priorité</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tacheTableBody">
+                        {% for tache in taches %}
+                        <tr>
+                            <td><strong>{{ tache.titre }}</strong></td>
+                            <td>{{ tache.description|slice(0, 50) }}{% if tache.description|length > 50 %}...{% endif %}</td>
+                            <td class="{% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}text-danger fw-bold{% endif %}">
+                                {% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% else %}
+                                    <i class="fas fa-calendar-alt"></i>
+                                {% endif %}
+                                {{ tache.deadline ? tache.deadline|date('d/m/Y') : '—' }}
+                            </div>
+                            <td>
+                                {% if tache.statut == 'A_FAIRE' %}
+                                    <span class="badge bg-warning text-dark">📌 À faire</span>
+                                {% elseif tache.statut == 'EN_COURS' %}
+                                    <span class="badge bg-info">⚡ En cours</span>
+                                {% else %}
+                                    <span class="badge bg-success">✅ Terminée</span>
+                                {% endif %}
+                            </div>
+                            <td>
+                                {% if tache.priorite == 'HAUTE' %}
+                                    <span class="badge bg-danger">🔴 Haute</span>
+                                {% elseif tache.priorite == 'MOYENNE' %}
+                                    <span class="badge bg-warning text-dark">🟡 Moyenne</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">🟢 Basse</span>
+                                {% endif %}
+                            </div>
+                            <td class="table-actions">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('app_tache_show', {'id': tache.id}) }}" class="btn btn-outline-info" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_tache_edit', {'id': tache.id}) }}" class="btn btn-outline-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="/api/export/tache/{{ tache.id }}" class="btn btn-outline-danger" title="PDF" target="_blank">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    <form method="post" action="{{ path('app_tache_delete', {'id': tache.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette tâche ?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ tache.id) }}">
+                                        <button class="btn btn-outline-danger" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">Aucune tâche trouvée</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-
-<!-- Statistiques -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body text-center">
-                <i class="fas fa-tasks fa-2x mb-2"></i>
-                <h5 class="card-title">Total tâches</h5>
-                <h2 class="display-4">{{ total|default(taches|length) }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body text-center">
-                <i class="fas fa-clock fa-2x mb-2"></i>
-                <h5 class="card-title">En cours</h5>
-                <h2 class="display-4">{{ en_cours|default(0) }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <i class="fas fa-check-circle fa-2x mb-2"></i>
-                <h5 class="card-title">Terminées</h5>
-                <h2 class="display-4">{{ terminees|default(0) }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-danger">
-            <div class="card-body text-center">
-                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                <h5 class="card-title">À faire</h5>
-                <h2 class="display-4">{{ a_faire|default(0) }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Barre de recherche -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <input type="text" id="searchInput" class="form-control" placeholder="🔍 Rechercher une tâche...">
-            </div>
-            <div class="col-md-4">
-                <select id="statutFilter" class="form-select">
-                    <option value="">Tous les statuts</option>
-                    <option value="A_FAIRE">📌 À faire</option>
-                    <option value="EN_COURS">⚡ En cours</option>
-                    <option value="TERMINEE">✅ Terminée</option>
-                </select>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Tableau des tâches (SANS la colonne ID) -->
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover" id="tacheTable">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Titre</th>
-                        <th>Description</th>
-                        <th>Deadline</th>
-                        <th>Statut</th>
-                        <th>Priorité</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tache in taches %}
-                    <tr>
-                        <td>
-                            <strong>{{ tache.titre }}</strong>
-                        </td>
-                        <td>
-                            {{ tache.description|slice(0, 50) }}{% if tache.description|length > 50 %}...{% endif %}
-                        </td>
-                        <td>
-                            {% if tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}
-                                <span class="text-danger fw-bold">
-                                    <i class="fas fa-exclamation-circle"></i> {{ tache.deadline|date('d/m/Y') }}
-                                </span>
-                            {% else %}
-                                {{ tache.deadline|date('d/m/Y') }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if tache.statut == 'A_FAIRE' %}
-                                <span class="badge bg-warning">📌 À faire</span>
-                            {% elseif tache.statut == 'EN_COURS' %}
-                                <span class="badge bg-info">⚡ En cours</span>
-                            {% else %}
-                                <span class="badge bg-success">✅ Terminée</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if tache.priorite == 'HAUTE' %}
-                                <span class="badge bg-danger">🔴 Haute</span>
-                            {% elseif tache.priorite == 'MOYENNE' %}
-                                <span class="badge bg-warning">🟡 Moyenne</span>
-                            {% else %}
-                                <span class="badge bg-success">🟢 Basse</span>
-                            {% endif %}
-                        </td>
-                        <td class="table-actions">
-                            <a href="{{ path('app_tache_show', {'id': tache.id}) }}" class="btn btn-sm btn-info" title="Voir">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ path('app_tache_edit', {'id': tache.id}) }}" class="btn btn-sm btn-warning" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form method="post" action="{{ path('app_tache_delete', {'id': tache.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette tâche ?')">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ tache.id) }}">
-                                <button class="btn btn-sm btn-danger" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        filterTable();
-    });
-    document.getElementById('statutFilter').addEventListener('change', function() {
-        filterTable();
-    });
+let statutChart, prioriteChart;
+let statsVisible = false;
 
-    function filterTable() {
-        let searchText = document.getElementById('searchInput').value.toLowerCase();
-        let statutFilter = document.getElementById('statutFilter').value;
-        let rows = document.querySelectorAll('#tacheTable tbody tr');
+// Fonction pour afficher/cacher les stats
+function toggleStats() {
+    const statsSection = document.getElementById('statsSection');
+    const statsBtn = document.getElementById('statsBtn');
+    
+    if (statsVisible) {
+        statsSection.style.display = 'none';
+        statsBtn.innerHTML = '<i class="fas fa-chart-line"></i> Afficher Statistiques';
+        statsVisible = false;
+    } else {
+        statsSection.style.display = 'block';
+        statsBtn.innerHTML = '<i class="fas fa-chart-line"></i> Masquer Statistiques';
+        statsVisible = true;
         
-        rows.forEach(row => {
-            let titre = row.cells[0].innerText.toLowerCase();
-            let statut = row.cells[3].innerText;
-            
-            let matchStatut = true;
-            if (statutFilter) {
-                if (statutFilter === 'A_FAIRE') matchStatut = statut.includes('À faire');
-                else if (statutFilter === 'EN_COURS') matchStatut = statut.includes('En cours');
-                else if (statutFilter === 'TERMINEE') matchStatut = statut.includes('Terminée');
+        // Créer les graphiques seulement si nécessaire
+        setTimeout(createCharts, 100);
+    }
+}
+
+// Créer les graphiques
+function createCharts() {
+    // Graphique des statuts
+    const statutCtx = document.getElementById('statutChart')?.getContext('2d');
+    if (statutCtx && !statutChart) {
+        statutChart = new Chart(statutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['À faire', 'En cours', 'Terminées'],
+                datasets: [{
+                    data: [{{ a_faire|default(0) }}, {{ en_cours|default(0) }}, {{ terminees|default(0) }}],
+                    backgroundColor: ['#ffc107', '#0dcaf0', '#198754'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom' } }
             }
-            
-            let matchSearch = titre.includes(searchText);
-            
-            row.style.display = (matchStatut && matchSearch) ? '' : 'none';
         });
     }
+    
+    // Graphique des priorités
+    const prioriteCtx = document.getElementById('prioriteChart')?.getContext('2d');
+    if (prioriteCtx && !prioriteChart) {
+        prioriteChart = new Chart(prioriteCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Haute', 'Moyenne', 'Basse'],
+                datasets: [{
+                    data: [{{ haute|default(0) }}, {{ moyenne|default(0) }}, {{ basse|default(0) }}],
+                    backgroundColor: ['#dc3545', '#ffc107', '#198754'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+}
+
+// Filtres
+const searchInput = document.getElementById('searchInput');
+const statutFilter = document.getElementById('statutFilter');
+const priorityFilter = document.getElementById('priorityFilter');
+const tbody = document.getElementById('tacheTableBody');
+
+function getRows() {
+    return tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
+}
+
+function filterTable() {
+    const searchText = searchInput.value.toLowerCase();
+    const statutValue = statutFilter.value;
+    const priorityValue = priorityFilter.value;
+
+    getRows().forEach(row => {
+        const titre = row.cells[0]?.innerText.toLowerCase() || '';
+        const statut = row.cells[3]?.innerText || '';
+        const priorite = row.cells[4]?.innerText || '';
+
+        let matchStatut = true;
+        if (statutValue === 'A_FAIRE') matchStatut = statut.includes('À faire');
+        else if (statutValue === 'EN_COURS') matchStatut = statut.includes('En cours');
+        else if (statutValue === 'TERMINEE') matchStatut = statut.includes('Terminée');
+
+        let matchPriority = true;
+        if (priorityValue === 'HAUTE') matchPriority = priorite.includes('Haute');
+        else if (priorityValue === 'MOYENNE') matchPriority = priorite.includes('Moyenne');
+        else if (priorityValue === 'BASSE') matchPriority = priorite.includes('Basse');
+
+        row.style.display = (matchStatut && matchPriority && titre.includes(searchText)) ? '' : 'none';
+    });
+}
+
+function resetFilters() {
+    searchInput.value = '';
+    statutFilter.value = '';
+    priorityFilter.value = '';
+    filterTable();
+}
+
+if (searchInput) searchInput.addEventListener('keyup', filterTable);
+if (statutFilter) statutFilter.addEventListener('change', filterTable);
+if (priorityFilter) priorityFilter.addEventListener('change', filterTable);
 </script>
 
 <style>
     .table-actions .btn { padding: 2px 8px; margin: 0 2px; }
-    .badge { font-size: 0.85rem; padding: 5px 10px; }
+    .badge { font-size: 0.85rem; padding: 5px 10px; border-radius: 20px; }
     .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .card-header { border-radius: 15px 15px 0 0; }
+    .progress-bar { transition: width 0.5s ease; }
+    .btn-group .btn { margin: 0 1px; }
+    #statsSection { transition: all 0.3s ease; }
 </style>
 {% endblock %}
-

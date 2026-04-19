@@ -31,13 +31,24 @@
         {% endif %}
 
         {# ── RESPONSABLE + ADMIN ── #}
+
         {% if app.user and app.user.role in ['admin', 'responsable_rh', 'responsable_projet', 'responsable_production', 'ceo'] %}
         <li class="px-4 pt-3 pb-2"><small class="nav-text text-uppercase" style="font-size:.7rem;letter-spacing:.8px;color:#9ca3af;">Gestion</small></li>
 
         <li>
+        <a class="nav-link active" href="{{ path('app_dashboard') }}"><i class="ti ti-home"></i><span class="nav-text">Dashboard</span></a></li>
+
+    
+        <li>
             <a class="nav-link {% if app.request.attributes.get('_route') starts with 'app_tache' %}active{% endif %}"
                href="{{ path('app_tache_index') }}">
-                <i class="ti ti-checklist"></i><span class="nav-text">Tâches & Planning</span>
+                <i class="ti ti-checklist"></i><span class="nav-text">Tâches</span>
+            </a>
+        </li>
+        <li>
+            <a class="nav-link {% if app.request.attributes.get('_route') starts with 'app_tache' %}active{% endif %}"
+               href="{{ path('app_planning_index') }}">
+                <i class="ti ti-checklist"></i><span class="nav-text">Planning</span>
             </a>
         </li>
         <li>
@@ -94,6 +105,7 @@
         {% endif %}
 
         <li class="px-4 pt-3 pb-2"><small class="nav-text text-uppercase" style="font-size:.7rem;letter-spacing:.8px;color:#9ca3af;">Compte</small></li>
+
 
         <li>
             <a class="nav-link {% if app.request.attributes.get('_route') starts with 'admin_profile' %}active{% endif %}"

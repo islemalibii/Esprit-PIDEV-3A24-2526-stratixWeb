@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\Evenement;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\QueryBuilder;
+
 
 /**
  * @extends ServiceEntityRepository<Evenement>
@@ -17,65 +19,66 @@ class EvenementRepository extends ServiceEntityRepository
     }
 
     
-    public function findByArchiveStatus(bool $status): array
-    {
-        return $this->findBy(['isArchived' => $status]);
+    public function findByArchiveStatus(bool $status): QueryBuilder
+    { 
+        return $this->createQueryBuilder('e')
+            ->where('e.isArchived = :status')
+            ->setParameter('status', $status);
+    }
+
+    public function findByArchiveStatusArray(bool $status): array
+    { 
+        return $this->createQueryBuilder('e')
+            ->where('e.isArchived = :status')
+            ->setParameter('status', $status)
+            ->getQuery()
+            ->getResult();
     }
 
     
-    public function searchByTitle(string $title): array
+    public function searchByTitle(string $title): QueryBuilder
     {
         return $this->createQueryBuilder('e')
             ->where('e.titre LIKE :title')
             ->andWhere('e.isArchived = false')
-            ->setParameter('title', '%'.$title.'%')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('title', '%'.$title.'%');
     }
 
-    public function filterByType(string $type): array
+    public function filterByType(string $type): QueryBuilder
     {
         return $this->createQueryBuilder('e')
             ->where('e.type_event = :type')
             ->andWhere('e.isArchived = false')
-            ->setParameter('type', $type)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('type', $type);
     }
     
 
-    public function findVisibleForEmployees(): array
+    public function findVisibleForEmployees(): QueryBuilder
     {
         return $this->createQueryBuilder('e')
             ->where('e.statut IN (:allowed_status)')
             ->andWhere('e.isArchived = false')
-            ->setParameter('allowed_status', ['planifier', 'terminer'])
-            ->getQuery()
-            ->getResult();
+            ->setParameter('allowed_status', ['planifier', 'terminer']);
     }
 
 
-    public function filterByTypeForEmployee(string $type): array
+    public function filterByTypeForEmployee(string $type): QueryBuilder
     {
         return $this->createQueryBuilder('e')
             ->where('e.type_event = :type')
             ->andWhere('e.statut = :status')
             ->andWhere('e.isArchived = false')
             ->setParameter('type', $type)
-            ->setParameter('status','planifier')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('status','planifier');
     }
-    public function searchPlanifierByTitle(string $title): array
+    public function searchPlanifierByTitle(string $title): QueryBuilder
     {
         return $this->createQueryBuilder('e')
             ->where('e.statut = :status')
             ->andWhere('e.isArchived = false')
             ->andWhere('e.titre LIKE :title')
             ->setParameter('status', 'planifier')
-            ->setParameter('title', '%' . $title . '%')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('title', '%' . $title . '%');
     }
     //    /**
     //     * @return Evenement[] Returns an array of Evenement objects

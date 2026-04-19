@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Tâches</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1f3b4c;
+            border-bottom: 2px solid #1f3b4c;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: #1f3b4c;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .stat-card.bg-info { background: #0dcaf0; }
+        .stat-card.bg-success { background: #198754; }
+        .stat-card.bg-warning { background: #ffc107; color: #333; }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background: #1f3b4c;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .badge-warning { background: #ffc107; color: #333; }
+        .badge-info { background: #0dcaf0; color: #333; }
+        .badge-success { background: #198754; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-secondary { background: #6c757d; color: white; }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .date {
+            text-align: right;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Gestion des Tâches</h1>
+        <div class="date">Exporté le : {{ date_export }}</div>
+        
+        <!-- Statistiques -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ total }}</div>
+                <div class="stat-label">📊 Total tâches</div>
+            </div>
+            <div class="stat-card bg-warning">
+                <div class="stat-number">{{ aFaire }}</div>
+                <div class="stat-label">📌 À faire</div>
+            </div>
+            <div class="stat-card bg-info">
+                <div class="stat-number">{{ enCours }}</div>
+                <div class="stat-label">⚡ En cours</div>
+            </div>
+            <div class="stat-card bg-success">
+                <div class="stat-number">{{ terminees }}</div>
+                <div class="stat-label">✅ Terminées</div>
+            </div>
+        </div>
+        
+        <!-- Tableau -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Description</th>
+                    <th>Deadline</th>
+                    <th>Statut</th>
+                    <th>Priorité</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tache in taches %}
+                <tr>
+                    <td><strong>{{ tache.titre }}</strong></div>
+                    <td>{{ tache.description|slice(0, 60) }}{% if tache.description|length > 60 %}...{% endif %}</div>
+                    <td>
+                        {% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}
+                            <span style="color: #dc3545;">⚠️ {{ tache.deadline|date('d/m/Y') }}</span>
+                        {% else %}
+                            {{ tache.deadline ? tache.deadline|date('d/m/Y') : '—' }}
+                        {% endif %}
+                    </div>
+                    <td>
+                        {% if tache.statut == 'A_FAIRE' %}
+                            <span class="badge badge-warning">📌 À faire</span>
+                        {% elseif tache.statut == 'EN_COURS' %}
+                            <span class="badge badge-info">⚡ En cours</span>
+                        {% else %}
+                            <span class="badge badge-success">✅ Terminée</span>
+                        {% endif %}
+                    </div>
+                    <td>
+                        {% if tache.priorite == 'HAUTE' %}
+                            <span class="badge badge-danger">🔴 Haute</span>
+                        {% elseif tache.priorite == 'MOYENNE' %}
+                            <span class="badge badge-warning">🟡 Moyenne</span>
+                        {% else %}
+                            <span class="badge badge-secondary">🟢 Basse</span>
+                        {% endif %}
+                    </div>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            <p>Document généré automatiquement par STRATIX - Gestion des tâches et plannings</p>
+        </div>
+    </div>
+</body>
+</html>

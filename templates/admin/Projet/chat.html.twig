@@ -1,0 +1,193 @@
+{# 1. Héritage dynamique #}
+{% extends is_granted('ROLE_RESPONSABLE') 
+    ? 'responsable/base_responsable.html.twig' 
+    : 'employee/base_employee.html.twig' 
+%}
+
+{% block title %}STRATIX - Chat {{ projet.nom }}{% endblock %}
+
+{% block employee_content %}
+<div class="main-wrapper-centered" style="width: 100%; min-height: 85vh; display: flex; align-items: flex-start; justify-content: center; padding-top: 30px;">
+    
+    <div class="central-chat-area" style="width: 100%; max-width: 1000px; margin: 0 auto;">
+        
+        {# En-tête #}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fs-4 mb-0 fw-bold text-dark">
+                    <i class="ti ti-messages me-2 text-danger"></i>Discussion de groupe
+                </h2>
+                <p class="text-muted small mb-0">Projet : <span class="fw-bold text-dark">{{ projet.nom }}</span></p>
+            </div>
+            <div>
+                {% set back_path = is_granted('ROLE_RESPONSABLE_PRODUCTION') 
+                    ? path('app_projet_index', {'id': projet.id}) 
+                    : path('app_projet_employee_index') 
+                %}
+                <a href="{{ back_path }}" class="btn btn-outline-secondary shadow-sm px-4 fw-bold rounded-3">
+                    <i class="ti ti-arrow-back-up me-1"></i> Retour
+                </a>
+            </div>
+        </div>
+
+        {# Carte de Chat #}
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: #fff;">
+            <div class="card-body p-0">
+                
+                {# Zone des messages #}
+                <div id="chat-container" class="p-4"
+                     style="height: 500px; overflow-y: auto; display: flex; flex-direction: column;
+                            gap: 12px; scroll-behavior: smooth; background-color: #f8fafc;">
+                    
+                    <div id="empty-state" class="text-center text-muted m-auto">
+                        <i class="ti ti-message-off d-block mb-2" style="font-size: 2.5rem; opacity: 0.2;"></i>
+                        <p class="mb-0">Aucun message pour le moment.</p>
+                    </div>
+                </div>
+
+                {# Zone de saisie #}
+                <div class="p-3 bg-white border-top">
+                    <div class="d-flex align-items-end gap-3 px-2">
+                        <textarea id="msgInput" rows="1"
+                            class="form-control rounded-4 border-2 py-2 px-3"
+                            placeholder="Écrivez votre message..."
+                            style="resize: none; overflow-y: hidden; max-height: 120px;
+                                   line-height: 1.5; font-size: 0.95rem;
+                                   box-shadow: none; outline: none; border-color: #e2e8f0;"></textarea>
+
+                        <button class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm"
+                                id="btnSend" style="width: 48px; height: 48px;">
+                            <i class="ti ti-send" style="font-size: 1.2rem;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Forcer l'annulation des marges du layout parent si nécessaire */
+    #content, .content-wrapper, .body-wrapper {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Bulles */
+    .msg-wrapper { display: flex; flex-direction: column; max-width: 75%; margin-bottom: 5px; }
+    .msg-me { align-self: flex-end; align-items: flex-end; }
+    .msg-other { align-self: flex-start; align-items: flex-start; }
+
+    .msg-row { display: flex; align-items: flex-end; gap: 10px; }
+    .msg-me .msg-row { flex-direction: row-reverse; }
+
+    .msg-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        font-size: 0.75rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        background-color: #edf2f7; color: #4a5568;
+    }
+    .msg-me .msg-avatar { background-color: #fee2e2; color: #dc3545; }
+
+    .chat-bubble {
+        padding: 10px 16px; font-size: 0.95rem; line-height: 1.5;
+        word-wrap: break-word; white-space: pre-wrap;
+    }
+    .bubble-me { background-color: #dc3545; color: #fff; border-radius: 18px 18px 4px 18px; }
+    .bubble-other { background-color: #ffffff; color: #1e293b; border: 1px solid #eef2f6; border-radius: 18px 18px 18px 4px; }
+
+    .msg-info { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; padding: 0 42px; }
+    
+    #chat-container::-webkit-scrollbar { width: 6px; }
+    #chat-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+</style>
+{% endblock %}
+
+{% block responsable_content %}
+    {{ block('employee_content') }}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const firebaseConfig = { databaseURL: "https://stratixchat-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+    const database = firebase.database();
+    const projetId = "{{ projet.id }}";
+    const myName = "{{ app.user.nom }} {{ app.user.prenom }}";
+    const chatRef = database.ref('projet-' + projetId);
+
+    const chatContainer = document.getElementById('chat-container');
+    const msgInput = document.getElementById('msgInput');
+    const btnSend = document.getElementById('btnSend');
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function getInitials(name) {
+        return name.split(' ').map(w => w[0] || '').join('').substring(0, 2).toUpperCase();
+    }
+
+    function displayMessage(sender, text, timestamp) {
+        const emptyState = document.getElementById('empty-state');
+        if (emptyState) emptyState.remove();
+
+        const isMe = (sender === myName);
+        const date = new Date(timestamp);
+        const heure = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+        const initials = getInitials(sender);
+
+        const div = document.createElement('div');
+        div.className = `msg-wrapper ${isMe ? 'msg-me' : 'msg-other'}`;
+        div.innerHTML = `
+            <div class="msg-info">${isMe ? 'Moi' : escapeHtml(sender)} · ${heure}</div>
+            <div class="msg-row">
+                <div class="msg-avatar">${initials}</div>
+                <div class="chat-bubble ${isMe ? 'bubble-me' : 'bubble-other'}">
+                    ${escapeHtml(text)}
+                </div>
+            </div>`;
+
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function sendMessage() {
+        const text = msgInput.value.trim();
+        if (!text) return;
+        chatRef.push({
+            sender: myName,
+            text: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            msgInput.value = '';
+            msgInput.style.height = 'auto';
+        });
+    }
+
+    btnSend.addEventListener('click', sendMessage);
+    msgInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    msgInput.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    chatRef.on('child_added', function (snapshot) {
+        const msg = snapshot.val();
+        displayMessage(msg.sender, msg.text, msg.timestamp);
+    });
+});
+</script>
+{% endblock %}

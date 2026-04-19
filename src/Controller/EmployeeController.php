@@ -32,7 +32,7 @@ class EmployeeController extends AbstractController
         $employe = !empty($allUsers) ? $allUsers[0] : null;
         
         if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
+            $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
         } else {
             $taches = [];
         }
@@ -92,7 +92,7 @@ class EmployeeController extends AbstractController
         $employe = !empty($allUsers) ? $allUsers[0] : null;
         
         if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
+            $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
         } else {
             $taches = [];
         }
@@ -124,7 +124,7 @@ class EmployeeController extends AbstractController
         $employe = !empty($allUsers) ? $allUsers[0] : null;
         
         if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
+            $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
         } else {
             $taches = [];
         }
@@ -190,7 +190,7 @@ class EmployeeController extends AbstractController
         $employe = !empty($allUsers) ? $allUsers[0] : null;
         
         if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
+            $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
         } else {
             $taches = [];
         }

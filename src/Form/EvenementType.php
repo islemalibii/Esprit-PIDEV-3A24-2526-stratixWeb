@@ -9,8 +9,10 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-
-
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Image;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 class EvenementType extends AbstractType
 {
@@ -27,7 +29,19 @@ class EvenementType extends AbstractType
                 'property_path'  => 'date_event',
             ])
             ->add('lieu', TextType::class, [
+                'attr' => [
+                    'placeholder' => 'Entrez une adresse...',
+                    'id'          => 'lieu-input',
+                    'autocomplete'=> 'off',
+                ]
             ])
+            ->add('latitude', HiddenType::class, [
+                'attr' => ['id' => 'latitude-input'],
+            ])
+            ->add('longitude', HiddenType::class, [
+                'attr' => ['id' => 'longitude-input'],
+            ])
+
             ->add('typeEvent', ChoiceType::class, [
                 'choices'  => [
                     'Formation'        => 'formation',
@@ -51,10 +65,32 @@ class EvenementType extends AbstractType
                 'data' => 'planifier',
 
             ])
-
-            ->add('imageUrl', TextType::class, [
+            ->add('recurrence', ChoiceType::class, [
+                'choices' => [
+                    'Pas de répétition' => 'none',
+                    'Chaque semaine'    => 'weekly',
+                    'Chaque mois'       => 'monthly',
+                ],
+                'expanded' => false,
+                'multiple' => false,
                 'required' => false,
-                'property_path'  => 'image_url',
+                'data'     => 'none',
+                'attr'     => ['id' => 'recurrence-select'],
+            ])
+
+            ->add('image', FileType::class, [
+                'required' => false,
+                'mapped'   => false,
+                'constraints' => [
+                    new NotBlank([
+                        'message' => "L'image est obligatoire.",
+                        'groups'  => ['create'], 
+                    ]),
+                    new Image([
+                        'maxSize' => '5M',
+                        'mimeTypesMessage' => "Format invalide. Utilisez JPG, PNG ou WEBP.",
+                    ]),
+                ],
             ]);
             
     }

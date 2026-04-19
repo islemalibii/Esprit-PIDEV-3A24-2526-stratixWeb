@@ -204,7 +204,7 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('admin_users');
     }
 
-    #[Route('/users/{id}/qrcode.svg', name: 'admin_user_qrcode', methods: ['GET'])]
+    #[Route('/users/{id}/qrcode', name: 'admin_user_qrcode', methods: ['GET'])]
     public function qrcode(Utilisateur $user): Response
     {
         $data = json_encode([

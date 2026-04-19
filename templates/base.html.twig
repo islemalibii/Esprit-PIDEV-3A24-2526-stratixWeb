@@ -77,6 +77,7 @@
             body[data-theme="dark"] small, body[data-theme="dark"] .small { color: #a0a0b0 !important; }
         </style>
     {% endblock %}
+    <meta name="csrf-token" content="{{ csrf_token('archive') }}">
 </head>
 <body data-theme="{{ app.user ? app.user.theme : 'light' }}">
     <div id="overlay" class="overlay"></div>
