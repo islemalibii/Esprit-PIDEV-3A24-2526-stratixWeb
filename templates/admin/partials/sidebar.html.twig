@@ -22,6 +22,12 @@
                 <i class="ti ti-users"></i><span class="nav-text">Utilisateurs</span>
             </a>
         </li>
+        <li>
+            <a class="nav-link {% if app.request.attributes.get('_route') == 'admin_organigramme' %}active{% endif %}"
+               href="{{ path('admin_organigramme') }}">
+                <i class="ti ti-hierarchy"></i><span class="nav-text">Organigramme</span>
+            </a>
+        </li>
         {% endif %}
 
         {# ── RESPONSABLE + ADMIN ── #}

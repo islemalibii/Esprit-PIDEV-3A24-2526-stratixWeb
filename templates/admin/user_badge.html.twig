@@ -1,0 +1,92 @@
+{% extends 'admin/base_admin.html.twig' %}
+{% block title %}Badge — {{ user.prenom }} {{ user.nom }}{% endblock %}
+{% import 'macros/avatar.html.twig' as avatarMacro %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fs-4 fw-bold mb-1">Badge employé</h1>
+        <a href="{{ path('admin_users') }}" class="text-secondary text-decoration-none small">
+            <i class="ti ti-arrow-left me-1"></i>Retour à la liste
+        </a>
+    </div>
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="ti ti-printer me-1"></i>Imprimer
+    </button>
+</div>
+
+{# Badge #}
+<div class="d-flex justify-content-center">
+    <div id="badge" style="width:340px;background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.12);overflow:hidden;font-family:sans-serif;">
+
+        {# Header coloré #}
+        <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:2rem;text-align:center;">
+            <div style="margin:0 auto 1rem;width:90px;height:90px;border-radius:50%;border:3px solid rgba(255,255,255,.5);overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);">
+                {% if user.avatar %}
+                    <img src="/images/avatar/{{ user.avatar }}" style="width:100%;height:100%;object-fit:cover;">
+                {% else %}
+                    <span style="color:#fff;font-size:2rem;font-weight:700;">
+                        {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
+                    </span>
+                {% endif %}
+            </div>
+            <h2 style="color:#fff;margin:0;font-size:1.3rem;font-weight:700;">{{ user.prenom }} {{ user.nom }}</h2>
+            <p style="color:rgba(255,255,255,.8);margin:.3rem 0 0;font-size:.85rem;text-transform:uppercase;letter-spacing:1px;">
+                {{ user.role|replace({'_': ' '})|upper }}
+            </p>
+        </div>
+
+        {# Infos #}
+        <div style="padding:1.5rem;">
+            {% if user.poste %}
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+                <span style="color:#6366f1;font-size:1.1rem;">💼</span>
+                <div>
+                    <div style="font-size:.7rem;color:#9ca3af;text-transform:uppercase;">Poste</div>
+                    <div style="font-size:.9rem;font-weight:600;color:#1e1b4b;">{{ user.poste }}</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if user.department %}
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+                <span style="font-size:1.1rem;">🏢</span>
+                <div>
+                    <div style="font-size:.7rem;color:#9ca3af;text-transform:uppercase;">Département</div>
+                    <div style="font-size:.9rem;font-weight:600;color:#1e1b4b;">{{ user.department }}</div>
+                </div>
+            </div>
+            {% endif %}
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+                <span style="font-size:1.1rem;">✉️</span>
+                <div>
+                    <div style="font-size:.7rem;color:#9ca3af;text-transform:uppercase;">Email</div>
+                    <div style="font-size:.85rem;color:#1e1b4b;">{{ user.email }}</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+                <span style="font-size:1.1rem;">🪪</span>
+                <div>
+                    <div style="font-size:.7rem;color:#9ca3af;text-transform:uppercase;">ID Employé</div>
+                    <div style="font-size:.9rem;font-weight:600;color:#1e1b4b;">#{{ '%05d'|format(user.id) }}</div>
+                </div>
+            </div>
+        </div>
+
+        {# QR Code #}
+        <div style="padding:1rem 1.5rem 1.5rem;text-align:center;border-top:1px solid #f3f4f6;">
+            <p style="font-size:.7rem;color:#9ca3af;margin-bottom:.75rem;text-transform:uppercase;letter-spacing:1px;">Scanner pour les infos</p>
+            <img src="{{ path('admin_user_qrcode', {id: user.id}) }}" style="width:120px;height:120px;">
+            <p style="font-size:.65rem;color:#d1d5db;margin-top:.5rem;">Stratix — {{ 'now'|date('Y') }}</p>
+        </div>
+
+    </div>
+</div>
+
+<style>
+@media print {
+    .topbar, .sidebar, .btn, h1, a { display: none !important; }
+    #badge { box-shadow: none; margin: 0 auto; }
+    body { background: white; }
+}
+</style>
+{% endblock %}

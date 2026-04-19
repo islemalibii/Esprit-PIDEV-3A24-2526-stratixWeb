@@ -6,14 +6,14 @@ use App\Entity\Participation;
 use App\Entity\Evenement;
 use App\Repository\ParticipationRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
 
 class ParticipationService
 {
     public function __construct(
         private EntityManagerInterface $em,
-        private MailerInterface $mailer,
+        private TransportInterface      $eventMailer,
         private ParticipationRepository $participationRepository
     ) {}
 
@@ -49,7 +49,7 @@ class ParticipationService
                 <p>À bientôt!</p>
             ");
 
-        $this->mailer->send($email);
+            $this->eventMailer->send($email);
 
         return ['success' => true, 'message' => 'Participation confirmée! Un email vous a été envoyé.'];
     }
@@ -81,7 +81,7 @@ class ParticipationService
                 <p>Nous espérons vous voir à un prochain événement!</p>
             ");
 
-        $this->mailer->send($email);
+            $this->eventMailer->send($email);
 
         return ['success' => true, 'message' => 'Participation annulée. Un email vous a été envoyé.'];
     }

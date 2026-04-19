@@ -1,0 +1,225 @@
+{% extends 'admin/base_admin.html.twig' %}
+{% block title %}Organigramme — Stratix{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fs-4 fw-bold mb-1">Organigramme</h1>
+        <p class="text-secondary small mb-0">{{ total }} employés actifs</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button id="btn-zoom-in"  class="btn btn-outline-secondary btn-sm"><i class="ti ti-zoom-in"></i></button>
+        <button id="btn-zoom-out" class="btn btn-outline-secondary btn-sm"><i class="ti ti-zoom-out"></i></button>
+        <button id="btn-reset"    class="btn btn-outline-secondary btn-sm"><i class="ti ti-focus-2"></i> Reset</button>
+        <button id="btn-export"   class="btn btn-primary btn-sm"><i class="ti ti-download me-1"></i>Export PNG</button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden;">
+    <div id="org-container" style="width:100%;height:80vh;overflow:auto;background:#f8f9fa;cursor:grab;">
+        <div id="org-wrap" style="transform-origin:top center;transition:transform .2s;padding:2rem;min-width:max-content;">
+            <div id="org-chart"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Arbre vertical */
+.tree { display:flex; flex-direction:column; align-items:center; }
+.tree-level { display:flex; justify-content:center; gap:2rem; position:relative; padding-top:2rem; }
+.tree-level::before {
+    content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+    border-left:2px solid #cbd5e1; height:2rem;
+}
+.tree-level:first-child::before { display:none; }
+
+.tree-group { display:flex; flex-direction:column; align-items:center; }
+.tree-group-label {
+    font-size:.65rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:1px; color:#9ca3af; margin-bottom:.75rem;
+    background:#e5e7eb; padding:.2rem .75rem; border-radius:999px;
+}
+
+.tree-nodes { display:flex; gap:1.5rem; position:relative; }
+.tree-nodes::before {
+    content:''; position:absolute; top:-1rem; left:0; right:0;
+    border-top:2px solid #cbd5e1;
+}
+.tree-nodes::after {
+    content:''; position:absolute; top:-1rem; left:50%; transform:translateX(-50%);
+    border-left:2px solid #f8f9fa; height:1rem;
+}
+
+.org-card {
+    background:#fff; border-radius:12px; padding:.85rem .75rem;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+    width:130px; text-align:center;
+    border-top:3px solid #e5e7eb;
+    cursor:pointer; transition:all .2s;
+    position:relative;
+}
+.org-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.15); }
+.org-card::before {
+    content:''; position:absolute; top:-1rem; left:50%; transform:translateX(-50%);
+    border-left:2px solid #cbd5e1; height:1rem;
+}
+.org-card.root::before { display:none; }
+
+.org-avatar {
+    width:48px; height:48px; border-radius:50%; margin:0 auto .5rem;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:1rem; color:#fff; overflow:hidden;
+}
+.org-name  { font-size:.75rem; font-weight:600; color:#1e1b4b; line-height:1.2; }
+.org-title { font-size:.65rem; color:#6b7280; margin-top:.2rem; }
+.org-dept  { font-size:.6rem;  color:#9ca3af; margin-top:.1rem; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+const data = {{ hierarchy|raw }};
+
+const roleColors = {
+    admin:'#4f46e5', ceo:'#dc2626',
+    responsable_rh:'#16a34a', responsable_projet:'#d97706',
+    responsable_production:'#0891b2', employe:'#6b7280'
+};
+const roleLabels = {
+    admin:'Administrateur', ceo:'CEO',
+    responsable_rh:'Resp. RH', responsable_projet:'Resp. Projet',
+    responsable_production:'Resp. Production', employe:'Employé'
+};
+
+function initials(name) {
+    return name.split(' ').map(w=>w[0]||'').join('').substring(0,2).toUpperCase();
+}
+
+function makeCard(node, isRoot=false) {
+    const color = roleColors[node.role] || '#6b7280';
+    const card = document.createElement('div');
+    card.className = 'org-card' + (isRoot ? ' root' : '');
+    card.style.borderTopColor = color;
+
+    let avatarHtml;
+    if (node.avatar && node.avatar.startsWith('http')) {
+        avatarHtml = `<img src="${node.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else if (node.avatar) {
+        avatarHtml = `<img src="/images/avatar/${node.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+        avatarHtml = `<span>${initials(node.name)}</span>`;
+    }
+
+    card.innerHTML = `
+        <div class="org-avatar" style="background:${color}">${avatarHtml}</div>
+        <div class="org-name">${node.name}</div>
+        <div class="org-title">${node.title||''}</div>
+        ${node.dept ? `<div class="org-dept">${node.dept}</div>` : ''}
+    `;
+    return card;
+}
+
+function buildTree(data) {
+    const chart = document.getElementById('org-chart');
+    const tree  = document.createElement('div');
+    tree.className = 'tree';
+
+    // Niveau 0 : racine
+    const rootLevel = document.createElement('div');
+    rootLevel.className = 'tree-level';
+    rootLevel.style.paddingTop = '0';
+    rootLevel.appendChild(makeCard(data, true));
+    tree.appendChild(rootLevel);
+
+    if (!data.children || !data.children.length) {
+        chart.appendChild(tree);
+        return;
+    }
+
+    // Grouper les enfants par rôle
+    const groups = {};
+    const order  = ['ceo','admin','responsable_rh','responsable_projet','responsable_production','employe'];
+    data.children.forEach(c => {
+        const r = c.role || 'employe';
+        if (!groups[r]) groups[r] = [];
+        groups[r].push(c);
+    });
+
+    // Niveaux par rôle
+    order.forEach(role => {
+        if (!groups[role]) return;
+        const level = document.createElement('div');
+        level.className = 'tree-level';
+
+        const group = document.createElement('div');
+        group.className = 'tree-group';
+
+        const label = document.createElement('div');
+        label.className = 'tree-group-label';
+        label.textContent = roleLabels[role] || role;
+        label.style.color = roleColors[role] || '#6b7280';
+        label.style.background = (roleColors[role]||'#6b7280') + '20';
+        group.appendChild(label);
+
+        const nodes = document.createElement('div');
+        nodes.className = 'tree-nodes';
+        groups[role].forEach(u => nodes.appendChild(makeCard(u)));
+        group.appendChild(nodes);
+
+        level.appendChild(group);
+        tree.appendChild(level);
+    });
+
+    chart.appendChild(tree);
+}
+
+buildTree(data);
+
+// Zoom
+const wrap = document.getElementById('org-wrap');
+const container = document.getElementById('org-container');
+let scale = 0.85;
+wrap.style.transform = `scale(${scale})`;
+
+document.getElementById('btn-zoom-in').addEventListener('click', () => {
+    scale = Math.min(scale + 0.1, 2);
+    wrap.style.transform = `scale(${scale})`;
+});
+document.getElementById('btn-zoom-out').addEventListener('click', () => {
+    scale = Math.max(scale - 0.1, 0.3);
+    wrap.style.transform = `scale(${scale})`;
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+    scale = 0.85;
+    wrap.style.transform = `scale(${scale})`;
+    container.scrollTo(0,0);
+});
+
+// Drag to pan
+let isDragging=false, startX, startY, scrollLeft, scrollTop;
+container.addEventListener('mousedown', e => {
+    isDragging=true; container.style.cursor='grabbing';
+    startX=e.pageX-container.offsetLeft; startY=e.pageY-container.offsetTop;
+    scrollLeft=container.scrollLeft; scrollTop=container.scrollTop;
+});
+container.addEventListener('mouseleave', ()=>{ isDragging=false; container.style.cursor='grab'; });
+container.addEventListener('mouseup',    ()=>{ isDragging=false; container.style.cursor='grab'; });
+container.addEventListener('mousemove',  e=>{
+    if(!isDragging) return; e.preventDefault();
+    container.scrollLeft = scrollLeft-(e.pageX-container.offsetLeft-startX);
+    container.scrollTop  = scrollTop -(e.pageY-container.offsetTop -startY);
+});
+
+// Export PNG
+document.getElementById('btn-export').addEventListener('click', () => {
+    const prev = wrap.style.transform;
+    wrap.style.transform = 'scale(1)';
+    html2canvas(wrap, {backgroundColor:'#f8f9fa', scale:2}).then(canvas => {
+        wrap.style.transform = prev;
+        const a = document.createElement('a');
+        a.download = 'organigramme-stratix.png';
+        a.href = canvas.toDataURL();
+        a.click();
+    });
+});
+</script>
+{% endblock %}

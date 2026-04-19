@@ -25,6 +25,12 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: PUBLIC_ACCESS }
         - { path: ^/signup, roles: PUBLIC_ACCESS }
+        - { path: ^/connect, roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/check-email, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/emotion-check, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/emotion-redirect, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/admin/users, roles: ROLE_ADMIN }
         - { path: ^/admin, roles: [ROLE_ADMIN, ROLE_RESPONSABLE_RH, ROLE_RESPONSABLE_PROJET, ROLE_RESPONSABLE_PRODUCTION, ROLE_CEO] }
         - { path: ^/employee, roles: ROLE_EMPLOYE }

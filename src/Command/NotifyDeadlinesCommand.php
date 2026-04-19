@@ -7,7 +7,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport\Transports;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -21,7 +21,7 @@ class NotifyDeadlinesCommand extends Command
 
     public function __construct(
         private ProjetRepository $projetRepository,
-        private MailerInterface $mailer,
+        private Transports $projetMailer,
         private HttpClientInterface $httpClient,
         // Ta clé API actuelle
         string $groqApiKey = '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'
@@ -32,7 +32,8 @@ class NotifyDeadlinesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $projets = $this->projetRepository->findProjetsProchesEcheance(7);
+        $output->writeln('Transport: ' . get_class($this->projetMailer));
+        $projets = $this->projetRepository->findProjetsProchesEcheance(10);
 
         foreach ($projets as $projet) {
             $output->writeln("<info>--- Projet : " . $projet->getNom() . " ---</info>");
@@ -122,6 +123,7 @@ private function generateAiMessage(string $projectName, ?string $userName): stri
                 </div>
             ");
 
-        $this->mailer->send($email);
-    }
+            $email->getHeaders()->addTextHeader('X-Transport', 'projet');
+    
+            $this->projetMailer->send($email, null);        }
 }
