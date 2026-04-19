@@ -1,7 +1,7 @@
 <?php
- 
+
 namespace App\Controller\Api;
- 
+
 use App\Repository\TacheRepository;
 use App\Repository\PlanningRepository;
 use App\Repository\UtilisateurRepository;
@@ -10,35 +10,35 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
- 
+
 #[Route('/api/chatbot')]
 class ChatbotApiController extends AbstractController
 {
+    // TA CLÉ GROQ
+    private const GROQ_API_KEY = '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';
     private const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
     private const MODEL = 'llama-3.3-70b-versatile';
     
     private $client;
-    private string $groqApiKey;
- 
+
     public function __construct(
         private TacheRepository $tacheRepository,
         private PlanningRepository $planningRepository,
         private UtilisateurRepository $utilisateurRepository
     ) {
-        $this->groqApiKey = $_ENV['GROQ_API_KEY'] ?? throw new \RuntimeException('GROQ_API_KEY is not set in environment variables.');
         $this->client = new Client([
             'verify' => false,
             'timeout' => 60,
         ]);
     }
- 
+
     #[Route('/test', name: 'api_chatbot_test', methods: ['GET'])]
     public function testApi(): JsonResponse
     {
         try {
             $response = $this->client->post(self::GROQ_API_URL, [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->groqApiKey,
+                    'Authorization' => 'Bearer ' . self::GROQ_API_KEY,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
@@ -55,7 +55,7 @@ class ChatbotApiController extends AbstractController
             return $this->json(['status' => 'ERROR', 'message' => $e->getMessage()], 500);
         }
     }
- 
+
     #[Route('/message', name: 'api_chatbot_message', methods: ['POST'])]
     public function sendMessage(Request $request): JsonResponse
     {
@@ -65,11 +65,13 @@ class ChatbotApiController extends AbstractController
         $user = $this->getUser();
         $userId = $user ? $user->getId() : null;
         
+        // Vérifier les commandes métier d'abord
         $businessResponse = $this->processBusinessCommand($message, $userId);
         if ($businessResponse) {
             return $this->json(['success' => true, 'response' => $businessResponse]);
         }
         
+        // TOUT le reste va à l'IA automatiquement
         $aiResponse = $this->sendToAI($message);
         
         return $this->json(['success' => true, 'response' => ['type' => 'text', 'content' => $aiResponse]]);
@@ -80,7 +82,7 @@ class ChatbotApiController extends AbstractController
         try {
             $response = $this->client->post(self::GROQ_API_URL, [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->groqApiKey,
+                    'Authorization' => 'Bearer ' . self::GROQ_API_KEY,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
@@ -232,4 +234,4 @@ class ChatbotApiController extends AbstractController
         
         return ['type' => 'text', 'content' => "✅ Tâche créée : **{$titre}**"];
     }
-}//
+}
