@@ -8,6 +8,7 @@ use App\Repository\TacheRepository;
 use App\Repository\PlanningRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -20,6 +21,7 @@ class EmployeeController extends AbstractController
         TacheRepository $tacheRepository,
         PlanningRepository $planningRepository,
     ): Response {
+<<<<<<< HEAD
         $allUsers = $utilisateurRepository->findAll();
         $employe = !empty($allUsers) ? $allUsers[0] : null;
         
@@ -38,6 +40,16 @@ class EmployeeController extends AbstractController
         $moyenne = 0;
         $basse = 0;
         
+=======
+        /** @var Utilisateur $employe */
+        $employe   = $this->getUser();
+        $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+
+        $aFaire = 0; $enCours = 0; $terminees = 0;
+        $haute  = 0; $moyenne = 0; $basse     = 0;
+
+>>>>>>> c75d721 (Fix: Kanban drag&drop + move route + whiteboard Twig)
         foreach ($taches as $tache) {
             if ($tache->getStatut() === 'A_FAIRE')   $aFaire++;
             if ($tache->getStatut() === 'EN_COURS')  $enCours++;
@@ -133,11 +145,13 @@ class EmployeeController extends AbstractController
                 if ($tache->getPriorite() === 'BASSE')   $color = '#10b981';
 
                 $events[] = [
+                    'id'       => 'tache_' . $tache->getId(),
                     'title'    => '📌 ' . $tache->getTitre(),
                     'start'    => $tache->getDeadline()->format('Y-m-d'),
                     'color'    => $color,
                     'priorite' => $tache->getPriorite(),
                     'statut'   => $tache->getStatut(),
+                    'type'     => 'tache',
                 ];
             }
         }
@@ -146,18 +160,17 @@ class EmployeeController extends AbstractController
             $heureDebut = $planning->getHeureDebut() ? $planning->getHeureDebut()->format('H:i') : '';
             $heureFin   = $planning->getHeureFin()   ? $planning->getHeureFin()->format('H:i')   : '';
             $shift      = $planning->getTypeShift()  ?? 'Planning';
-
-            $titre = $shift;
-            if ($heureDebut && $heureFin) {
-                $titre .= ' (' . $heureDebut . ' - ' . $heureFin . ')';
-            }
+            $titre      = $shift;
+            if ($heureDebut && $heureFin) $titre .= ' (' . $heureDebut . ' - ' . $heureFin . ')';
 
             $events[] = [
+                'id'       => 'planning_' . $planning->getId(),
                 'title'    => '📅 ' . $titre,
                 'start'    => $planning->getDate()->format('Y-m-d'),
                 'color'    => '#3b82f6',
                 'priorite' => null,
                 'statut'   => null,
+                'type'     => 'planning',
             ];
         }
 
@@ -196,6 +209,45 @@ class EmployeeController extends AbstractController
             'terminees' => $terminees,
             'hasTaches' => count($taches) > 0,
         ]);
+    }
+
+    #[Route('/employee/tache/{id}/move', name: 'app_employee_tache_move', methods: ['POST'])]
+    public function moveTache(
+        int $id,
+        Request $request,
+        TacheRepository $tacheRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        /** @var Utilisateur $user */
+        $user  = $this->getUser();
+        $tache = $tacheRepository->find($id);
+
+        if (!$tache || $tache->getEmployeId() !== $user->getId()) {
+            return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
+        }
+
+        $body      = json_decode($request->getContent(), true);
+        $newStatus = $body['status'] ?? $request->request->get('status');
+
+        $statusMap = [
+            'a_faire'   => 'A_FAIRE',
+            'en_cours'  => 'EN_COURS',
+            'terminees' => 'TERMINEE',
+            'A_FAIRE'   => 'A_FAIRE',
+            'EN_COURS'  => 'EN_COURS',
+            'TERMINEE'  => 'TERMINEE',
+        ];
+
+        $mapped = $statusMap[$newStatus] ?? null;
+
+        if (!$mapped) {
+            return $this->json(['success' => false, 'error' => 'Statut invalide'], 400);
+        }
+
+        $tache->setStatut($mapped);
+        $em->flush();
+
+        return $this->json(['success' => true]);
     }
 
     #[Route('/employee/profile', name: 'employee_profile')]
