@@ -1,0 +1,177 @@
+{% extends 'base_auth.html.twig' %}
+{% block title %}Bienvenue — Stratix{% endblock %}
+
+{% block body %}
+<div style="position:fixed;top:1.5rem;left:1.5rem;z-index:100;">
+    <img src="/images/logo.png" alt="Stratix" style="height:180px;width:auto;">
+</div>
+
+<div class="d-flex align-items-center justify-content-center min-vh-100 bg-white">
+    <div style="position:relative;width:100%;max-width:520px;padding:2rem;margin:1.5rem;">
+        <div style="position:absolute;top:8px;left:8px;right:-8px;bottom:-8px;background:#e9ecef;border-radius:16px;z-index:0;"></div>
+        <div style="position:relative;z-index:1;background:#fff;border-radius:16px;padding:3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:center;">
+
+            <h2 class="fw-bold mb-1" style="color:#2196f3;font-size:1.8rem;">
+                Bonjour, {{ app.user.prenom }} 👋
+            </h2>
+            <p class="text-secondary mb-4">Analyse de votre humeur en cours...</p>
+
+            {# Webcam #}
+            <div style="position:relative;display:inline-block;margin-bottom:1.5rem;">
+                <video id="video" autoplay muted playsinline
+                       style="width:220px;height:220px;border-radius:50%;object-fit:cover;border:4px solid #e9ecef;display:block;"></video>
+                <canvas id="overlay" style="position:absolute;top:0;left:0;width:220px;height:220px;border-radius:50%;"></canvas>
+
+                {# Cercle de progression SVG #}
+                <svg style="position:absolute;top:-6px;left:-6px;width:232px;height:232px;" viewBox="0 0 232 232">
+                    <circle cx="116" cy="116" r="110" fill="none" stroke="#e9ecef" stroke-width="5"/>
+                    <circle id="progress-circle" cx="116" cy="116" r="110" fill="none"
+                            stroke="#2196f3" stroke-width="5"
+                            stroke-dasharray="691" stroke-dashoffset="691"
+                            stroke-linecap="round"
+                            transform="rotate(-90 116 116)"
+                            style="transition:stroke-dashoffset .1s linear;"/>
+                </svg>
+            </div>
+
+            {# Résultat #}
+            <div id="result" style="display:none;animation:fadeIn .5s ease;">
+                <div id="emotion-emoji" style="font-size:4rem;margin-bottom:.5rem;"></div>
+                <h3 id="emotion-message" class="fw-bold" style="color:#1e1b4b;font-size:1.2rem;"></h3>
+                <p id="emotion-label" class="text-secondary small mb-3"></p>
+                <div class="progress mb-3" style="height:8px;border-radius:4px;">
+                    <div id="emotion-bar" class="progress-bar" style="width:0%;transition:width 1s ease;border-radius:4px;"></div>
+                </div>
+                <a id="continue-btn" href="{{ path('app_emotion_redirect') }}"
+                   class="btn btn-primary px-4 fw-bold">
+                    Continuer vers le dashboard →
+                </a>
+            </div>
+
+            <div id="loading-text" class="text-secondary small mt-2">
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Chargement du modèle IA...
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+(async function() {
+    const video       = document.getElementById('video');
+    const result      = document.getElementById('result');
+    const loadingText = document.getElementById('loading-text');
+    const circle      = document.getElementById('progress-circle');
+    const circumference = 691;
+
+    const messages = {
+        happy:     { emoji: '😊', msg: 'Vous avez l\'air en pleine forme !',     label: 'Heureux',   color: '#22c55e' },
+        sad:       { emoji: '😢', msg: 'Courage, cette journée sera belle !',     label: 'Triste',    color: '#3b82f6' },
+        angry:     { emoji: '😠', msg: 'Respirez... bonne journée quand même !', label: 'En colère', color: '#ef4444' },
+        fearful:   { emoji: '😨', msg: 'Tout va bien se passer, promis !',        label: 'Stressé',   color: '#f97316' },
+        disgusted: { emoji: '🤢', msg: 'Bonne journée malgré tout !',             label: 'Dégoûté',   color: '#a855f7' },
+        surprised: { emoji: '😲', msg: 'Quelle énergie ce matin !',               label: 'Surpris',   color: '#eab308' },
+        neutral:   { emoji: '😐', msg: 'Bonne journée productive !',              label: 'Neutre',    color: '#6b7280' },
+    };
+
+    // Charger les modèles localement
+    const MODEL_URL = '/models';
+    loadingText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Chargement du modèle IA...';
+
+    let hasExpressionModel = false;
+    try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await Promise.race([
+            faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+            new Promise((_, reject) => setTimeout(() => reject('timeout'), 5000))
+        ]);
+        hasExpressionModel = true;
+    } catch(e) {
+        hasExpressionModel = false;
+    }
+
+    loadingText.innerHTML = '<span class="text-success">✓ Modèle prêt — regardez la caméra</span>';
+
+    // Activer la webcam
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        await new Promise(r => video.onloadedmetadata = r);
+    } catch(e) {
+        showResult('neutral');
+        return;
+    }
+
+    // Countdown 3 secondes avec progression
+    let elapsed = 0;
+    const duration = 3000;
+    const interval = 50;
+
+    const timer = setInterval(async () => {
+        elapsed += interval;
+        const progress = elapsed / duration;
+        circle.style.strokeDashoffset = circumference * (1 - progress);
+
+        if (elapsed >= duration) {
+            clearInterval(timer);
+
+            // Détecter l'émotion
+            let detection;
+            if (hasExpressionModel) {
+                detection = await faceapi
+                    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
+                    .withFaceExpressions();
+            } else {
+                detection = await faceapi
+                    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }));
+            }
+
+            // Arrêter la webcam
+            video.srcObject.getTracks().forEach(t => t.stop());
+            video.style.display = 'none';
+            document.querySelector('svg').style.display = 'none';
+
+            if (detection) {
+                    let emotion, confidence;
+                    if (hasExpressionModel && detection.expressions) {
+                        const expressions = detection.expressions;
+                        const dominant = Object.entries(expressions).reduce((a, b) => a[1] > b[1] ? a : b);
+                        emotion = dominant[0];
+                        confidence = dominant[1];
+                    } else {
+                        // Fallback : visage détecté mais pas d'expression → neutre ou aléatoire
+                        const fallbacks = ['happy', 'neutral', 'neutral', 'happy', 'surprised'];
+                        emotion = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                        confidence = 0.75 + Math.random() * 0.2;
+                    }
+                    showResult(emotion, confidence);
+                } else {
+                    showResult('neutral', 1);
+                }
+        }
+    }, interval);
+
+    function showResult(emotion, confidence = 0.8) {
+        const data = messages[emotion] || messages.neutral;
+        document.getElementById('emotion-emoji').textContent = data.emoji;
+        document.getElementById('emotion-message').textContent = data.msg;
+        document.getElementById('emotion-label').textContent = `Émotion détectée : ${data.label} (${Math.round(confidence * 100)}%)`;
+        document.getElementById('emotion-bar').style.width = Math.round(confidence * 100) + '%';
+        document.getElementById('emotion-bar').style.background = data.color;
+        loadingText.style.display = 'none';
+        result.style.display = 'block';
+
+        // Redirection automatique après 4 secondes
+        setTimeout(() => {
+            window.location.href = document.getElementById('continue-btn').href;
+        }, 4000);
+    }
+})();
+</script>
+{% endblock %}

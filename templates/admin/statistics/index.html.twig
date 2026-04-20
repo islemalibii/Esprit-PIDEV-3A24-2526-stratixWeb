@@ -1,0 +1,202 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques - STRATIX{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-chart-line"></i> Statistiques Avancées</h1>
+    <a href="{{ path('app_tache_index') }}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Retour aux tâches
+    </a>
+</div>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-2x mb-2"></i>
+                <h5 class="card-title">Total tâches</h5>
+                <h2 class="display-4">{{ total }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-trophy fa-2x mb-2"></i>
+                <h5 class="card-title">Taux de complétion</h5>
+                <h2 class="display-4">{{ taux_completion }}%</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h5 class="card-title">En cours</h5>
+                <h2 class="display-4">{{ en_cours }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <h5 class="card-title">En retard</h5>
+                <h2 class="display-4">{{ en_retard }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Statuts pie chart -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">
+                <i class="fas fa-chart-pie"></i> Répartition par Statut
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center">
+                <canvas id="statutChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priorité pie chart -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">
+                <i class="fas fa-chart-pie"></i> Répartition par Priorité
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center">
+                <canvas id="prioriteChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress bars -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header fw-bold">
+                <i class="fas fa-chart-bar"></i> Détail des statuts
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>📌 À faire</span>
+                        <strong>{{ a_faire }} / {{ total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-warning" style="width: {{ total > 0 ? (a_faire / total * 100)|round : 0 }}%">
+                            {{ total > 0 ? (a_faire / total * 100)|round : 0 }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>⚡ En cours</span>
+                        <strong>{{ en_cours }} / {{ total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" style="width: {{ total > 0 ? (en_cours / total * 100)|round : 0 }}%">
+                            {{ total > 0 ? (en_cours / total * 100)|round : 0 }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>✅ Terminées</span>
+                        <strong>{{ terminees }} / {{ total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: {{ total > 0 ? (terminees / total * 100)|round : 0 }}%">
+                            {{ total > 0 ? (terminees / total * 100)|round : 0 }}%
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>🔴 Priorité Haute</span>
+                        <strong>{{ haute }} / {{ total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-danger" style="width: {{ total > 0 ? (haute / total * 100)|round : 0 }}%">
+                            {{ total > 0 ? (haute / total * 100)|round : 0 }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>🟡 Priorité Moyenne</span>
+                        <strong>{{ moyenne }} / {{ total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-warning" style="width: {{ total > 0 ? (moyenne / total * 100)|round : 0 }}%">
+                            {{ total > 0 ? (moyenne / total * 100)|round : 0 }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>🟢 Priorité Basse</span>
+                        <strong>{{ basse }} / {{ total }}</strong>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: {{ total > 0 ? (basse / total * 100)|round : 0 }}%">
+                            {{ total > 0 ? (basse / total * 100)|round : 0 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Statut chart
+    new Chart(document.getElementById('statutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['À faire', 'En cours', 'Terminées'],
+            datasets: [{
+                data: [{{ a_faire }}, {{ en_cours }}, {{ terminees }}],
+                backgroundColor: ['#ffc107', '#0dcaf0', '#198754'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Priorité chart
+    new Chart(document.getElementById('prioriteChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Haute', 'Moyenne', 'Basse'],
+            datasets: [{
+                data: [{{ haute }}, {{ moyenne }}, {{ basse }}],
+                backgroundColor: ['#dc3545', '#ffc107', '#198754'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

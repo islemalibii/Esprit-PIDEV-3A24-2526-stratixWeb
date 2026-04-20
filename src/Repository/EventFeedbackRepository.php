@@ -16,6 +16,19 @@ class EventFeedbackRepository extends ServiceEntityRepository
         parent::__construct($registry, EventFeedback::class);
     }
 
+    // src/Repository/EventFeedbackRepository.php
+
+    public function findFeedbackEventIds(string $userEmail): array
+    {
+        $results = $this->createQueryBuilder('f')
+            ->select('IDENTITY(f.evenement) as event_id')
+            ->where('f.user_email = :email') 
+            ->setParameter('email', $userEmail)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_column($results, 'event_id');
+    }
     //    /**
     //     * @return EventFeedback[] Returns an array of EventFeedback objects
     //     */

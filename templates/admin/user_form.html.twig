@@ -1,5 +1,6 @@
 {% extends 'admin/base_admin.html.twig' %}
 {% block title %}{{ title }} — Stratix{% endblock %}
+{% import 'macros/avatar.html.twig' as avatarMacro %}
 
 {% block admin_content %}
 
@@ -19,7 +20,8 @@
 <div class="row justify-content-center">
     <div class="col-lg-10">
 
-        {{ form_start(form) }}
+        {{ form_start(form, {attr: {enctype: 'multipart/form-data', id: 'user-form'}}) }}
+        <input type="hidden" name="face_validated" id="face_validated" value="0">
 
         {# Section 1 — Infos personnelles #}
         <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
@@ -66,6 +68,36 @@
             </div>
         </div>
 
+        {# Section 3 — Photo de profil IA #}
+        <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;">
+            <div class="card-header bg-white px-4 py-3 border-bottom">
+                <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <span class="rounded-circle bg-info d-flex align-items-center justify-content-center text-white" style="width:28px;height:28px;font-size:.8rem;">
+                        <i class="ti ti-camera"></i>
+                    </span>
+                    Photo de profil <span class="text-secondary fw-normal ms-1" style="font-size:.8rem;">(optionnel — vérification IA)</span>
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-4">
+                    {# Prévisualisation #}
+                    <div id="avatar-preview" style="width:80px;height:80px;border-radius:50%;background:#e9ecef;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:2px solid #dee2e6;">
+                        {% if editUser and editUser.avatar %}
+                            <img src="/images/avatar/{{ editUser.avatar }}" style="width:100%;height:100%;object-fit:cover;">
+                        {% else %}
+                            <svg width="40" height="40" fill="#adb5bd" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="flex-fill">
+                        <input type="file" name="avatar" id="avatar-input" accept="image/*" class="form-control">
+                        <div id="face-status" class="mt-2 small">
+                            <span class="text-secondary">Chargement du modèle IA...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {# Boutons #}
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary px-4">
@@ -78,5 +110,60 @@
 
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+(async function() {
+    const MODEL_URL = '/models';
+    const input     = document.getElementById('avatar-input');
+    const preview   = document.getElementById('avatar-preview');
+    const status    = document.getElementById('face-status');
+    const validated = document.getElementById('face_validated');
+    const form      = document.getElementById('user-form');
+
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    status.innerHTML = '<span class="text-secondary">Modèle IA prêt — choisissez une photo</span>';
+
+    input.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        validated.value = '0';
+        status.innerHTML = '<span class="text-secondary"><span class="spinner-border spinner-border-sm me-1"></span>Analyse du visage...</span>';
+
+        const objectUrl = URL.createObjectURL(file);
+        preview.innerHTML = `<img src="${objectUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+
+        const img = new Image();
+        img.src = objectUrl;
+        await new Promise(r => img.onload = r);
+
+        const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
+
+        if (detection) {
+            validated.value = '1';
+            status.innerHTML = '<span class="text-success fw-semibold">✓ Visage humain détecté — photo acceptée</span>';
+            preview.style.borderColor = '#198754';
+        } else {
+            validated.value = '0';
+            status.innerHTML = '<span class="text-danger fw-semibold">✗ Aucun visage détecté — choisissez une photo avec un visage visible</span>';
+            preview.style.borderColor = '#dc3545';
+            setTimeout(() => {
+                preview.innerHTML = `<svg width="40" height="40" fill="#adb5bd" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>`;
+                preview.style.borderColor = '#dee2e6';
+                input.value = '';
+                status.innerHTML = '<span class="text-secondary">Modèle IA prêt — choisissez une photo</span>';
+            }, 3000);
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (input.files.length > 0 && validated.value !== '1') {
+            e.preventDefault();
+            status.innerHTML = '<span class="text-danger fw-semibold">✗ Attendez la validation du visage avant de soumettre</span>';
+        }
+    });
+})();
+</script>
 
 {% endblock %}

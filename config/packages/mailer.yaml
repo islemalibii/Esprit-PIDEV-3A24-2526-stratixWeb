@@ -1,3 +1,6 @@
 framework:
     mailer:
-        dsn: '%env(MAILER_DSN_PROJET)%'
+        transports:
+            default: '%env(MAILER_DSN)%'
+            event: '%env(MAILER_DSN_EVENT)%'
+            projet: '%env(MAILER_DSN_PROJET)%'

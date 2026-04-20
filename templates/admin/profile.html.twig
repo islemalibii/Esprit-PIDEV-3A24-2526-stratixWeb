@@ -1,5 +1,6 @@
 {% extends 'admin/base_admin.html.twig' %}
 {% block title %}Mon profil — Stratix{% endblock %}
+{% import 'macros/avatar.html.twig' as avatarMacro %}
 
 {% block admin_content %}
 <div class="row justify-content-center">
@@ -8,10 +9,7 @@
             <div class="card-body p-4">
 
                 <div class="d-flex align-items-center gap-3 pb-4 mb-4 border-bottom">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                         style="width:64px;height:64px;font-size:1.4rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);flex-shrink:0;">
-                        {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
-                    </div>
+                    {{ avatarMacro.show(user, '64px', '1.4rem') }}
                     <div>
                         <h3 class="fw-bold mb-1">{{ user.prenom }} {{ user.nom }}</h3>
                         <div class="text-secondary small">{{ user.email }}</div>

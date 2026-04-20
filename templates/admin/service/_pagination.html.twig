@@ -1,0 +1,35 @@
+{% if pagination.pageCount > 1 %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if pagination.currentPageNumber > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ baseUrl ~ filters|merge({'page': 1})|url_encode }}">Premier</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="{{ baseUrl ~ filters|merge({'page': pagination.currentPageNumber - 1})|url_encode }}">Précédent</a>
+                    </li>
+                {% endif %}
+
+                {% for page in 1..pagination.pageCount %}
+                    {% if page == pagination.currentPageNumber %}
+                        <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ baseUrl ~ filters|merge({'page': page})|url_encode }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.currentPageNumber < pagination.pageCount %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ baseUrl ~ filters|merge({'page': pagination.currentPageNumber + 1})|url_encode }}">Suivant</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="{{ baseUrl ~ filters|merge({'page': pagination.pageCount})|url_encode }}">Dernier</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+{% endif %}

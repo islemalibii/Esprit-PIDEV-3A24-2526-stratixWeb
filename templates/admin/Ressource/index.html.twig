@@ -1,89 +1,191 @@
+{# templates/admin/ressource/index.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion des Ressources{% endblock %}
+{% block title %}Gestion des Ressources {% endblock %}
 
 {% block body %}
 <main id="content" class="content py-4">
+    <div class="container mt-4">
+        
+        {# --- BANDEAU DE CONSEIL IA --- #}
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert alert-info d-flex align-items-center shadow-sm border-0" style="background-color: #e3f2fd; border-left: 5px solid #3498db !important;">
+                    <i class="ti ti-robot fs-3 me-3 text-primary"></i>
+                    <div>
+                        <strong>Assistant Stratix AI :</strong> 
+                        Le système surveille actuellement votre boîte mail. Vous pouvez aussi importer manuellement un catalogue via le bouton <strong>"Analyser"</strong>.
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-body">
+        {# --- SYSTÈME D'ONGLETS --- #}
+        <ul class="nav nav-pills mb-4 shadow-sm p-2 bg-white rounded" id="resourceTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-content" type="button" role="tab">
+                    <i class="ti ti-box me-1"></i> Inventaire des Ressources
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="imports-tab" data-bs-toggle="tab" data-bs-target="#imports-content" type="button" role="tab">
+                    <i class="ti ti-mail-download me-1"></i> Catalogues Reçus (Email)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="resourceTabContent">
             
-            <form method="GET" action="{{ path('ressource_index') }}" class="row g-3 align-items-center mb-4">
-                <div class="col-auto">
-                    <label class="fw-bold">Rechercher :</label>
-                </div>
-                <div class="col-md-4">
-                    <input type="text" name="q" value="{{ searchTerm }}" 
-                           class="form-control" placeholder="Nom, type ou fournisseur...">
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary" style="background-color: #3498db; border: none;">Rechercher</button>
-                    <a href="{{ path('ressource_index') }}" class="btn btn-secondary" style="background-color: #95a5a6; border: none;">Effacer</a>
-                </div>
-                
-                <div class="col text-end">
-                    {# CORRECTION : ressource_new n'existe pas, on utilise ressource_form #}
-                    <a href="{{ path('ressource_form') }}" class="btn btn-success fw-bold px-4" style="background-color: #27ae60; border: none;">
-                        ➕ Nouvelle Ressource
-                    </a>
-                </div>
-            </form>
+            {# --- ONGLET 1 : GESTION DES RESSOURCES --- #}
+            <div class="tab-pane fade show active" id="list-content" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        
+                        <form method="GET" action="{{ path('ressource_index') }}" class="row g-3 align-items-center mb-4">
+                            <div class="col-auto">
+                                <label class="fw-bold">Rechercher :</label>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="q" value="{{ searchTerm }}" class="form-control" placeholder="Nom, type ou fournisseur...">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary" style="background-color: #3498db; border: none;">Rechercher</button>
+                                <a href="{{ path('ressource_index') }}" class="btn btn-secondary" style="background-color: #95a5a6; border: none;">Effacer</a>
+                            </div>
+                            
+                            <div class="col text-end">
+                                <a href="{{ path('ressource_form') }}" class="btn btn-success fw-bold px-4" style="background-color: #27ae60; border: none;">
+                                    ➕ Nouvelle Ressource
+                                </a>
+                            </div>
+                        </form>
 
-            <h2 class="mb-4" style="color: #2c3e50; font-weight: bold;">Gestion des Ressources</h2>
+                        <h2 class="mb-4" style="color: #2c3e50; font-weight: bold;">Gestion des Ressources</h2>
 
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Nom</th>
-                            <th>Type</th>
-                            <th>Quantité</th>
-                            <th>Fournisseur</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ressource in ressources %}
-                            <tr>
-                                <td class="fw-bold">{{ ressource.nom }}</td>
-                                <td><span class="badge bg-info text-dark">{{ ressource.typeRessource }}</span></td>
-                                <td>{{ ressource.quantite }}</td>
-                                <td>{{ ressource.fournisseur }}</td>
-                                <td class="text-center">
-                                    {# CORRECTION : ressource_edit n'existe pas, on utilise ressource_form avec l'ID #}
-                                    <a href="{{ path('ressource_form', {'id': ressource.id}) }}" class="btn btn-sm btn-outline-warning">Modifier</a>
-                                    
-                                    <form method="post" action="{{ path('ressource_delete', {'id': ressource.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer cette ressource ?');">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ressource.id) }}">
-                                        <button class="btn btn-sm btn-outline-danger">Supprimer</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">Aucune ressource trouvée.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Type</th>
+                                        <th>Quantité</th>
+                                        <th>Fournisseur Actuel</th>
+                                        <th class="text-center" style="color: #6366f1;"><i class="ti ti-cpu"></i> Intelligence</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ressource in ressources %}
+                                        <tr>
+                                            <td class="fw-bold">{{ ressource.nom }}</td>
+                                            <td><span class="badge bg-info text-dark">{{ ressource.typeRessource }}</span></td>
+                                            <td>{{ ressource.quantite }}</td>
+                                            <td>{{ ressource.fournisseur }}</td>
+                                            
+                                            {# MODIFICATION ICI : Route corrigée vers app_ressource_analyser #}
+                                            <td class="text-center">
+                                                <a href="{{ path('app_ressource_analyser', {'id': ressource.id}) }}" 
+                                                   class="btn btn-sm btn-primary shadow-sm px-3" 
+                                                   style="background-color: #6366f1; border: none; border-radius: 20px;">
+                                                    <i class="ti ti-bolt"></i> Analyser IA
+                                                </a>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <a href="{{ path('ressource_form', {'id': ressource.id}) }}" class="btn btn-sm btn-outline-warning">Modifier</a>
+                                                <form method="post" action="{{ path('ressource_delete', {'id': ressource.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer cette ressource ?');">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ressource.id) }}">
+                                                    <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4">Aucune ressource trouvée.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row text-center mt-4 p-3 border-top" style="background-color: #f8f9fa; border-radius: 0 0 8px 8px;">
+                            <div class="col-md-4 fw-bold" style="color: #2c3e50;">Total ressources : {{ ressources|length }}</div>
+                            <div class="col-md-4 fw-bold" style="color: #27ae60;">Quantité totale : {{ quantiteTotale|default(0) }}</div>
+                            <div class="col-md-4 fw-bold" style="color: #3498db;">Types : {{ nombreTypes|default(0) }}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="row text-center mt-4 p-3 border-top" style="background-color: #ecf0f1; border-radius: 0 0 8px 8px;">
-                <div class="col-md-4 fw-bold" style="color: #2c3e50;">
-                    Total ressources : {{ ressources|length }}
-                </div>
-                <div class="col-md-4 fw-bold" style="color: #27ae60;">
-                    Quantité totale : {{ quantiteTotale|default(0) }}
-                </div>
-                <div class="col-md-4 fw-bold" style="color: #3498db;">
-                    Types : {{ nombreTypes|default(0) }}
+            {# --- ONGLET 2 : HISTORIQUE DES IMPORTS --- #}
+            <div class="tab-pane fade" id="imports-content" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h4 class="mb-4" style="color: #2c3e50; font-weight: bold;">
+                            <i class="ti ti-file-analytics text-primary"></i> Catalogues Récupérés par Email
+                        </h4>
+                        
+                        <div class="alert alert-light border mb-4">
+                            <small class="text-muted">
+                                <i class="ti ti-info-circle"></i> Ces fichiers ont été extraits automatiquement de votre boîte mail. 
+                                Vous pouvez les télécharger pour vérification.
+                            </small>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date de réception</th>
+                                        <th>Source</th>
+                                        <th>Nom du fichier</th>
+                                        <th class="text-center">Statut</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if imports is defined and imports is not empty %}
+                                        {% for import in imports %}
+                                            <tr>
+                                                <td>{{ import.createdAt|date('d/m/Y H:i') }}</td>
+                                                <td><span class="badge bg-light text-dark border">{{ import.senderEmail }}</span></td>
+                                                <td><i class="ti ti-file-type-csv text-success"></i> {{ import.fileName }}</td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-success-soft text-success">
+                                                        <i class="ti ti-check"></i> Synchronisé
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ asset('uploads/catalogues/' ~ import.fileName) }}" class="btn btn-sm btn-light border">
+                                                        <i class="ti ti-download"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-5">
+                                                <i class="ti ti-mail-opened fs-1 text-muted d-block mb-2"></i>
+                                                <span class="text-muted">Aucun catalogue n'a été reçu par email récemment.</span>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
-</div>
 </main>
 
+<style>
+    .nav-pills .nav-link { color: #64748b; border-radius: 8px; transition: 0.3s; }
+    .nav-pills .nav-link.active { background-color: #3498db !important; color: white; }
+    .bg-success-soft { background-color: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 12px; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .table-hover tbody tr:hover { background-color: #f8fafc; }
+</style>
 {% endblock %}

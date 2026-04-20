@@ -1,0 +1,30 @@
+{% block body %}
+<div class="container mt-4">
+    <h1>Analyse IA : {{ ressource.nom }}</h1>
+    
+    <div class="row mt-4">
+        {% for item in analyse %}
+            <div class="col-md-4">
+                <div class="card {{ item.isBest ? 'border-success shadow-lg' : 'opacity-75' }}">
+                    {% if item.isBest %}
+                        <div class="card-header bg-success text-white text-center">
+                            ⭐ RECOMMANDATION STRATIX AI
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.offre.fournisseur.nom }}</h5>
+                        <p class="h3 text-primary">{{ item.offre.prix }} DT</p>
+                        <p>Livraison : <strong>{{ item.offre.delaiTransportJours }} jours</strong></p>
+                        
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-info" style="width: {{ item.score }}%">
+                                Score IA : {{ item.score }}/100
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

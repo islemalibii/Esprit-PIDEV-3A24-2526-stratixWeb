@@ -1,0 +1,187 @@
+{# templates/admin/Ressource/resultat_ia.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultats de l'Analyse IA - Stratix{% endblock %}
+
+{% block body %}
+<main id="content" class="content py-4">
+    <div class="container-fluid mt-4">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark">
+                    <i class="ti ti-brain text-primary me-2"></i>Analyse Comparative IA
+                </h2>
+                <p class="text-muted">Analyse effectuée pour la ressource : <strong>{{ ressource.nom }}</strong></p>
+            </div>
+            <a href="{{ path('ressource_index') }}" class="btn btn-outline-primary">
+                <i class="ti ti-arrow-left"></i> Retour au stock
+            </a>
+        </div>
+
+        <div class="row">
+            {# Meilleur Choix #}
+            {% if resultats|length > 0 %}
+                {% set meilleur = resultats[0] %}
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm overflow-hidden" style="border-left: 5px solid #10b981 !important;">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 p-3 rounded-circle me-4">
+                                    <i class="ti ti-trophy fs-1 text-success"></i>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success mb-2">RECOMMANDATION IA STRATIX</span>
+                                    <h3 class="mb-1">Meilleure offre : {{ meilleur.fournisseur }}</h3>
+                                    <p class="mb-0 text-muted">
+                                        Prix : <span class="fw-bold text-dark">{{ meilleur.prix }} DT</span> | 
+                                        Délai : <span class="fw-bold text-dark">{{ meilleur.delai }} jours</span>
+                                        {% if meilleur.score_ia is defined %}
+                                            | Score IA : <span class="fw-bold text-primary">{{ meilleur.score_ia }}/100</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# SECTION VISUALISATION : RADAR CHART #}
+            <div class="col-12 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold"><i class="ti ti-chart-radar me-2 text-primary"></i>Comparaison Performance Fournisseurs</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="max-height: 400px; position: relative;">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Tableau comparatif #}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold">Toutes les offres analysées</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Classement</th>
+                                        <th>Fournisseur</th>
+                                        <th>Prix (DT)</th>
+                                        <th>Délai (Jours)</th>
+                                        {% if resultats[0].score_ia is defined %}
+                                            <th>Score IA</th>
+                                        {% endif %}
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for index, offre in resultats %}
+                                        <tr>
+                                            <td class="ps-4">
+                                                {% if index == 0 %}
+                                                    <span class="badge rounded-pill bg-warning text-dark">#1</span>
+                                                {% else %}
+                                                    <span class="text-muted">#{{ index + 1 }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="fw-bold">{{ offre.fournisseur }}</td>
+                                            <td>{{ offre.prix }} DT</td>
+                                            <td>
+                                                <span class="badge {{ offre.delai > 5 ? 'bg-soft-warning text-warning' : 'bg-soft-success text-success' }}">
+                                                    {{ offre.delai }} jours
+                                                </span>
+                                            </td>
+                                            {% if offre.score_ia is defined %}
+                                                <td class="fw-bold text-primary">{{ offre.score_ia }}%</td>
+                                            {% endif %}
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-primary">Sélectionner</button>
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">Aucune donnée traitée.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .bg-soft-success { background-color: #d1fae5; color: #065f46; }
+    .bg-soft-warning { background-color: #fef3c7; color: #92400e; }
+</style>
+
+{# SCRIPTS POUR LE GRAPHIQUE #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        
+        // Configuration des labels (critères)
+        const labels = ["Prix (Optimisé)", "Rapidité (Délai)", "Fiabilité Score IA"];
+        
+        // Génération dynamique des datasets depuis Twig
+        const datasets = [
+            {% for offre in resultats %}
+            {
+                label: "{{ offre.fournisseur }}",
+                data: [
+                    {# Normalisation simple pour le rendu visuel (0-100) #}
+                    {{ (1000 / (offre.prix + 1)) * 5 }}, 
+                    {{ 100 - (offre.delai * 5) }},
+                    {{ offre.score_ia is defined ? offre.score_ia : 50 }}
+                ],
+                fill: true,
+                backgroundColor: 'rgba({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }}, 0.2)',
+                borderColor: 'rgb({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }})',
+                pointBackgroundColor: 'rgb({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }})',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }})'
+            },
+            {% endfor %}
+        ];
+
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        suggestedMax: 100,
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

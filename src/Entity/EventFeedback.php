@@ -98,4 +98,18 @@ class EventFeedback
         return $this;
     }
 
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $user_email = null;
+
+    public function getUserEmail(): ?string
+    {
+        return $this->user_email;
+    }
+
+    public function setUserEmail(?string $user_email): static
+    {
+        $this->user_email = $user_email;
+        return $this;
+    }
+
 }

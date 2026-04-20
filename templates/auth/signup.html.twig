@@ -23,7 +23,8 @@
             <div class="alert alert-danger py-2 small">Veuillez corriger les erreurs ci-dessous.</div>
         {% endif %}
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="face_validated" id="face_validated" value="0">
             <div class="row g-3 mb-2">
                 <div class="col-6">
                     <label class="form-label fw-semibold">Nom *</label>
@@ -56,8 +57,7 @@
             </div>
             <div class="row g-3 mb-4">
                 <div class="col-6">
-                    <label class="form-label fw-semibold">Mot de passe *</label>
-                    <input type="password" name="password" id="pw1"
+                    <label class="form-label fw-semibold">Mot de passe *</label>                    <input type="password" name="password" id="pw1"
                            class="form-control form-control-lg {% if errors.password is defined %}is-invalid{% endif %}"
                            placeholder="••••••••" required>
                     {% if errors.password is defined %}
@@ -78,6 +78,25 @@
                     {% if errors.confirm is defined %}<div class="invalid-feedback">{{ errors.confirm }}</div>{% endif %}
                 </div>
             </div>
+            {# --- Photo de profil avec détection IA --- #}
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Photo de profil <span class="text-secondary fw-normal">(optionnel)</span></label>
+                <div class="border rounded-3 p-3 {% if errors.avatar is defined %}border-danger{% else %}border-secondary{% endif %}" style="background:#f8f9fa;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div id="avatar-preview" style="width:72px;height:72px;border-radius:50%;background:#e9ecef;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                            <svg width="36" height="36" fill="#adb5bd" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        </div>
+                        <div class="flex-fill">
+                            <input type="file" name="avatar" id="avatar-input" accept="image/*" class="form-control form-control-sm">
+                            <div id="face-status" class="mt-2 small"></div>
+                        </div>
+                    </div>
+                </div>
+                {% if errors.avatar is defined %}
+                    <div class="text-danger small mt-1">{{ errors.avatar }}</div>
+                {% endif %}
+            </div>
+
             <button type="submit" class="btn btn-primary w-100 fw-bold text-uppercase btn-lg" style="letter-spacing:1px;">
                 S'inscrire
             </button>
@@ -145,6 +164,64 @@ document.querySelector('[name=confirm]').addEventListener('input', function() {
     if (!this.value) { clearState(this); return; }
     this.value === document.getElementById('pw1').value ? setValid(this) : setInvalid(this);
 });
+</script>
+
+{# face-api.js depuis CDN #}
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+(async function() {
+    const MODEL_URL = '/models';
+    const input     = document.getElementById('avatar-input');
+    const preview   = document.getElementById('avatar-preview');
+    const status    = document.getElementById('face-status');
+    const validated = document.getElementById('face_validated');
+    const form      = document.querySelector('form');
+
+    // Charger le modèle au démarrage
+    status.innerHTML = '<span class="text-secondary small">Chargement du modèle IA...</span>';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    status.innerHTML = '';
+
+    input.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        validated.value = '0';
+        status.innerHTML = '<span class="text-secondary"><span class="spinner-border spinner-border-sm me-1"></span>Analyse du visage...</span>';
+
+        // Prévisualisation
+        const objectUrl = URL.createObjectURL(file);
+        preview.innerHTML = `<img src="${objectUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+
+        // Créer un élément image pour face-api
+        const img = new Image();
+        img.src = objectUrl;
+        await new Promise(r => img.onload = r);
+
+        const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
+
+        if (detection) {
+            validated.value = '1';
+            status.innerHTML = '<span class="text-success fw-semibold">✓ Visage humain détecté</span>';
+        } else {
+            validated.value = '0';
+            status.innerHTML = '<span class="text-danger fw-semibold">✗ Aucun visage détecté — choisissez une photo avec votre visage visible</span>';
+            setTimeout(() => {
+                preview.innerHTML = `<svg width="36" height="36" fill="#adb5bd" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>`;
+                input.value = '';
+                status.innerHTML = '';
+            }, 3000);
+        }
+    });
+
+    // Bloquer soumission si photo uploadée mais pas validée
+    form.addEventListener('submit', function(e) {
+        if (input.files.length > 0 && validated.value !== '1') {
+            e.preventDefault();
+            status.innerHTML = '<span class="text-danger fw-semibold">✗ Attendez la validation du visage avant de soumettre</span>';
+        }
+    });
+})();
 </script>
 
 {% endblock %}

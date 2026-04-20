@@ -11,9 +11,28 @@
 
     {% block stylesheets %}
         <link rel="stylesheet" crossorigin href="/styles/app.css">
+        <style>
+            body[data-theme="dark"] { background: #1a1a2e !important; color: #e0e0e0 !important; }
+            body[data-theme="dark"] .card { background: #16213e !important; border-color: #2d2d4e !important; color: #e0e0e0 !important; }
+            body[data-theme="dark"] #topbar, body[data-theme="dark"] .navbar { background: #16213e !important; border-color: #2d2d4e !important; }
+            body[data-theme="dark"] #sidebar, body[data-theme="dark"] .sidebar { background: #0f3460 !important; }
+            body[data-theme="dark"] .bg-white { background: #16213e !important; }
+            body[data-theme="dark"] .border-bottom { border-color: #2d2d4e !important; }
+            body[data-theme="dark"] .text-dark { color: #e0e0e0 !important; }
+            body[data-theme="dark"] .text-secondary { color: #a0a0b0 !important; }
+            body[data-theme="dark"] .form-control, body[data-theme="dark"] .form-select { background: #1a1a2e !important; color: #e0e0e0 !important; border-color: #2d2d4e !important; }
+            body[data-theme="dark"] .dropdown-menu { background: #16213e !important; border-color: #2d2d4e !important; }
+            body[data-theme="dark"] .dropdown-item { color: #e0e0e0 !important; }
+            body[data-theme="dark"] .dropdown-item:hover { background: #0f3460 !important; }
+            body[data-theme="dark"] .list-group-item { background: #16213e !important; border-color: #2d2d4e !important; color: #e0e0e0 !important; }
+            body[data-theme="dark"] .btn-light { background: #2d2d4e !important; border-color: #2d2d4e !important; color: #e0e0e0 !important; }
+            body[data-theme="dark"] .card-header { background: #16213e !important; border-color: #2d2d4e !important; }
+            body[data-theme="dark"] h1,body[data-theme="dark"] h2,body[data-theme="dark"] h3,
+            body[data-theme="dark"] h4,body[data-theme="dark"] h5,body[data-theme="dark"] h6 { color: #e0e0e0 !important; }
+        </style>
     {% endblock %}
 </head>
-<body>
+<body data-theme="{{ app.user ? app.user.theme : 'light' }}">
     <div id="overlay" class="overlay"></div>
 
     {{ include('employee/partials/navbar.html.twig') }}
@@ -31,7 +50,19 @@
             var dropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
             dropdowns.forEach(function(el) { new bootstrap.Dropdown(el); });
         });
-    </script>
+        document.getElementById('theme-toggle')?.addEventListener('click', function() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme') || 'light';
+            const next = current === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', next);
+            const icon = document.getElementById('theme-icon');
+            if (icon) { icon.className = next === 'dark' ? 'ti ti-sun' : 'ti ti-moon'; }
+            fetch('{{ path('app_theme_toggle') }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'theme=' + next
+            });
+        });    </script>
     {% block javascripts %}{% endblock %}
 </body>
 </html>

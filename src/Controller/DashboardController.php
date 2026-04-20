@@ -67,12 +67,43 @@ class DashboardController extends AbstractController
             $employes[$u->getId()] = $u->getPrenom() . ' ' . $u->getNom();
         }
 
+        // Stats utilisateurs simplifiées (sans isActive ni isAccountLocked)
+        $users = $utilisateurRepository->findAll();
+        $totalUsers = count($users);
+        
+        // Compter par statut
+        $actifs = count(array_filter($users, fn($u) => $u->getStatut() === 'actif'));
+        $locked = count(array_filter($users, fn($u) => $u->getStatut() === 'bloque'));
+        $admins = count(array_filter($users, fn($u) => $u->getRole() === 'admin'));
+
+        $roles = [];
+        foreach ($users as $u) {
+            $role = $u->getRole();
+            $roles[$role] = ($roles[$role] ?? 0) + 1;
+        }
+
         $quotes = [
             ["text" => "Le succès c'est tomber sept fois et se relever huit.", "author" => "Proverbe japonais"],
             ["text" => "La productivité n'est jamais un accident.", "author" => "Paul J. Meyer"],
             ["text" => "Une heure de planification peut vous faire gagner 10 heures de travail.", "author" => "Dale Carnegie"],
         ];
         $quote = $quotes[array_rand($quotes)];
+
+        // Notifications emails simulées
+        $emailNotifications = [
+            [
+                'title' => '📧 Email de test',
+                'message' => 'Cliquez sur "Envoyer un test" pour recevoir un vrai email.',
+                'type' => 'info',
+                'createdAt' => new \DateTime(),
+                'isRead' => false,
+                'relatedType' => null,
+                'relatedId' => null
+            ]
+        ];
+
+        // Utilisateurs verrouillés (statut = bloque)
+        $lockedUsers = array_filter($users, fn($u) => $u->getStatut() === 'bloque');
 
         return $this->render('admin/dashboard/index.html.twig', [
             'total'            => count($taches),
@@ -91,6 +122,17 @@ class DashboardController extends AbstractController
             'quote'            => $quote,
             'taches'           => $taches,
             'plannings'        => $plannings,
+            'emailNotifications' => $emailNotifications,
+            'stats' => [
+                'total' => $totalUsers,
+                'actifs' => $actifs,
+                'locked' => $locked,
+                'admins' => $admins,
+                'taux_actifs' => $totalUsers > 0 ? round(($actifs / $totalUsers) * 100) : 0,
+            ],
+            'roles' => $roles,
+            'lockedUsers' => $lockedUsers,
+            'recent' => array_slice(array_reverse($users), 0, 10),
         ]);
     }
 }

@@ -21,6 +21,9 @@
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
+        #rec-carousel::-webkit-scrollbar { 
+            display: none; 
+        }
     </style>
 {% endblock %}
 
@@ -30,10 +33,163 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h4 fw-bold text-dark mb-1">Événements</h1>
-            <p class="text-muted small mb-0">Consultez les réunions et formations à venir.</p>
         </div>
     </div>
 
+    {% if recommendations is not empty %}
+        <div class="mb-5">
+
+            {# Section header #}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-2 p-2" style="background:#ede9fe;">
+                        <i class="ti ti-sparkles" style="color:#7c3aed;"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-semibold text-dark">Recommandé pour vous</h5>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                            style="width:32px;height:32px;background:#ede9fe;color:#7c3aed;border:none;"
+                            onclick="scrollRec(-1)">
+                        <i class="ti ti-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center"
+                            style="width:32px;height:32px;background:#7c3aed;color:white;border:none;"
+                            onclick="scrollRec(1)">
+                        <i class="ti ti-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div style="position:relative; overflow:hidden;">
+                <div id="rec-carousel"
+                    style="display:flex; gap:20px; overflow-x:auto; scroll-behavior:smooth; 
+                            scrollbar-width:none; -ms-overflow-style:none; padding-bottom:4px;">
+
+                    {% for rec in recommendations %}
+                    {% set event = rec.event %}
+                    {% set reason = rec.reason %}
+                    {% set typeLabels = {
+                        'reunion':          ['Réunion',      '#3b82f6', '#eff6ff'],
+                        'formation':        ['Formation',    '#8b5cf6', '#f5f3ff'],
+                        'lancementProduit': ['Lancement',    '#10b981', '#ecfdf5'],
+                        'seminaire':        ['Séminaire',    '#f59e0b', '#fffbeb'],
+                        'recrutement':      ['Recrutement',  '#ef4444', '#fef2f2']
+                    } %}
+
+                    {# Each card — Horizontal layout with gradient #}
+                    {# Each card — Horizontal layout with gradient #}
+                    <div style="min-width:340px; max-width:340px; flex-shrink:0;">
+                        <div class="position-relative overflow-hidden"
+                            style="border-radius:14px;
+                                    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 60%, #fed7aa 100%);
+                                    border-top: 3px solid #ea580c;
+                                    box-shadow: 0 4px 15px rgba(234,88,12,0.12);
+                                    height:100%;">
+
+                           
+
+                            <div class="d-flex h-100">
+
+                                {# Left — Image #}
+                                <div style="width:110px; min-width:110px; flex-shrink:0;">
+                                    {% if event.imageUrl %}
+                                        <img src="{{ asset(event.imageUrl) }}"
+                                            style="width:110px; height:100%; min-height:180px; object-fit:cover; border-radius:14px 0 0 14px;"
+                                            alt="{{ event.titre }}">
+                                    {% else %}
+                                        <div class="d-flex align-items-center justify-content-center"
+                                            style="width:110px; min-height:180px; height:100%;
+                                                    background:linear-gradient(135deg, #ffedd5, #fdba74);
+                                                    border-radius:14px 0 0 14px;">
+                                            <i class="fas fa-calendar fa-2x" style="color:#ea580c; opacity:0.5;"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {# Right — Content #}
+                                <div class="d-flex flex-column justify-content-between p-3 flex-grow-1">
+                                    <div>
+                                        {% if event.typeEvent in typeLabels|keys %}
+                                            {% set label = typeLabels[event.typeEvent] %}
+                                            <span class="badge rounded-pill mb-2"
+                                                style="background:{{ label[2] }}; color:{{ label[1] }}; font-size:0.7rem;">
+                                                {{ label[0] }}
+                                            </span>
+                                        {% endif %}
+
+                                        <h6 class="fw-bold mb-1" style="color:#7c2d12; font-size:0.9rem;">
+                                            {{ event.titre }}
+                                        </h6>
+
+                                        <p class="mb-2" style="font-size:0.75rem; color:#9a3412; line-height:1.4;">
+                                            {{ event.description|slice(0, 55) }}...
+                                        </p>
+
+                                        <div style="font-size:0.72rem; color:#ea580c;" class="mb-2">
+                                            <i class="far fa-calendar-alt me-1"></i>
+                                            {{ event.dateEvent ? event.dateEvent|date('d M Y') : '—' }}
+                                            {% if event.lieu %}
+                                            <br>
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ event.lieu|slice(0, 25) }}{% if event.lieu|length > 25 %}...{% endif %}
+                                            {% endif %}
+                                        </div>
+
+                                        {# AI Reason #}
+                                        <div class="p-2 rounded-2 mb-2"
+                                            style="background:rgba(234,88,12,0.1); border-left: 2px solid #ea580c;">
+                                            <small style="color:#9a3412; font-size:0.68rem; line-height:1.3;">
+                                                <i class="ti ti-info-circle me-1"></i>
+                                                {{ reason|slice(0, 80) }}{% if reason|length > 80 %}...{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    {# Buttons #}
+                                    <div class="d-flex gap-1">
+                                        {% set alreadyJoined = event.id in joinedEventIds %}
+                                        <button
+                                            class="btn btn-sm flex-grow-1 btn-participate {{ alreadyJoined ? 'btn-success' : '' }}"
+                                            data-event-id="{{ event.id }}"
+                                            style="{% if not alreadyJoined %}background:#ea580c; color:white; border:none;{% endif %} font-size:0.75rem;"
+                                            {{ alreadyJoined ? 'disabled' : '' }}>
+                                            <i class="ti ti-{{ alreadyJoined ? 'check' : 'calendar-plus' }} me-1"></i>
+                                            {{ alreadyJoined ? 'Inscrit' : 'Participer' }}
+                                        </button>
+                                        <a href="{{ path('emp_event_show', {'id': event.id}) }}"
+                                        class="btn btn-sm"
+                                        style="background:rgba(234,88,12,0.15); color:#ea580c; border:none; font-size:0.75rem;">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="participate-msg px-3 pb-2" style="font-size:0.75rem;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                </div>
+            </div>
+
+            {# Dot indicators #}
+            <div class="d-flex justify-content-center gap-1 mt-3">
+                {% for rec in recommendations %}
+                <div class="rounded-circle"
+                    style="width:8px;height:8px;background:{% if loop.first %}#7c3aed{% else %}#e2d9f3{% endif %};
+                            transition:background 0.3s;"
+                    id="dot-{{ loop.index0 }}">
+                </div>
+                {% endfor %}
+            </div>
+
+            <hr class="my-4">
+        </div>
+    {% endif %}
     <div class="search-container mb-4">
         <form method="GET" action="{{ path('emp_event_list') }}" id="filterForm" class="row g-3 align-items-center">
             <div class="col-md-8">
@@ -63,6 +219,7 @@
         </form>
     </div>
 
+
     {% if events is empty %}
         <div class="text-center py-5 bg-white rounded-3 shadow-sm">
             <i class="fas fa-calendar-times fa-3x text-light mb-3"></i>
@@ -81,7 +238,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="card event-card shadow-sm h-100 overflow-hidden">
                         {% if event.imageUrl %}
-                            <img src="{{ asset('images/events/' ~ event.imageUrl) }}" 
+                            <img src="{{ asset(event.imageUrl) }}" 
                                  class="card-img-top" 
                                  style="height:160px; object-fit:cover;" 
                                  alt="{{ event.titre }}">
@@ -123,15 +280,47 @@
                                 <span class="badge bg-success-soft text-success w-100 py-2">
                                     <i class="fas fa-check-circle me-1"></i> Planifié
                                 </span>
+                                {% set alreadyJoined = event.id in joinedEventIds %}
+                                <button 
+                                    class="btn btn-sm w-100 btn-participate {{ alreadyJoined ? 'btn-success' : 'btn-primary' }}"
+                                    data-event-id="{{ event.id }}"
+                                    {{ alreadyJoined ? 'disabled' : '' }}>
+                                    <i class="ti ti-{{ alreadyJoined ? 'check' : 'calendar-plus' }} me-1"></i>
+                                    {{ alreadyJoined ? 'Inscrit' : 'Participer' }}
+                                </button>
+                                <a href="{{ path('emp_event_show', {'id': event.id}) }}"
+                                class="btn btn-sm btn-outline-secondary w-100">
+                                    <i class="ti ti-eye me-1"></i> Détails
+                                </a>
                             {% elseif event.statut == 'terminer' %}
                                 <span class="badge bg-light text-muted w-100 py-2">
                                     <i class="fas fa-history me-1"></i> Terminé
                                 </span>
+                                {% set alreadyFeedback = event.id in feedbackEventIds %}
+                                {% if alreadyFeedback %}
+                                    <span class="btn btn-sm btn-warning w-100 mt-1 disabled" style="opacity:1; cursor:default; pointer-events:none;">
+                                        <i class="ti ti-star me-1"></i> Merci pour votre avis !
+                                    </span>
+                                {% else %}
+                                    <a href="{{ path('feedback_new', {'id': event.id}) }}"
+                                    class="btn btn-sm btn-outline-warning w-100 mt-1">
+                                        <i class="ti ti-star me-1"></i> Donner un avis
+                                    </a>
+                                {% endif %}
+
+                                <a href="{{ path('emp_event_show', {'id': event.id}) }}"
+                                class="btn btn-sm btn-outline-secondary w-100 mt-1">
+                                    <i class="ti ti-eye me-1"></i> Détails
+                                </a>
                             {% endif %}
                         </div>
+                        <div class="participate-msg mt-2"></div>
                     </div>
                 </div>
             {% endfor %}
+        </div>
+        <div class="d-flex justify-content-center mt-4">
+            {{ knp_pagination_render(events) }}
         </div>
     {% endif %}
 
@@ -155,5 +344,60 @@
                 document.getElementById('filterForm').submit();
             }, 400);
         });
+
+
+        document.querySelectorAll('.btn-participate').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const eventId = this.dataset.eventId;
+            const msgBox  = this.closest('.card').querySelector('.participate-msg');
+            const button  = this;
+
+            fetch(`/api/participation/join/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            })
+            .then(r => r.json())
+            .then(data => {
+                msgBox.innerHTML = `
+                    <div class="alert alert-${data.success ? 'success' : 'warning'} py-1 px-2 small mb-0">
+                        ${data.message}
+                    </div>`;
+                if (data.success) {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="ti ti-check me-1"></i> Inscrit';
+                    button.classList.replace('btn-primary', 'btn-success');
+
+                    setTimeout(() => location.reload(), 1500);
+
+                }
+            })
+            .catch(() => {
+                msgBox.innerHTML = `<div class="alert alert-danger py-1 px-2 small mb-0">Une erreur est survenue.</div>`;
+            });
+        });
+    });
+    
+    const carousel  = document.getElementById('rec-carousel');
+    const cardWidth = 316; 
+    const dots      = document.querySelectorAll('[id^="dot-"]');
+    let current     = 0;
+    const total     = {{ recommendations|length }};
+
+    function updateDots() {
+        dots.forEach((d, i) => {
+            d.style.background = i === current ? '#7c3aed' : '#e2d9f3';
+        });
+    }
+
+    function scrollRec(dir) {
+        current = Math.max(0, Math.min(total - 1, current + dir));
+        carousel.scrollTo({ left: current * cardWidth, behavior: 'smooth' });
+        updateDots();
+    }
+
+    carousel.addEventListener('scroll', function() {
+        current = Math.round(carousel.scrollLeft / cardWidth);
+        updateDots();
+    });
     </script>
 {% endblock %}

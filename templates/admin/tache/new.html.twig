@@ -1,13 +1,11 @@
-{% extends 'admin/base_admin.html.twig' %}
+{% extends 'base.html.twig' %}
 
 {% block title %}New Tache{% endblock %}
 
-{% block admin_content %}
+{% block body %}
     <h1>Create new Tache</h1>
 
     {{ include('admin/tache/_form.html.twig') }}
 
     <a href="{{ path('app_tache_index') }}">back to list</a>
 {% endblock %}
-
-
