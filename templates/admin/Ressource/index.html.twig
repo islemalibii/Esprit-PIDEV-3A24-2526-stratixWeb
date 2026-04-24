@@ -1,20 +1,20 @@
 {# templates/admin/ressource/index.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion des Ressources {% endblock %}
+{% block title %}Stratix | Gestion & Recommandation IA{% endblock %}
 
 {% block body %}
 <main id="content" class="content py-4">
     <div class="container mt-4">
         
-        {# --- BANDEAU DE CONSEIL IA --- #}
+        {# --- BANDEAU DE CONSEIL IA (DYNAMIQUE) --- #}
         <div class="row mb-4">
             <div class="col-md-12">
-                <div class="alert alert-info d-flex align-items-center shadow-sm border-0" style="background-color: #e3f2fd; border-left: 5px solid #3498db !important;">
-                    <i class="ti ti-robot fs-3 me-3 text-primary"></i>
+                <div class="alert alert-info d-flex align-items-center shadow-sm border-0" style="background-color: #eef2ff; border-left: 5px solid #6366f1 !important;">
+                    <i class="ti ti-sparkles fs-3 me-3" style="color: #6366f1;"></i>
                     <div>
                         <strong>Assistant Stratix AI :</strong> 
-                        Le système surveille actuellement votre boîte mail. Vous pouvez aussi importer manuellement un catalogue via le bouton <strong>"Analyser"</strong>.
+                        L'analyse prédictive est prête. Consultez l'onglet <strong>"Optimisation de Production"</strong> pour voir quels produits assembler aujourd'hui.
                     </div>
                 </div>
             </div>
@@ -24,53 +24,53 @@
         <ul class="nav nav-pills mb-4 shadow-sm p-2 bg-white rounded" id="resourceTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active fw-bold" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-content" type="button" role="tab">
-                    <i class="ti ti-box me-1"></i> Inventaire des Ressources
+                    <i class="ti ti-box me-1"></i> Inventaire
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="production-tab" data-bs-toggle="tab" data-bs-target="#production-content" type="button" role="tab" style="color: #6366f1;">
+                    <i class="ti ti-cpu me-1"></i> Optimisation de Production (IA)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="imports-tab" data-bs-toggle="tab" data-bs-target="#imports-content" type="button" role="tab">
-                    <i class="ti ti-mail-download me-1"></i> Catalogues Reçus (Email)
+                    <i class="ti ti-mail-download me-1"></i> Catalogues Emails
                 </button>
             </li>
         </ul>
 
         <div class="tab-content" id="resourceTabContent">
             
-            {# --- ONGLET 1 : GESTION DES RESSOURCES --- #}
+            {# --- ONGLET 1 : INVENTAIRE --- #}
             <div class="tab-pane fade show active" id="list-content" role="tabpanel">
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        
                         <form method="GET" action="{{ path('ressource_index') }}" class="row g-3 align-items-center mb-4">
-                            <div class="col-auto">
-                                <label class="fw-bold">Rechercher :</label>
-                            </div>
                             <div class="col-md-4">
-                                <input type="text" name="q" value="{{ searchTerm }}" class="form-control" placeholder="Nom, type ou fournisseur...">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="ti ti-search"></i></span>
+                                    <input type="text" name="q" value="{{ searchTerm }}" class="form-control border-start-0" placeholder="Rechercher une ressource...">
+                                </div>
                             </div>
                             <div class="col-auto">
-                                <button type="submit" class="btn btn-primary" style="background-color: #3498db; border: none;">Rechercher</button>
-                                <a href="{{ path('ressource_index') }}" class="btn btn-secondary" style="background-color: #95a5a6; border: none;">Effacer</a>
+                                <button type="submit" class="btn btn-primary px-4">Filtrer</button>
                             </div>
-                            
                             <div class="col text-end">
-                                <a href="{{ path('ressource_form') }}" class="btn btn-success fw-bold px-4" style="background-color: #27ae60; border: none;">
-                                    ➕ Nouvelle Ressource
+                                <a href="{{ path('ressource_form') }}" class="btn btn-success fw-bold shadow-sm">
+                                    <i class="ti ti-plus"></i> Nouvelle Ressource
                                 </a>
                             </div>
                         </form>
-
-                        <h2 class="mb-4" style="color: #2c3e50; font-weight: bold;">Gestion des Ressources</h2>
 
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Nom</th>
+                                        <th>Nom du composant</th>
                                         <th>Type</th>
-                                        <th>Quantité</th>
-                                        <th>Fournisseur Actuel</th>
-                                        <th class="text-center" style="color: #6366f1;"><i class="ti ti-cpu"></i> Intelligence</th>
+                                        <th>Stock</th>
+                                        <th>Fournisseur</th>
+                                        <th class="text-center">Expertise IA</th>
                                         <th class="text-center">Actions</th>
                                     </tr>
                                 </thead>
@@ -78,69 +78,89 @@
                                     {% for ressource in ressources %}
                                         <tr>
                                             <td class="fw-bold">{{ ressource.nom }}</td>
-                                            <td><span class="badge bg-info text-dark">{{ ressource.typeRessource }}</span></td>
-                                            <td>{{ ressource.quantite }}</td>
+                                            <td><span class="badge bg-light text-dark border">{{ ressource.typeRessource }}</span></td>
+                                            <td>
+                                                <span class="fw-bold {{ ressource.quantite < 10 ? 'text-danger' : 'text-dark' }}">
+                                                    {{ ressource.quantite }}
+                                                </span>
+                                            </td>
                                             <td>{{ ressource.fournisseur }}</td>
-                                            
-                                            {# MODIFICATION ICI : Route corrigée vers app_ressource_analyser #}
                                             <td class="text-center">
-                                                <a href="{{ path('app_ressource_analyser', {'id': ressource.id}) }}" 
-                                                   class="btn btn-sm btn-primary shadow-sm px-3" 
-                                                   style="background-color: #6366f1; border: none; border-radius: 20px;">
-                                                    <i class="ti ti-bolt"></i> Analyser IA
+                                                <a href="{{ path('app_ressource_analyser', {'id': ressource.id}) }}" class="btn btn-sm btn-ia-action">
+                                                     <i class="ti ti-analyze"></i> Analyser
                                                 </a>
                                             </td>
-
                                             <td class="text-center">
-                                                <a href="{{ path('ressource_form', {'id': ressource.id}) }}" class="btn btn-sm btn-outline-warning">Modifier</a>
-                                                <form method="post" action="{{ path('ressource_delete', {'id': ressource.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer cette ressource ?');">
+                                                <a href="{{ path('ressource_form', {'id': ressource.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-edit"></i></a>
+                                                <form method="post" action="{{ path('ressource_delete', {'id': ressource.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer ?');">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ressource.id) }}">
-                                                    <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                                    <button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
                                                 </form>
                                             </td>
-                                        </tr>
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted py-4">Aucune ressource trouvée.</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <div class="row text-center mt-4 p-3 border-top" style="background-color: #f8f9fa; border-radius: 0 0 8px 8px;">
-                            <div class="col-md-4 fw-bold" style="color: #2c3e50;">Total ressources : {{ ressources|length }}</div>
-                            <div class="col-md-4 fw-bold" style="color: #27ae60;">Quantité totale : {{ quantiteTotale|default(0) }}</div>
-                            <div class="col-md-4 fw-bold" style="color: #3498db;">Types : {{ nombreTypes|default(0) }}</div>
+            {# --- ONGLET 2 : OPTIMISATION DE PRODUCTION (LE NOUVEAU MODÈLE) --- #}
+            <div class="tab-pane fade" id="production-content" role="tabpanel">
+                <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 15px;">
+                    <div class="card-header bg-dark py-3">
+                        <h5 class="text-white mb-0"><i class="ti ti-binary me-2"></i> Moteur de Suggestion de Création</h5>
+                    </div>
+                    <div class="card-body p-4 bg-light">
+                        {# Simulation de la suggestion IA #}
+                        <div class="row align-items-center bg-white p-4 rounded shadow-sm border-start border-primary border-5">
+                            <div class="col-md-8">
+                                <h3 class="fw-bold text-dark">Suggestion : Assembler "Kit Réseau Entreprise v2"</h3>
+                                <p class="text-muted">Basé sur vos stocks de <strong>Routeurs Cisco</strong> et <strong>Câbles Cat6</strong> en surplus.</p>
+                                <div class="d-flex gap-4">
+                                    <div>
+                                        <small class="text-uppercase text-muted d-block">Quantité possible</small>
+                                        <span class="fs-4 fw-bold">12 Unités</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-uppercase text-muted d-block">Rentabilité</small>
+                                        <span class="fs-4 fw-bold text-success">+ 450.00 DT</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-lg btn-primary shadow">Lancer la création</button>
+                            </div>
+                        </div>
+                        
+                        {# Visualisation des ressources consommées #}
+                        <div class="mt-4">
+                            <h6>Composants requis pour cette suggestion :</h6>
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar bg-primary" style="width: 70%"></div>
+                                <div class="progress-bar bg-info" style="width: 30%"></div>
+                            </div>
+                            <small class="text-muted">70% de Routeurs / 30% de Connectique</small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {# --- ONGLET 2 : HISTORIQUE DES IMPORTS --- #}
+            {# --- ONGLET 3 : CATALOGUES EMAIL --- #}
             <div class="tab-pane fade" id="imports-content" role="tabpanel">
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <h4 class="mb-4" style="color: #2c3e50; font-weight: bold;">
-                            <i class="ti ti-file-analytics text-primary"></i> Catalogues Récupérés par Email
-                        </h4>
-                        
-                        <div class="alert alert-light border mb-4">
-                            <small class="text-muted">
-                                <i class="ti ti-info-circle"></i> Ces fichiers ont été extraits automatiquement de votre boîte mail. 
-                                Vous pouvez les télécharger pour vérification.
-                            </small>
-                        </div>
-
+                        <h4 class="mb-4 fw-bold">Catalogues Extraits</h4>
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Date de réception</th>
-                                        <th>Source</th>
-                                        <th>Nom du fichier</th>
+                                        <th>Date</th>
+                                        <th>Expéditeur</th>
+                                        <th>Fichier</th>
                                         <th class="text-center">Statut</th>
-                                        <th class="text-center">Action</th>
+                                        <th class="text-center">Vérification</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -148,27 +168,16 @@
                                         {% for import in imports %}
                                             <tr>
                                                 <td>{{ import.createdAt|date('d/m/Y H:i') }}</td>
-                                                <td><span class="badge bg-light text-dark border">{{ import.senderEmail }}</span></td>
-                                                <td><i class="ti ti-file-type-csv text-success"></i> {{ import.fileName }}</td>
+                                                <td><code>{{ import.senderEmail }}</code></td>
+                                                <td>{{ import.fileName }}</td>
+                                                <td class="text-center"><span class="badge bg-success">Synchronisé</span></td>
                                                 <td class="text-center">
-                                                    <span class="badge bg-success-soft text-success">
-                                                        <i class="ti ti-check"></i> Synchronisé
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <a href="{{ asset('uploads/catalogues/' ~ import.fileName) }}" class="btn btn-sm btn-light border">
-                                                        <i class="ti ti-download"></i>
-                                                    </a>
+                                                    <a href="{{ asset('uploads/catalogues/' ~ import.fileName) }}" class="btn btn-sm btn-light border"><i class="ti ti-download"></i></a>
                                                 </td>
                                             </tr>
                                         {% endfor %}
                                     {% else %}
-                                        <tr>
-                                            <td colspan="5" class="text-center py-5">
-                                                <i class="ti ti-mail-opened fs-1 text-muted d-block mb-2"></i>
-                                                <span class="text-muted">Aucun catalogue n'a été reçu par email récemment.</span>
-                                            </td>
-                                        </tr>
+                                        <tr><td colspan="5" class="text-center py-5 text-muted">Aucune donnée email reçue.</td></tr>
                                     {% endif %}
                                 </tbody>
                             </table>
@@ -182,10 +191,14 @@
 </main>
 
 <style>
-    .nav-pills .nav-link { color: #64748b; border-radius: 8px; transition: 0.3s; }
-    .nav-pills .nav-link.active { background-color: #3498db !important; color: white; }
-    .bg-success-soft { background-color: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 12px; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .table-hover tbody tr:hover { background-color: #f8fafc; }
+    :root {
+        --primary-color: #6366f1;
+    }
+    .nav-pills .nav-link { color: #64748b; border-radius: 8px; padding: 10px 20px; transition: all 0.3s ease; }
+    .nav-pills .nav-link.active { background-color: var(--primary-color) !important; color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+    .btn-ia-action { background-color: #f5f3ff; color: #6366f1; border: 1px solid #ddd6fe; border-radius: 20px; font-weight: 600; transition: 0.3s; }
+    .btn-ia-action:hover { background-color: #6366f1; color: white; transform: scale(1.05); }
+    .card { border-radius: 12px; }
+    .table-hover tbody tr:hover { background-color: #fcfdff; }
 </style>
 {% endblock %}

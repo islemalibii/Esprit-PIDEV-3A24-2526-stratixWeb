@@ -26,3 +26,6 @@ parameters:
     mail_user: '%env(STRATIX_MAIL_USER)%'
     mail_pass: '%env(STRATIX_MAIL_PASS)%'
     catalogues_directory: '%kernel.project_dir%/public/uploads/catalogues'
+
+    parameters:
+    gemini_api_key: '%env(GEMINI_API_KEY)%'

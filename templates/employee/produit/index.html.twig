@@ -1,138 +1,156 @@
-{# templates/front/produit/index.html.twig #}
 {% extends 'employee/base_employee.html.twig' %}
 
 {% block title %}Stratix - Catalogue Produits{% endblock %}
 
-<<<<<<< HEAD:templates/front/produit/index.html.twig
-
-{% block admin_content %}
-=======
-{# TRÈS IMPORTANT : On utilise admin_content car c'est ce bloc que tu as défini dans base_admin #}
 {% block employee_content %}
->>>>>>> 1e7c57a8dd68d0ce87103c96bffacb00b563325f:templates/employee/produit/index.html.twig
 <style>
-    
-    .header-gradient {
-        background: linear-gradient(to right, #667eea, #764ba2);
-        padding: 40px 20px;
+    .content-wrapper-fix {
+        padding-top: 20px;
+    }
+
+    .header-produit {
+        background: linear-gradient(to right, #2193b0, #6dd5ed);
+        padding: 25px 20px;
         color: white;
         text-align: center;
-        border-radius: 0 0 15px 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    .search-bar {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         margin-bottom: 25px;
     }
-    .btn-stratix-primary { background-color: #667eea; color: white; border: none; }
-    .btn-stratix-secondary { background-color: #764ba2; color: white; border: none; }
-    .btn-stratix-admin { background-color: #e74c3c; color: white; border: none; }
     
-    .stats-footer {
-        background-color: #ecf0f1;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 30px;
+    .card-produit {
+        border: none;
+        border-radius: 12px;
+        transition: transform 0.2s;
+        background-color: white;
+    }
+    
+    .card-produit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     }
 
-    .card-product {
-        border-radius: 10px;
-        transition: transform 0.2s;
-        border: none !important;
-        background: white;
+    /* Couleur personnalisée pour correspondre au dégradé bleu */
+    .btn-search { background-color: #2193b0; color: white; border: none; }
+    .btn-search:hover { background-color: #1a7a94; color: white; }
+    
+    .stats-bar-produit {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        margin-top: 20px;
+        border-radius: 12px;
     }
-    .card-product:hover {
-        transform: scale(1.01);
+
+    .img-placeholder {
+        width: 80px;
+        height: 80px;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .search-container {
+        background-color: white;
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
     }
 </style>
 
-<div class="container-fluid pb-5">
-    <div class="header-gradient shadow">
-        <h1 class="display-5 fw-bold text-white">CATALOGUE PRODUITS</h1>
-        <p class="lead opacity-75">Découvrez tous nos produits</p>
+<div class="container-fluid content-wrapper-fix">
+    {# ENTÊTE #}
+    <div class="header-produit">
+        <h1 class="h3 fw-bold mb-1"><i class="ti ti-shopping-bag me-2"></i>CATALOGUE PRODUITS</h1>
+        <p class="mb-0 opacity-75 small">Consultation des articles en stock - Espace Employé</p>
     </div>
 
-    <div class="search-bar shadow-sm">
-        <form method="GET" action="{{ path('front_produit_index') }}" class="row g-3 align-items-center">
-            <div class="col-auto d-none d-lg-block">
-                <span class="fw-bold">🔍 Rechercher:</span>
+    {# BARRE DE RECHERCHE #}
+    <div class="search-container shadow-sm mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-8">
+                {# Le formulaire envoie 'q' au contrôleur #}
+                <form method="GET" action="{{ path('front_produit_index') }}" class="d-flex gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0 text-muted"><i class="ti ti-search"></i></span>
+                        <input type="text" name="q" value="{{ searchTerm }}" 
+                               class="form-control border-0 bg-light" placeholder="Nom du produit...">
+                    </div>
+                    <button type="submit" class="btn btn-search px-4 rounded-3">Rechercher</button>
+                </form>
             </div>
-            <div class="col-lg-4">
-                <input type="text" name="q" value="{{ searchTerm|default('') }}" 
-                       class="form-control" placeholder="Nom du produit...">
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-stratix-primary px-4">Rechercher</button>
-                <a href="{{ path('front_produit_index') }}" class="btn btn-secondary">Effacer</a>
-            </div>
-            
-            <div class="col text-end d-flex gap-2 justify-content-end">
-                <a href="{{ path('front_ressource_index') }}" class="btn btn-stratix-secondary">
-                    Voir les Ressources
-                </a>
-                <a href="{{ path('produit_index') }}" class="btn btn-stratix-admin">
-                    🔙 Administration
+            <div class="col-md-4 text-end">
+                <a href="{{ path('front_produit_index') }}" class="btn btn-outline-secondary rounded-3 border-0">
+                    <i class="ti ti-refresh me-1"></i> Réinitialiser
                 </a>
             </div>
-        </form>
+        </div>
     </div>
 
-    <div class="row row-cols-1 g-3">
+    {# LISTE DES PRODUITS #}
+    <div class="row g-3 mb-4">
         {% for produit in produits %}
-            <div class="col">
-                <div class="card card-product shadow-sm">
-                    <div class="row g-0 align-items-center">
-                        <div class="col-md-2 p-3 text-center">
+            <div class="col-12">
+                <div class="card card-produit shadow-sm border p-3">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
                             {% if produit.imagePath %}
                                 <img src="{{ asset('uploads/produits/' ~ produit.imagePath) }}" 
-                                     class="img-fluid rounded" style="max-height: 120px; border: 1px solid #ddd;">
+                                     alt="{{ produit.nom }}" class="rounded shadow-sm" 
+                                     style="width: 80px; height: 80px; object-fit: cover;">
                             {% else %}
-                                <img src="{{ asset('images/default-product.png') }}" 
-                                     class="img-fluid rounded" style="max-height: 120px; opacity: 0.5;">
+                                <div class="img-placeholder text-muted">
+                                    <i class="ti ti-photo fs-3"></i>
+                                </div>
                             {% endif %}
                         </div>
-                        <div class="col-md-7">
-                            <div class="card-body">
-                                <h4 class="card-title fw-bold" style="color: #2c3e50;">{{ produit.nom }}</h4>
-                                <p class="text-muted small mb-2">{{ produit.description }}</p>
-                                <span class="badge bg-light text-primary border mb-0">Catégorie: {{ produit.categorie }}</span>
+                        <div class="col">
+                            <h5 class="fw-bold mb-1" style="color: #2c3e50;">{{ produit.nom }}</h5>
+                            <div class="d-flex gap-3 small text-muted">
+                                <span><i class="ti ti-currency-dollar text-info me-1"></i><strong>{{ produit.prix }} DT</strong></span>
+                                <span><i class="ti ti-calendar me-1"></i> {{ produit.dateCreation|date('d/m/Y') }}</span>
                             </div>
                         </div>
-                        <div class="col-md-3 p-3 text-center border-start">
-                            <h3 class="text-success fw-bold">{{ produit.prix }} DT</h3>
-                            <div class="mb-2">Stock: {{ produit.stockActuel }}</div>
-                            
+                        <div class="col-md-3 text-center border-start">
+                            <span class="text-muted small fw-bold text-uppercase d-block mb-1">Stock Actuel</span>
+                            <h3 class="fw-bold mb-0 {% if produit.stockActuel <= 0 %}text-danger{% elseif produit.stockActuel <= 5 %}text-warning{% else %}text-success{% endif %}">
+                                {{ produit.stockActuel }}
+                            </h3>
                             {% if produit.stockActuel <= 0 %}
-                                <span class="badge w-100 py-2" style="background-color: #ffebee; color: #c62828;">⚠ RUPTURE</span>
-                            {% elseif produit.stockActuel <= produit.stockMin %}
-                                <span class="badge w-100 py-2" style="background-color: #fff3e0; color: #ef6c00;">⚠ Stock faible</span>
+                                <span class="badge bg-danger-subtle text-danger rounded-pill px-3 mt-1 small">Rupture</span>
                             {% else %}
-                                <span class="badge w-100 py-2" style="background-color: #e8f5e8; color: #2e7d32;">✓ En stock</span>
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 mt-1 small">En stock</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         {% else %}
-            <div class="alert alert-light text-center py-5 border">
-                Aucun produit trouvé pour cette recherche.
+            <div class="col-12 text-center py-5 bg-white rounded-4 border shadow-sm">
+                <i class="ti ti-search fs-1 text-muted"></i>
+                <p class="mt-3 text-muted fw-bold">Aucun produit ne correspond à "{{ searchTerm }}".</p>
+                <a href="{{ path('front_produit_index') }}" class="btn btn-sm btn-link text-info">Afficher tout le catalogue</a>
             </div>
         {% endfor %}
     </div>
 
-    <div class="stats-footer d-flex justify-content-around align-items-center shadow-sm">
-        <div class="fw-bold fs-5" style="color: #2c3e50;">
-            Total produits: {{ stats.total|default(0) }}
-        </div>
-        <div class="fw-bold fs-5 text-success">
-            Produits disponibles: {{ stats.disponibles|default(0) }}
-        </div>
-        <div class="text-muted fst-italic d-none d-md-block">
-            Mode Consultation Uniquement
+    {# BARRE DE STATISTIQUES #}
+    <div class="stats-bar-produit shadow-sm mb-5">
+        <div class="row align-items-center text-center">
+            <div class="col-md-4 border-end">
+                <div class="small text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Articles Total</div>
+                <div class="fw-bold h5 mb-0 text-dark">{{ stats.total }}</div>
+            </div>
+            <div class="col-md-4 border-end">
+                <div class="small text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Disponibles</div>
+                <div class="fw-bold h5 mb-0 text-success">{{ stats.disponibles }}</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Mode</div>
+                <div class="text-secondary small fw-medium">Consultation</div>
+            </div>
         </div>
     </div>
 </div>

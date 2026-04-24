@@ -13,19 +13,23 @@ class FrontProduitController extends AbstractController
     #[Route('/boutique', name: 'front_produit_index')]
     public function index(ProduitRepository $repository, Request $request): Response
     {
-        // Remplacement de searchField.getText()
+        // Récupération du terme de recherche
         $searchTerm = $request->query->get('q', '');
 
+        // Utilisation du tri par défaut (Nom croissant)
         if ($searchTerm) {
             $produits = $repository->findBySearch($searchTerm);
         } else {
-            $produits = $repository->findAll();
+            // On trie par nom pour que la liste soit plus lisible
+            $produits = $repository->findBy([], ['nom' => 'ASC']);
         }
 
-        // Remplacement de mettreAJourStatistiques()
+        // Statistiques
         $total = count($produits);
         $disponibles = 0;
+        
         foreach ($produits as $p) {
+            // Un produit est disponible si son stock est > 0
             if ($p->getStockActuel() > 0) {
                 $disponibles++;
             }
