@@ -224,4 +224,19 @@ class RessourceController extends AbstractController
             'base64' => base64_encode($binary)
         ]);
     }
+
+ #[Route('/ressource/ai-assistant', name: 'app_ressource_ai_assistant', methods: ['GET'])]
+public function stratixAIAssistant(RessourceRepository $repo, GeminiService $geminiIA): Response 
+{
+    // On récupère toutes les ressources réelles de ta base de données
+    $ressources = $repo->findAll();
+    
+    // On demande à l'IA d'analyser ces ressources spécifiques
+    $suggestions = $geminiIA->suggererProduits($ressources);
+
+    return $this->render('admin/Ressource/ai_assistant.html.twig', [
+        'ressources' => $ressources,
+        'suggestions' => $suggestions
+    ]);
+}
 }
