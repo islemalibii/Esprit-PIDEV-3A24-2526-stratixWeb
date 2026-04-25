@@ -20,3 +20,7 @@
 ###< symfony/asset-mapper ###
 
 node_modules/
+
+###> phpstan/phpstan ###
+phpstan.neon
+###< phpstan/phpstan ###

@@ -26,8 +26,8 @@ class EventController extends AbstractController
     #[Route('/responsable/evenement', name: 'resp_event_index')]
     public function responsableIndex(Request $request, EvenementRepository $repo, PaginatorInterface $paginator): Response
     {
-        $search = $request->query->get('search');
-        $type_event = $request->query->get('type_event');
+        $search = (string) $request->query->get('search', '');
+        $type_event = (string) $request->query->get('type_event', '');
 
         if ($search) {
             $events = $repo->searchByTitle($search);
@@ -142,7 +142,8 @@ class EventController extends AbstractController
                 'message' => 'Aucun avis disponible pour générer un résumé.'
             ]);
         }
-        $summary = $summaryService->generateSummary($feedbacks, $evenement->getTitre());
+        $eventTitle = (string) ($evenement->getTitre() ?? 'Événement sans titre');
+        $summary = $summaryService->generateSummary($feedbacks, $eventTitle);
         if (!$summary) {
             return $this->json([
                 'success' => false,
@@ -160,8 +161,8 @@ class EventController extends AbstractController
     #[Route('/employee/events', name: 'emp_event_list')]
     public function employeeIndex(Request $request, EvenementRepository $repo, ParticipationRepository $participationRepo, EventFeedbackRepository $feedbackRepo, PaginatorInterface $paginator, RecommendationService $recommendationService): Response
     {
-        $type   = $request->query->get('type');
-        $search = $request->query->get('search');
+        $type   = (string) $request->query->get('type', '');
+        $search = (string) $request->query->get('search', '');
 
         if ($search) {
             $events = $repo->searchPlanifierByTitle($search);
@@ -176,7 +177,8 @@ class EventController extends AbstractController
             9
         );
 
-        $userEmail = $this->getUser()?->getUserIdentifier();
+        $user = $this->getUser();
+        $userEmail = $user ? (string) $user->getUserIdentifier() : '';
 
         $joinedEventIds = $participationRepo->findUserEventIds($userEmail);
 

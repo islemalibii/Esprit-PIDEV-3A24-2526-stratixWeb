@@ -86,7 +86,7 @@ class EventFeedback
         return $this;
     }
 
-    public function getDateFeedback(): ?\DateTime
+    public function getDateFeedback(): ?\DateTimeInterface
     {
         return $this->date_feedback;
     }

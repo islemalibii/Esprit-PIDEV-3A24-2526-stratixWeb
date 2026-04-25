@@ -4,15 +4,17 @@ namespace App\Service;
 
 class MeetingSummaryService
 {
-    public function __construct(private string $apiKey) {}  // 👈 $apiKey
+    public function __construct(private string $apiKey) {}  
 
+    /** @param array<int, \App\Entity\EventFeedback> $feedbacks */
     public function generateSummary(array $feedbacks, string $eventTitle): ?string
     {
         if (empty($feedbacks)) return null;
 
         $feedbackList = '';
         foreach ($feedbacks as $feedback) {
-            $stars       = str_repeat('★', $feedback->getRating()) . str_repeat('☆', 5 - $feedback->getRating());
+            $rating = $feedback->getRating() ?? 0; 
+            $stars  = str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
             $commentaire = $feedback->getCommentaire() ?? 'Aucun commentaire';
             $feedbackList .= "- Note: {$stars} ({$feedback->getRating()}/5) | Commentaire: {$commentaire}\n";
         }
@@ -48,7 +50,7 @@ class MeetingSummaryService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
             CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => 0,
             CURLOPT_SSL_VERIFYHOST => false, 
             CURLOPT_POSTFIELDS     => json_encode([
                 'contents' => [
@@ -59,7 +61,7 @@ class MeetingSummaryService
 
         $result = curl_exec($ch);
 
-        if (!$result) {
+        if (!is_string($result)) {
             dump(curl_error($ch));
             curl_close($ch);
             return null;

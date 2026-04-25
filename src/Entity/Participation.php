@@ -94,7 +94,7 @@ class Participation
         return $this;
     }
 
-    public function getParticipationDate(): ?\DateTime
+    public function getParticipationDate(): ?\DateTimeInterface
     {
         return $this->participation_date;
     }

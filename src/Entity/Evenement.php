@@ -13,7 +13,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
 #[ORM\Table(name: 'evenement')]
-#[UniqueEntity(fields: ['titre'], message: "Un événement avec ce titre existe déjà.")]  // 👈 here on the class
+#[UniqueEntity(fields: ['titre'], message: "Un événement avec ce titre existe déjà.")] 
 class Evenement
 {
     #[ORM\Id]
@@ -65,7 +65,7 @@ class Evenement
     )]
     private ?\DateTimeInterface $date_event = null;
 
-    public function getDateEvent(): ?\DateTime
+    public function getDateEvent(): ?\DateTimeInterface
     {
         return $this->date_event;
     }
@@ -199,6 +199,9 @@ class Evenement
         return $this;
     }
 
+    /**
+     * @var Collection<int, EventFeedback>
+     */
     #[ORM\OneToMany(targetEntity: EventFeedback::class, mappedBy: 'evenement')]
     private Collection $eventFeedbacks;
 
@@ -227,9 +230,6 @@ class Evenement
      */
     public function getEventFeedbacks(): Collection
     {
-        if (!$this->eventFeedbacks instanceof Collection) {
-            $this->eventFeedbacks = new ArrayCollection();
-        }
         return $this->eventFeedbacks;
     }
 

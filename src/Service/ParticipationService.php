@@ -17,6 +17,9 @@ class ParticipationService
         private ParticipationRepository $participationRepository
     ) {}
 
+    /** *
+     * @return array{success: bool, message: string} 
+     */
     public function participate(Evenement $evenement, string $userEmail): array
     {
         $existing = $this->participationRepository->findOneBy([
@@ -29,12 +32,20 @@ class ParticipationService
         }
 
         $participation = new Participation();
-        $participation->setEventId($evenement->getId());
+        $eventId = $evenement->getId();
+        if ($eventId === null) {
+             return ['success' => false, 'message' => 'ID de l\'événement invalide.'];
+        }
+
+        $participation->setEventId($eventId);
         $participation->setUserEmail($userEmail);
         $participation->setParticipationDate(new \DateTime());
 
         $this->em->persist($participation);
         $this->em->flush();
+
+        $dateEvent = $evenement->getDateEvent();
+        $formattedDate = $dateEvent ? $dateEvent->format('d/m/Y') : 'Date à confirmer';
 
         $email = (new Email())
             ->from('islem.alibii@gmail.com')
@@ -43,7 +54,7 @@ class ParticipationService
             ->html("
                 <h2>Bonjour,</h2>
                 <p>Votre participation à l'événement <strong>{$evenement->getTitre()}</strong> a été confirmée.</p>
-                <p><strong>Date:</strong> {$evenement->getDateEvent()->format('d/m/Y')}</p>
+                <p><strong>Date:</strong> {$formattedDate}</p>
                 <p><strong>Lieu:</strong> {$evenement->getLieu()}</p>
                 <br>
                 <p>À bientôt!</p>
@@ -56,6 +67,9 @@ class ParticipationService
         return ['success' => true, 'message' => 'Participation confirmée! Un email vous a été envoyé.'];
     }
 
+    /** * 
+     * @return array{success: bool, message: string} 
+     */
     public function cancelParticipation(Evenement $evenement, string $userEmail): array
     {
         $participation = $this->participationRepository->findOneBy([
@@ -70,6 +84,9 @@ class ParticipationService
         $this->em->remove($participation);
         $this->em->flush();
 
+        $dateEvent = $evenement->getDateEvent();
+        $formattedDate = $dateEvent ? $dateEvent->format('d/m/Y') : 'Date à confirmer';
+
         $email = (new Email())
             ->from('islem.alibii@gmail.com')
             ->to($userEmail)
@@ -77,7 +94,7 @@ class ParticipationService
             ->html("
                 <h2>Bonjour,</h2>
                 <p>Votre participation à l'événement <strong>{$evenement->getTitre()}</strong> a été annulée.</p>
-                <p><strong>Date:</strong> {$evenement->getDateEvent()->format('d/m/Y')}</p>
+                <p><strong>Date:</strong> {$formattedDate}</p>
                 <p><strong>Lieu:</strong> {$evenement->getLieu()}</p>
                 <br>
                 <p>Nous espérons vous voir à un prochain événement!</p>
