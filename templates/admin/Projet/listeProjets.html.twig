@@ -2,18 +2,55 @@
 
 {% block title %}STRATIX - Liste des Projets{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {# Styles pour FullCalendar #}
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+    <style>
+        /* Style des onglets pour correspondre au design Stratix */
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 10px 20px;
+        }
+        .nav-tabs .nav-link.active {
+            color: #dc3545 !important;
+            border-bottom: 3px solid #dc3545;
+            background: transparent;
+        }
+        #calendar {
+            background: #fff;
+            padding: 15px;
+            min-height: 650px;
+        }
+        /* Customisation des événements sur le calendrier */
+        .fc-event {
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 2px;
+            font-size: 0.85em;
+        }
+        /* Style pour le select de statut */
+        .form-select:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.1);
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
 <main id="content" class="content py-4">
     <div class="container-fluid px-4">
         
-        {# --- FORMULAIRE DE FILTRAGE (SERVEUR) --- #}
+        {# --- FORMULAIRE DE FILTRAGE ET ACTIONS --- #}
         <form method="get" action="{{ path('app_projet_index') }}" id="filterForm" class="row g-3 align-items-center mb-4 mt-2">
             <div class="col-lg-3">
                 <h2 class="fs-4 mb-0 fw-bold text-dark">Gestion des Projets</h2>
-                <p class="text-muted small mb-0">Suivi en temps réel de vos développements.</p>
+                <p class="text-muted small mb-0">Suivi en temps réel (Total : {{ projets.getTotalItemCount }})</p>
             </div>
             
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <div class="input-group shadow-sm border rounded-3 overflow-hidden bg-white">
                     <span class="input-group-text bg-white border-0"><i class="ti ti-search text-muted"></i></span>
                     <input type="text" 
@@ -24,23 +61,25 @@
                            value="{{ currentSearch ?? '' }}">
                 </div>
             </div>
-            
+
+            {# --- FILTRE PAR STATUT --- #}
             <div class="col-lg-2">
-                <select name="statut" 
-                        id="statutFilter" 
-                        class="form-select border-0 shadow-sm fw-semibold text-danger" 
-                        onchange="this.form.submit()">
+                <select name="statut" id="statutSelect" class="form-select shadow-sm border rounded-3 fw-bold text-muted">
                     <option value="">Tous les statuts</option>
-                    {% set statuts = ['Planifié', 'En cours', 'Terminé', 'Annulé'] %}
-                    {% for s in statuts %}
-                        <option value="{{ s }}" {{ (currentStatut ?? '') == s ? 'selected' : '' }}>{{ s }}</option>
-                    {% endfor %}
+                    <option value="Planifié" {{ currentStatut == 'Planifié' ? 'selected' : '' }}>🔵Planifié</option>
+                    <option value="En cours" {{ currentStatut == 'En cours' ? 'selected' : '' }}>🟡 En cours</option>
+                    <option value="Terminé"  {{ currentStatut == 'Terminé' ? 'selected' : '' }}>🟢 Terminé</option>
+                    <option value="Annulé"   {{ currentStatut == 'Annulé' ? 'selected' : '' }}>🔴 Annulé</option>
                 </select>
             </div>
             
-            <div class="col-lg-3 text-end d-flex gap-2 justify-content-end">
-                <a href="{{ path('app_projet_archives') }}" class="btn btn-outline-secondary shadow-sm px-3 fw-bold rounded-3">
-                    <i class="ti ti-archive me-1"></i> Archives
+            <div class="col-lg-4 text-end d-flex gap-2 justify-content-end">
+                <a href="{{ path('app_projet_favoris_liste') }}" class="btn btn-outline-danger shadow-sm px-3 fw-bold rounded-3" title="Mes Favoris">
+                    <i class="ti ti-heart-filled"></i>
+                </a>
+
+                <a href="{{ path('app_projet_archives') }}" class="btn btn-outline-secondary shadow-sm px-3 fw-bold rounded-3" title="Archives">
+                    <i class="ti ti-archive"></i>
                 </a>
 
                 <a href="{{ path('app_projet_new') }}" class="btn btn-danger shadow-sm px-4 fw-bold rounded-3">
@@ -49,122 +88,187 @@
             </div>
         </form>
 
-        {# --- TABLEAU DES PROJETS --- #}
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="table-responsive">
-                <table class="table align-middle mb-0" id="projetTable">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4 py-3 text-muted small fw-bold" style="width: 70px;">ICÔNE</th>
-                            <th class="py-3 text-muted small fw-bold cursor-pointer" onclick="sortTable(1)">
-                                NOM DU PROJET <i class="ti ti-arrows-sort ms-1"></i>
-                            </th>
-                            <th class="py-3 text-muted small fw-bold text-center cursor-pointer" onclick="sortTable(2)">
-                                BUDGET <i class="ti ti-arrows-sort ms-1"></i>
-                            </th>
-                            <th class="py-3 text-muted small fw-bold text-center">STATUT</th>
-                            <th class="text-end pe-4 py-3 text-muted small fw-bold">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="projetTableBody">
-                    {% for projet in projets %}
-                        <tr class="projet-row">
-                            <td class="ps-4">
-                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 38px; height: 38px;">
-                                    <i class="ti ti-folder text-danger" style="font-size: 1.2rem;"></i>
-                                </div>
-                            </td>
-                            <td class="fw-bold projet-nom">
-                                <a href="{{ path('app_projet_show', {'id': projet.id}) }}" class="text-dark text-decoration-none project-title-link">
-                                    {{ projet.nom }}
-                                </a>
-                            </td>
-                            <td class="text-success fw-bold text-center projet-budget" data-value="{{ projet.budget }}">
-                                {{ projet.budget|number_format(2, ',', ' ') }} DT
-                            </td>
-                            <td class="text-center">
-                                <span class="badge projet-statut-badge rounded-pill px-3 py-2 
-                                    {% if projet.statut == 'En cours' %}bg-warning text-dark
-                                    {% elseif projet.statut == 'Terminé' %}bg-success
-                                    {% elseif projet.statut == 'Annulé' %}bg-danger
-                                    {% else %}bg-info text-white{% endif %}">
-                                    {{ projet.statut }}
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group shadow-sm rounded-3 border bg-white">
-                                    <a href="{{ path('app_projet_show', {'id': projet.id}) }}" class="btn btn-sm btn-white" title="Voir">
-                                        <i class="ti ti-eye text-primary"></i>
-                                    </a>
-                                    <a href="{{ path('app_projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-white" title="Modifier">
-                                        <i class="ti ti-edit text-warning"></i>
-                                    </a>
-                                    <a href="{{ path('app_projet_archive_action', {'id': projet.id}) }}" class="btn btn-sm btn-white" title="Archiver" onclick="return confirm('Voulez-vous archiver ce projet ?');">
-                                        <i class="ti ti-archive text-secondary"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <i class="ti ti-folder-off fs-1 d-block mb-2"></i>
-                                Aucun projet trouvé pour ces critères.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        {# --- NAVIGATION PAR ONGLETS --- #}
+        <ul class="nav nav-tabs mb-4 border-bottom-0" id="projectTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="table-tab" data-bs-toggle="tab" data-bs-target="#tableView" type="button" role="tab">
+                    <i class="ti ti-list me-1"></i> Vue Liste
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendarView" type="button" role="tab">
+                    <i class="ti ti-calendar me-1"></i> Vue Calendrier
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="projectTabsContent">
+            
+            {# --- VUE 1 : TABLEAU --- #}
+            <div class="tab-pane fade show active" id="tableView" role="tabpanel">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0" id="projetTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3 text-muted small fw-bold" style="width: 70px;">ICÔNE</th>
+                                    <th class="py-3 text-muted small fw-bold">NOM DU PROJET</th>
+                                    <th class="py-3 text-muted small fw-bold text-center">BUDGET</th>
+                                    <th class="py-3 text-muted small fw-bold text-center">STATUT</th>
+                                    <th class="text-end pe-4 py-3 text-muted small fw-bold">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projetTableBody">
+                            {% for projet in projets %}
+                                <tr class="projet-row">
+                                    <td class="ps-4">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 38px; height: 38px;">
+                                            <i class="ti ti-folder text-danger" style="font-size: 1.2rem;"></i>
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold projet-nom">
+                                        <a href="{{ path('app_projet_show', {'id': projet.id}) }}" class="text-dark text-decoration-none project-title-link">
+                                            {{ projet.nom }}
+                                        </a>
+                                    </td>
+                                    <td class="text-success fw-bold text-center projet-budget">
+                                        {{ projet.budget|number_format(2, ',', ' ') }} DT
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge projet-statut-badge rounded-pill px-3 py-2 
+                                            {% if projet.statut == 'En cours' %}bg-warning text-dark
+                                            {% elseif projet.statut == 'Terminé' %}bg-success
+                                            {% elseif projet.statut == 'Annulé' %}bg-danger
+                                            {% else %}bg-info text-white{% endif %}">
+                                            {{ projet.statut }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group shadow-sm rounded-3 border bg-white">
+                                            {% set isFav = (user_favoris_ids is defined and projet.id in user_favoris_ids) %}
+                                            
+                                            <a href="{{ path('projet_toggle_favori', {'id': projet.id}) }}" 
+                                               class="btn btn-sm btn-white js-favori-btn" 
+                                               title="Ajouter aux favoris">
+                                                 <i class="ti {{ isFav ? 'ti-heart-filled text-danger' : 'ti-heart text-secondary' }}" style="font-size: 1.1rem;"></i>
+                                            </a>
+
+                                            <a href="{{ path('app_projet_chat', {'id': projet.id}) }}" class="btn btn-sm btn-white text-info" title="Ouvrir le Chat">
+                                                <i class="ti ti-messages" style="font-size: 1.1rem;"></i>
+                                            </a>
+                                            
+                                            <a href="{{ path('app_projet_show', {'id': projet.id}) }}" class="btn btn-sm btn-white" title="Voir">
+                                                <i class="ti ti-eye text-primary"></i>
+                                            </a>
+                                            <a href="{{ path('app_projet_edit', {'id': projet.id}) }}" class="btn btn-sm btn-white" title="Modifier">
+                                                <i class="ti ti-edit text-warning"></i>
+                                            </a>
+                                            <a href="{{ path('app_projet_archive_action', {'id': projet.id}) }}" class="btn btn-sm btn-white" title="Archiver" onclick="return confirm('Voulez-vous archiver ce projet ?');">
+                                                <i class="ti ti-archive text-secondary"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="ti ti-folder-off fs-1 d-block mb-2"></i>
+                                        Aucun projet trouvé.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {# --- NAVIGATION PAGINÉE --- #}
+                <div class="d-flex justify-content-center mt-4">
+                    {{ knp_pagination_render(projets) }}
+                </div>
             </div>
+
+            {# --- VUE 2 : CALENDRIER --- #}
+            <div class="tab-pane fade" id="calendarView" role="tabpanel">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 </main>
+{% endblock %}
 
-<style>
-    .cursor-pointer { cursor: pointer; transition: 0.2s; }
-    .cursor-pointer:hover { background-color: #f8f9fa !important; }
-    .project-title-link:hover { color: #dc3545 !important; text-decoration: underline !important; }
-    .projet-row:hover { background-color: #fcfcfc; }
-    .btn-white { background: #fff; border: 1px solid #eee; }
-    .btn-white:hover { background: #f8f9fa; }
-</style>
-
-<script>
-    // Soumission automatique de la recherche après un court délai (Debounce)
-    let searchTimer;
-    const searchInput = document.getElementById('searchInput');
+{% block javascripts %}
+    {{ parent() }}
+    {# Scripts FullCalendar #}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => {
-                document.getElementById('filterForm').submit();
-            }, 800); // Attend 800ms après la fin de la frappe
-        });
-    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. INITIALISATION DU CALENDRIER
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                buttonText: {
+                    today: "Aujourd'hui",
+                    month: "Mois",
+                    week: "Semaine",
+                    list: "Planning"
+                },
+                events: "{{ path('api_projets_calendar') }}",
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        window.location.href = info.event.url;
+                        info.jsEvent.preventDefault();
+                    }
+                }
+            });
 
-    // --- LOGIQUE DE TRI DU TABLEAU (CLIENT) ---
-    let sortOrder = true;
-    function sortTable(idx) {
-        const body = document.getElementById("projetTableBody");
-        const rows = Array.from(body.querySelectorAll(".projet-row"));
+            // Correction du bug de rendu de FullCalendar dans un onglet Bootstrap
+            var calendarTab = document.getElementById('calendar-tab');
+            calendarTab.addEventListener('shown.bs.tab', function () {
+                calendar.render();
+                calendar.updateSize();
+            });
 
-        if (rows.length === 0) return;
+            // 2. GESTION DES FAVORIS (AJAX)
+            document.querySelectorAll('.js-favori-btn').forEach(function(link) {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const url = this.href;
+                    const icon = this.querySelector('i');
 
-        rows.sort((a, b) => {
-            let aVal, bVal;
-            if (idx === 2) { // Colonne Budget
-                aVal = parseFloat(a.querySelector(".projet-budget").dataset.value) || 0;
-                bVal = parseFloat(b.querySelector(".projet-budget").dataset.value) || 0;
-            } else { // Colonne Nom
-                aVal = a.children[idx].innerText.toLowerCase();
-                bVal = b.children[idx].innerText.toLowerCase();
+                    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.isFavorite) {
+                            icon.classList.replace('ti-heart', 'ti-heart-filled');
+                            icon.classList.replace('text-secondary', 'text-danger');
+                        } else {
+                            icon.classList.replace('ti-heart-filled', 'ti-heart');
+                            icon.classList.replace('text-danger', 'text-secondary');
+                        }
+                    })
+                    .catch(error => console.error('Erreur:', error));
+                });
+            });
+
+            // 3. GESTION DU FILTRE AUTOMATIQUE PAR STATUT
+            const statutSelect = document.getElementById('statutSelect');
+            const filterForm = document.getElementById('filterForm');
+
+            if (statutSelect) {
+                statutSelect.addEventListener('change', function() {
+                    filterForm.submit();
+                });
             }
-            return sortOrder ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
         });
-
-        sortOrder = !sortOrder;
-        rows.forEach(r => body.appendChild(r));
-    }
-</script>
+    </script>
 {% endblock %}

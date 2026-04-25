@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Sprint{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="card border-0 shadow-sm rounded-4 mx-auto" style="max-width: 600px;">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold text-danger"><i class="fas fa-running me-2"></i>Ajouter un Sprint</h5>
+            <small class="text-muted">Projet : {{ projet.nom }}</small>
+        </div>
+        <div class="card-body p-4">
+            {{ form_start(form) }}
+                {{ form_rest(form) }}
+                <div class="mt-4 d-flex gap-2">
+                    <button class="btn btn-danger rounded-3 fw-bold w-100">Enregistrer</button>
+                    <a href="{{ path('app_projet_show', {'id': projet.id}) }}" class="btn btn-light border w-100">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

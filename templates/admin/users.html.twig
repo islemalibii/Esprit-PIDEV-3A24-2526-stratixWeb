@@ -1,5 +1,6 @@
 {% extends 'admin/base_admin.html.twig' %}
 {% block title %}Utilisateurs — Stratix{% endblock %}
+{% import 'macros/avatar.html.twig' as avatarMacro %}
 
 {% block admin_content %}
 
@@ -68,10 +69,7 @@
 
                     {# Avatar + nom #}
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
-                             style="width:48px;height:48px;font-size:1rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);">
-                            {{ u.prenom|first|upper }}{{ u.nom|first|upper }}
-                        </div>
+                        {{ avatarMacro.show(u, '48px', '1rem') }}
                         <div>
                             <div class="fw-bold" style="font-size:.95rem;">{{ u.nom }} {{ u.prenom }}</div>
                             <div class="text-secondary" style="font-size:.75rem;">CIN: {{ u.cin }}</div>
@@ -111,6 +109,9 @@
                     <div class="d-flex gap-2">
                         <a href="{{ path('admin_user_edit', {id: u.id}) }}" class="btn btn-sm btn-outline-primary flex-fill">
                             <i class="ti ti-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{{ path('admin_user_badge', {id: u.id}) }}" class="btn btn-sm btn-outline-info flex-fill">
+                            <i class="ti ti-id-badge me-1"></i>Badge
                         </a>
                         <form method="post" action="{{ path('admin_user_toggle_lock', {id: u.id}) }}" class="flex-fill">
                             <input type="hidden" name="_token" value="{{ csrf_token('toggle'~u.id) }}">

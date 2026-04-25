@@ -14,6 +14,15 @@
                 <li><div class="alert alert-success py-1 px-3 mb-0 small">{{ msg }}</div></li>
             {% endfor %}
 
+            {# Theme toggle #}
+            {% if app.user %}
+            <li>
+                <button id="theme-toggle" class="btn btn-light btn-icon btn-sm rounded-circle" title="Mode sombre/clair">
+                    <i class="ti ti-{% if app.user.theme == 'dark' %}sun{% else %}moon{% endif %}" id="theme-icon"></i>
+                </button>
+            </li>
+            {% endif %}
+
             {# Notifications #}
             <li class="dropdown">
                 <a class="position-relative btn btn-light btn-icon btn-sm rounded-circle"
@@ -31,7 +40,7 @@
                         <span class="fw-semibold small">Notifications</span>
                         <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25">{{ admin_notifications|length }} nouvelles</span>
                     </div>
-                    <ul class="list-unstyled p-0 m-0">
+                    <ul class="list-unstyled p-0 m-0" style="max-height:320px;overflow-y:auto;">
                         {% for notif in admin_notifications %}
                         <li class="p-3 border-bottom">
                             <div class="d-flex gap-3">
@@ -53,18 +62,18 @@
                         {% endfor %}
                     </ul>
                     <div class="px-3 py-2 text-center border-top">
-                        <a href="{{ path('admin_users') }}" class="text-primary small text-decoration-none">Voir tous les utilisateurs</a>
+                        <a href="{{ path('admin_notifications_read') }}" class="text-primary small text-decoration-none">
+                            Tout marquer comme lu
+                        </a>
                     </div>
                 </div>
             </li>
+            {% import 'macros/avatar.html.twig' as avatarMacro %}
             {% if app.user %}
             <li class="ms-2 dropdown">
                 <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
                    class="d-flex align-items-center gap-2 text-decoration-none">
-                    <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                         style="background:linear-gradient(135deg,#4f46e5,#7c3aed);width:34px;height:34px;font-size:.8rem;">
-                        {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
-                    </div>
+                    {{ avatarMacro.show(app.user, '34px', '.8rem') }}
                     <div class="d-none d-md-block">
                         <div class="small fw-semibold text-dark">{{ app.user.prenom }} {{ app.user.nom }}</div>
                         <div class="small text-secondary" style="font-size:.72rem;">{{ app.user.role|upper }}</div>
@@ -72,10 +81,7 @@
                 </a>
                 <div class="dropdown-menu dropdown-menu-end p-0" style="min-width:210px;">
                     <div class="d-flex gap-3 align-items-center px-3 py-3 border-bottom">
-                        <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="background:linear-gradient(135deg,#4f46e5,#7c3aed);width:42px;height:42px;">
-                            {{ app.user.prenom|first|upper }}{{ app.user.nom|first|upper }}
-                        </div>
+                        {{ avatarMacro.show(app.user, '42px', '1rem') }}
                         <div>
                             <h4 class="mb-0 small fw-semibold">{{ app.user.prenom }} {{ app.user.nom }}</h4>
                             <p class="mb-0 small text-secondary">{{ app.user.email }}</p>

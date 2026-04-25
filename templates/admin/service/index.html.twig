@@ -1,137 +1,931 @@
 {% extends 'admin/base_admin.html.twig' %}
 
 {% block admin_content %}
-<div class="container-fluid">
+<div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Gestion des Services</h1>
-        <a href="{{ path('app_service_new') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nouveau Service
-        </a>
+        <div>
+            <h1 class="h3 mb-0 text-dark">Gestion des Services</h1>
+            <p class="text-muted small mt-1">Filtres en temps réel</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary" id="visioBtn">
+                <i class="fas fa-video me-2"></i>Visio
+            </button>
+            <a href="{{ path('app_service_new') }}" class="btn btn-orange">
+                <i class="fas fa-plus me-2"></i>Nouveau Service
+            </a>
+        </div>
     </div>
 
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    {% endfor %}
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Recherche et Filtrage</h6>
-        </div>
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <input type="text" name="search" class="form-control" placeholder="Rechercher par titre ou description..."
-                           value="{{ search }}">
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="converter-card">
+                <div class="converter-header">
+                    <h6 class="mb-0"><i class="fas fa-exchange-alt me-2 text-orange"></i>Convertisseur de Devises</h6>
                 </div>
-                <div class="col-md-3">
-                    <select name="categorie" class="form-select">
-                        <option value="">Toutes les catégories</option>
-                        {% for categorie in categories %}
-                            <option value="{{ categorie.nom }}" {{ selectedCategorie == categorie.nom ? 'selected' }}>
-                                {{ categorie.nom }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="archive" value="1" id="archiveCheck"
-                               {{ showArchives ? 'checked' }}>
-                        <label class="form-check-label" for="archiveCheck">
-                            Archives
-                        </label>
+                <div class="converter-body">
+                    <div class="row align-items-end g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Montant en TND</label>
+                            <div class="input-group">
+                                <input type="number" id="montant-tnd" class="form-control converter-input" value="100">
+                                <span class="input-group-text converter-input-suffix">DT</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">USD</label>
+                            <div class="input-group">
+                                <input type="text" id="montant-usd" class="form-control converter-input bg-soft" readonly>
+                                <span class="input-group-text converter-input-suffix">$</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">EUR</label>
+                            <div class="input-group">
+                                <input type="text" id="montant-eur" class="form-control converter-input bg-soft" readonly>
+                                <span class="input-group-text converter-input-suffix">€</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-orange w-100" id="btnConvertir">
+                                <i class="fas fa-sync-alt me-2"></i>Convertir
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-search"></i> Rechercher
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="filter-card">
+                <div class="filter-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-sliders-h me-2 text-orange"></i>Filtres</h6>
+                    <button type="button" class="btn btn-sm btn-link text-muted" id="toggleAdvancedFilters">
+                        <i class="fas fa-chevron-down me-1"></i> Plus
                     </button>
-                    <a href="{{ path('app_service_index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times"></i> Réinitialiser
-                    </a>
                 </div>
-            </form>
+                <div class="filter-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" id="quickKeyword" class="form-control filter-input" placeholder="Rechercher par titre ou description...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="quickCategorie" class="form-select filter-select">
+                                <option value="">Toutes catégories</option>
+                                {% for categorie in categories %}
+                                    <option value="{{ categorie.nom }}">{{ categorie.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-danger-outline flex-grow-1" id="exportPdfBtn">
+                                    <i class="fas fa-file-pdf me-2"></i>PDF
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="insightsBtn">
+                                    <i class="fas fa-brain me-1"></i> IA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="advancedFilters" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Budget min (DT)</label>
+                                <input type="number" id="budgetMin" class="form-control filter-input" placeholder="0" step="1000">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Budget max (DT)</label>
+                                <input type="number" id="budgetMax" class="form-control filter-input" placeholder="Illimité" step="1000">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Date de début après</label>
+                                <input type="date" id="dateStart" class="form-control filter-input">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Date de fin avant</label>
+                                <input type="date" id="dateEnd" class="form-control filter-input">
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="showArchive">
+                                    <label class="form-check-label text-muted" for="showArchive">
+                                        <i class="fas fa-archive me-1"></i>Inclure les archives
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="activeFiltersTags" class="mt-3 d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        {% for service in services %}
-            <div class="col-xl-4 col-md-6 mb-4">
-                <div class="card border-left-primary shadow h-100">
-                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h6 class="m-0 font-weight-bold text-primary">{{ service.titre }}</h6>
-                        {% if service.categorie %}
-                            <span class="badge bg-secondary">{{ service.categorie.nom }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="card-body">
-                        <div class="row no-gutters align-items-center mb-2">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                    Budget
-                                </div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ service.budget|number_format(0, ',', ' ') }} DT
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row no-gutters align-items-center mb-2">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                    Période
-                                </div>
-                                <div class="text-xs text-muted">
-                                    {{ service.dateDebut ? service.dateDebut|date('d/m/Y') : 'N/A' }} -
-                                    {{ service.dateFin ? service.dateFin|date('d/m/Y') : 'N/A' }}
-                                </div>
-                            </div>
-                        </div>
-                        {% if service.description %}
-                            <p class="text-muted small mb-3">
-                                {{ service.description|slice(0, 100) ~ (service.description|length > 100 ? '...' : '') }}
-                            </p>
-                        {% endif %}
-                    </div>
-                    <div class="card-footer">
-                        <div class="btn-group w-100" role="group">
-                            <a href="{{ path('app_service_show', {'id': service.id}) }}"
-                               class="btn btn-sm btn-outline-info">
-                                <i class="fas fa-eye"></i> Voir
-                            </a>
-                            <a href="{{ path('app_service_edit', {'id': service.id}) }}"
-                               class="btn btn-sm btn-outline-warning">
-                                <i class="fas fa-edit"></i> Modifier
-                            </a>
-                            <form method="post" action="{{ path('app_service_archive', {'id': service.id}) }}"
-                                  class="d-inline"
-                                  onsubmit="return confirm('{{ service.archive ? 'Restaurer' : 'Archiver' }} ce service ?');">
-                                <input type="hidden" name="_token" value="{{ csrf_token('archive' ~ service.id) }}">
-                                <button type="submit" class="btn btn-sm {{ service.archive ? 'btn-outline-success' : 'btn-outline-secondary' }}">
-                                    <i class="fas fa-{{ service.archive ? 'undo' : 'archive' }}"></i>
-                                    {{ service.archive ? 'Restaurer' : 'Archiver' }}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+    <div id="insightsPanel" class="insights-panel" style="display: none;">
+        <div class="insights-header">
+            <i class="fas fa-robot me-2"></i> Insights IA
+            <button type="button" class="insights-close" onclick="closeInsights()">✕</button>
+        </div>
+        <div id="insightsContent" class="insights-content">
+            <div class="insights-loading">
+                <div class="spinner-border text-orange spinner-border-sm me-2" role="status"></div>
+                Analyse des services en cours...
+            </div>
+        </div>
+    </div>
+
+    <div id="servicesContainer" class="row g-4">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-orange" role="status"></div>
+            <p class="mt-2 text-muted">Chargement des services...</p>
+        </div>
+    </div>
+
+    <div id="paginationContainer" class="mt-4"></div>
+</div>
+
+<div class="modal fade" id="visioModal" tabindex="-1" aria-labelledby="visioModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="height: 80vh;">
+            <div class="modal-header" style="background: var(--orange); color: white;">
+                <h5 class="modal-title" id="visioModalLabel">
+                    <i class="fas fa-video me-2"></i>Visioconférence
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 position-relative" style="height: calc(100% - 60px);">
+                <div id="visioLoading" class="position-absolute top-50 start-50 translate-middle text-center" style="z-index: 10;">
+                    <div class="spinner-border text-orange" role="status"></div>
+                    <p class="mt-2 text-muted">Chargement de la visioconférence...</p>
+                </div>
+                <iframe id="visioIframe" 
+                        width="100%" 
+                        height="100%" 
+                        frameborder="0" 
+                        allow="camera; microphone; fullscreen; autoplay; display-capture" 
+                        allowfullscreen
+                        style="display: none;">
+                </iframe>
+                <div id="visioFallback" class="d-none h-100 d-flex flex-column align-items-center justify-content-center text-center p-4">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5>Impossible de charger la visioconférence</h5>
+                    <p class="text-muted">Cliquez sur le lien ci-dessous pour ouvrir la réunion dans un nouvel onglet :</p>
+                    <a id="visioFallbackLink" href="#" target="_blank" class="btn btn-orange mt-2">Ouvrir la visio dans un nouvel onglet</a>
                 </div>
             </div>
-        {% else %}
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucun service trouvé</h5>
-                        <p class="text-muted">Il n'y a pas de services {{ showArchives ? 'archivés' : 'actifs' }} correspondant à vos critères.</p>
-                        <a href="{{ path('app_service_new') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Créer le premier service
-                        </a>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+        </div>
     </div>
 </div>
+
+<div id="assistantBubble" class="assistant-bubble" onclick="toggleAssistant()">
+    <div class="bubble-icon">🤖</div>
+    <div class="bubble-pulse"></div>
+</div>
+
+<div id="assistantWindow" class="assistant-window" style="display: none;">
+    <div class="assistant-window-header">
+        <div class="assistant-header-content">
+            <div class="assistant-avatar">🤖</div>
+            <div class="assistant-header-text">
+                <h4>Assistant IA</h4>
+                <small id="assistantStatus">✅ Prêt à vous aider</small>
+            </div>
+        </div>
+        <button class="assistant-close-btn" onclick="toggleAssistant()">✕</button>
+    </div>
+    <div class="assistant-window-body">
+        <div id="chatMessages" class="chat-messages">
+            <div class="message ai-message">
+                <div class="message-avatar">🤖</div>
+                <div class="message-bubble">
+                    Bonjour ! <br>
+                    J'ai analysé les services en temps réel.<br><br>
+                    Posez-moi des questions comme :<br>
+                    • Budget total<br>
+                    • Liste des services<br>
+                    • Services sans responsable
+                </div>
+            </div>
+        </div>
+        <div class="assistant-input-container">
+            <textarea id="questionInput" class="assistant-input" placeholder="Écrivez votre message..." rows="1"></textarea>
+            <button id="sendButton" class="assistant-send-btn" onclick="askQuestion()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --orange: #f97316;
+        --orange-light: #ffedd5;
+        --orange-dark: #ea580c;
+        --gray-50: #fafafa;
+        --gray-100: #f5f5f5;
+        --gray-200: #e5e5e5;
+        --gray-600: #525252;
+        --gray-700: #404040;
+        --gray-800: #262626;
+    }
+    body { background-color: var(--gray-100); font-family: 'Inter', system-ui, sans-serif; }
+    .service-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .service-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+    .service-hover-details {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 10;
+        overflow-y: auto;
+        color: white;
+    }
+    .service-card:hover .service-hover-details {
+        opacity: 1;
+        visibility: visible;
+    }
+    .hover-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .hover-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+        color: white;
+    }
+    .hover-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        width: fit-content;
+    }
+    .hover-badge.active { background: var(--orange); color: white; }
+    .hover-badge.archived { background: #6c757d; color: white; }
+    .hover-budget { font-size: 1.2rem; font-weight: 700; }
+    .hover-category, .hover-dates {
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .hover-description {
+        font-size: 0.8rem;
+        line-height: 1.4;
+        max-height: 120px;
+        overflow-y: auto;
+        color: #e5e5e5;
+    }
+    .hover-link {
+        margin-top: 0.5rem;
+        color: var(--orange);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+    .hover-link:hover {
+        text-decoration: underline;
+        color: var(--orange-light);
+    }
+    .service-hover-details::-webkit-scrollbar {
+        width: 4px;
+    }
+    .service-hover-details::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px;
+    }
+    .service-hover-details::-webkit-scrollbar-thumb {
+        background: var(--orange);
+        border-radius: 2px;
+    }
+    .service-card-header { 
+        padding: 1rem 1rem 0.5rem 1rem; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        border-left: 4px solid var(--orange);
+    }
+    .service-title { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); margin: 0; }
+    .service-badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 20px; }
+    .bg-orange { background: var(--orange-light); color: var(--orange); }
+    .bg-secondary { background: #e5e5e5; color: #666; }
+    .service-card-body { padding: 0.5rem 1rem 1rem 1rem; flex: 1; }
+    .service-budget { text-align: center; padding: 0.5rem; margin-bottom: 0.5rem; }
+    .budget-label { font-size: 0.7rem; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.5px; }
+    .budget-value { font-size: 1.4rem; font-weight: 700; color: var(--gray-800); margin: 0; }
+    .budget-value small { font-size: 0.7rem; font-weight: 400; color: var(--gray-600); }
+    .service-category-info, .service-date { margin-top: 0.5rem; padding: 0.25rem 0; }
+    .service-description { margin: 0.5rem 0; }
+    .service-date { 
+        margin-top: 0.5rem; 
+        padding-top: 0.5rem; 
+        border-top: 1px solid var(--gray-200); 
+    }
+    .service-card-footer { 
+        padding: 0.75rem 1rem; 
+        border-top: 1px solid var(--gray-200); 
+        display: flex; 
+        gap: 0.5rem; 
+        justify-content: center; 
+        position: relative;
+        z-index: 5;
+        background: white;
+    }
+    .service-btn { 
+        width: 32px; 
+        height: 32px; 
+        border-radius: 10px; 
+        display: inline-flex; 
+        align-items: center; 
+        justify-content: center; 
+        transition: all 0.2s; 
+        text-decoration: none; 
+        border: none; 
+        cursor: pointer; 
+    }
+    .service-btn-info { background: #eff6ff; color: #3b82f6; }
+    .service-btn-info:hover { background: #3b82f6; color: white; }
+    .service-btn-warning { background: #fffbeb; color: #f59e0b; }
+    .service-btn-warning:hover { background: #f59e0b; color: white; }
+    .service-btn-archive { background: #fef2f2; color: #ef4444; }
+    .service-btn-archive:hover { background: #ef4444; color: white; }
+    .new-service-glow {
+        box-shadow: 0 0 0 2px #10b981, 0 4px 12px rgba(16,185,129,0.2);
+        transition: box-shadow 0.2s ease;
+    }
+    .new-service-glow:hover {
+        box-shadow: 0 0 0 3px #10b981, 0 8px 20px rgba(16,185,129,0.3);
+    }
+    .converter-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .converter-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-200); }
+    .converter-body { padding: 1.25rem; }
+    .converter-input { border: 1px solid var(--gray-200); border-radius: 12px; padding: 0.6rem 1rem; font-size: 0.9rem; }
+    .converter-input:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+    .converter-input-suffix { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 12px; color: var(--gray-600); }
+    .bg-soft { background-color: var(--gray-50); }
+    .filter-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .filter-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-200); }
+    .filter-body { padding: 1.25rem; }
+    .filter-input, .filter-select { border: 1px solid var(--gray-200); border-radius: 12px; padding: 0.6rem 1rem; font-size: 0.9rem; }
+    .filter-input:focus, .filter-select:focus { border-color: var(--orange); outline: none; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+    .btn-orange { background: var(--orange); border: none; color: white; padding: 0.6rem 1.25rem; border-radius: 12px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; }
+    .btn-orange:hover { background: var(--orange-dark); transform: translateY(-1px); color: white; }
+    .btn-orange-outline { background: transparent; border: 1px solid var(--orange); color: var(--orange); padding: 0.6rem 1.25rem; border-radius: 12px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; }
+    .btn-orange-outline:hover { background: var(--orange); color: white; }
+    .btn-secondary-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-600); padding: 0.6rem 1rem; border-radius: 12px; transition: all 0.2s; }
+    .btn-secondary-outline:hover { background: var(--gray-100); border-color: var(--gray-400); }
+    .btn-danger-outline { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 0.6rem 1rem; border-radius: 12px; transition: all 0.2s; }
+    .btn-danger-outline:hover { background: #ef4444; color: white; }
+    .empty-state { text-align: center; padding: 3rem; background: white; border-radius: 20px; }
+    .insights-panel {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .insights-header {
+        padding: 1rem 1.25rem;
+        background: rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        color: #f97316;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .insights-close {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color 0.2s;
+    }
+    .insights-close:hover { color: white; }
+    .insights-content {
+        padding: 1.5rem;
+        color: #e2e8f0;
+        line-height: 1.6;
+        font-size: 0.9rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .insights-content p { margin-bottom: 0.75rem; }
+    .insights-content ul, .insights-content ol { margin: 0.5rem 0 0.5rem 1.5rem; }
+    .insights-content li { margin: 0.25rem 0; }
+    .insights-content strong { color: #f97316; }
+    .insights-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: #cbd5e1;
+    }
+    .assistant-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: var(--orange); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(249,115,22,0.3); z-index: 1000; transition: all 0.3s ease; }
+    .assistant-bubble:hover { transform: scale(1.05); }
+    .bubble-icon { font-size: 28px; }
+    .bubble-pulse { position: absolute; width: 100%; height: 100%; border-radius: 50%; background: var(--orange); animation: pulse 2s infinite; z-index: -1; }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 70% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(1.3); opacity: 0; } }
+    .assistant-window { 
+        position: fixed; 
+        bottom: 110px; 
+        right: 30px; 
+        width: 380px; 
+        height: 520px; 
+        background: white; 
+        border-radius: 20px; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+        display: flex; 
+        flex-direction: column; 
+        z-index: 1000; 
+        overflow: hidden; 
+        animation: slideUp 0.3s ease; 
+    }
+    .assistant-window-body { 
+        flex: 1; 
+        display: flex; 
+        flex-direction: column; 
+        background: var(--gray-50); 
+        overflow: hidden; 
+        min-height: 0;
+    }
+    .chat-messages { 
+        flex: 1; 
+        overflow-y: auto; 
+        padding: 1rem; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px;
+        min-height: 0;
+    }
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb:hover { background: #555; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .assistant-window-header { background: white; padding: 1rem; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+    .assistant-header-content { display: flex; align-items: center; gap: 12px; }
+    .assistant-avatar { width: 40px; height: 40px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .assistant-header-text h4 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--gray-800); }
+    .assistant-header-text small { font-size: 0.7rem; color: var(--gray-600); }
+    .assistant-close-btn { background: var(--gray-100); border: none; width: 30px; height: 30px; border-radius: 10px; cursor: pointer; color: var(--gray-600); transition: all 0.2s; }
+    .assistant-close-btn:hover { background: var(--gray-200); }
+    .message { display: flex; gap: 10px; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .user-message { flex-direction: row-reverse; }
+    .message-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .user-message .message-avatar { background: var(--orange); color: white; }
+    .ai-message .message-avatar { background: white; border: 1px solid var(--gray-200); }
+    .message-bubble { max-width: 70%; padding: 10px 14px; border-radius: 18px; font-size: 0.85rem; line-height: 1.4; }
+    .user-message .message-bubble { background: var(--orange); color: white; border-radius: 18px 18px 5px 18px; }
+    .ai-message .message-bubble { background: white; color: var(--gray-700); border-radius: 18px 18px 18px 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .assistant-input-container { padding: 1rem; background: white; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; align-items: flex-end; }
+    .assistant-input { flex: 1; border: 1px solid var(--gray-200); border-radius: 20px; padding: 10px 15px; font-size: 0.85rem; resize: none; font-family: inherit; max-height: 80px; }
+    .assistant-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+    .assistant-send-btn { background: var(--orange); border: none; color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .assistant-send-btn:hover:not(:disabled) { transform: scale(1.05); }
+    .assistant-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
+    .typing-indicator span { width: 6px; height: 6px; background: var(--gray-400); border-radius: 50%; animation: typing 1.4s infinite; }
+    @keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+</style>
+
+<script>
+    let assistantVisible = false;
+    const API_URL = '/admin/services/api/assistant/ask';
+    
+    function toggleAssistant() {
+        const window = document.getElementById('assistantWindow');
+        assistantVisible = !assistantVisible;
+        window.style.display = assistantVisible ? 'flex' : 'none';
+        if (assistantVisible) {
+            setTimeout(() => {
+                document.getElementById('questionInput').focus();
+                scrollToBottom();
+            }, 100);
+        }
+    }
+    
+    function handleKeyPress(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            askQuestion();
+        }
+    }
+    
+    function scrollToBottom() {
+        const container = document.getElementById('chatMessages');
+        if (container) container.scrollTop = container.scrollHeight;
+    }
+    
+    async function askQuestion() {
+        const input = document.getElementById('questionInput');
+        const question = input.value.trim();
+        if (!question) return;
+        addMessage(question, 'user');
+        input.value = '';
+        input.style.height = 'auto';
+        const sendBtn = document.getElementById('sendButton');
+        const statusLabel = document.getElementById('assistantStatus');
+        sendBtn.disabled = true;
+        statusLabel.innerHTML = '🤔 Réflexion...';
+        showTypingIndicator();
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question })
+            });
+            const data = await response.json();
+            removeTypingIndicator();
+            if (data.response) {
+                addMessage(data.response, 'ai');
+                statusLabel.innerHTML = '✅ Prêt';
+            } else {
+                addMessage('❌ Erreur: ' + (data.error || 'Inconnue'), 'ai');
+                statusLabel.innerHTML = '⚠️ Erreur';
+            }
+        } catch (error) {
+            removeTypingIndicator();
+            addMessage('❌ Erreur de connexion', 'ai');
+            statusLabel.innerHTML = '❌ Hors ligne';
+        } finally {
+            sendBtn.disabled = false;
+            document.getElementById('questionInput').focus();
+        }
+    }
+    
+    function addMessage(message, type) {
+        const container = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = `message ${type === 'user' ? 'user-message' : 'ai-message'}`;
+        div.innerHTML = `<div class="message-avatar">${type === 'user' ? '👤' : '🤖'}</div><div class="message-bubble">${escapeHtml(message).replace(/\n/g, '<br>')}</div>`;
+        container.appendChild(div);
+        scrollToBottom();
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function showTypingIndicator() {
+        removeTypingIndicator();
+        const container = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.id = 'typingIndicator';
+        div.className = 'message ai-message';
+        div.innerHTML = `<div class="message-avatar">🤖</div><div class="message-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+        container.appendChild(div);
+        scrollToBottom();
+    }
+    
+    function removeTypingIndicator() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+    
+    let insightsVisible = false;
+    async function generateInsights() {
+        const panel = document.getElementById('insightsPanel');
+        const contentDiv = document.getElementById('insightsContent');
+        if (!insightsVisible) {
+            panel.style.display = 'block';
+            insightsVisible = true;
+            contentDiv.innerHTML = `<div class="insights-loading"><div class="spinner-border text-orange spinner-border-sm me-2" role="status"></div> Analyse des services en cours...</div>`;
+            const question = `Analyse la liste des services et donne-moi des insights professionnels en français sous forme de paragraphes courts et de puces. Inclus: 
+- Nombre total de services actifs
+- Budget total (somme)
+- Répartition par catégorie (les 3 principales)
+- Services dont la date de fin est dans moins de 30 jours (urgents)
+- Recommandations ou points d'attention`;
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question })
+                });
+                const data = await response.json();
+                if (data.response) {
+                    let formatted = data.response.replace(/\n/g, '<br>');
+                    contentDiv.innerHTML = `<div>${formatted}</div>`;
+                } else {
+                    contentDiv.innerHTML = `<div class="text-danger">❌ Erreur: ${data.error || 'Impossible de générer les insights'}</div>`;
+                }
+            } catch (error) {
+                contentDiv.innerHTML = `<div class="text-danger">❌ Erreur de connexion à l'assistant IA</div>`;
+            }
+        } else {
+            panel.style.display = 'none';
+            insightsVisible = false;
+        }
+    }
+    
+    function closeInsights() {
+        document.getElementById('insightsPanel').style.display = 'none';
+        insightsVisible = false;
+    }
+    
+    const visioBtn = document.getElementById('visioBtn');
+    const visioModal = document.getElementById('visioModal');
+    const visioIframe = document.getElementById('visioIframe');
+    const visioLoading = document.getElementById('visioLoading');
+    const visioFallback = document.getElementById('visioFallback');
+    const visioFallbackLink = document.getElementById('visioFallbackLink');
+    
+    if (visioBtn) {
+        visioBtn.addEventListener('click', function() {
+            const roomName = 'stratix-' + Date.now();
+            const userName = '{{ app.user.prenom ?? "Invité" }} {{ app.user.nom ?? "" }}'.trim();
+            const url = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&userInfo.displayName=${encodeURIComponent(userName)}`;
+            visioIframe.style.display = 'none';
+            visioFallback.classList.add('d-none');
+            visioLoading.style.display = 'flex';
+            visioIframe.src = url;
+            visioFallbackLink.href = url;
+            visioIframe.onload = function() {
+                visioLoading.style.display = 'none';
+                visioIframe.style.display = 'block';
+                visioFallback.classList.add('d-none');
+            };
+            visioIframe.onerror = function() {
+                visioLoading.style.display = 'none';
+                visioIframe.style.display = 'none';
+                visioFallback.classList.remove('d-none');
+            };
+            setTimeout(() => {
+                if (visioIframe.style.display !== 'block' && visioFallback.classList.contains('d-none')) {
+                    visioLoading.style.display = 'none';
+                    visioIframe.style.display = 'none';
+                    visioFallback.classList.remove('d-none');
+                }
+            }, 5000);
+            const modal = new bootstrap.Modal(visioModal);
+            modal.show();
+        });
+    }
+    
+    if (visioModal) {
+        visioModal.addEventListener('hidden.bs.modal', function () {
+            visioIframe.src = '';
+            visioIframe.style.display = 'none';
+            visioLoading.style.display = 'flex';
+            visioFallback.classList.add('d-none');
+        });
+    }
+    
+    const quickKeyword = document.getElementById('quickKeyword');
+    const quickCategorie = document.getElementById('quickCategorie');
+    const budgetMin = document.getElementById('budgetMin');
+    const budgetMax = document.getElementById('budgetMax');
+    const dateStart = document.getElementById('dateStart');
+    const dateEnd = document.getElementById('dateEnd');
+    const showArchive = document.getElementById('showArchive');
+    const servicesContainer = document.getElementById('servicesContainer');
+    const paginationContainer = document.getElementById('paginationContainer');
+    const toggleBtn = document.getElementById('toggleAdvancedFilters');
+    const advancedDiv = document.getElementById('advancedFilters');
+    const activeTagsDiv = document.getElementById('activeFiltersTags');
+    
+    let debounceTimer;
+    let currentPage = 1;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    
+    function getFilterParams() {
+        const params = new URLSearchParams();
+        const keyword = quickKeyword.value.trim();
+        if (keyword) params.append('keyword', keyword);
+        const categorie = quickCategorie.value;
+        if (categorie) params.append('categorie', categorie);
+        const min = budgetMin.value;
+        if (min !== '') params.append('budgetMin', min);
+        const max = budgetMax.value;
+        if (max !== '') params.append('budgetMax', max);
+        const start = dateStart.value;
+        if (start) params.append('dateStart', start);
+        const end = dateEnd.value;
+        if (end) params.append('dateEnd', end);
+        const archive = showArchive.checked ? '1' : '0';
+        params.append('archive', archive);
+        params.append('page', currentPage);
+        return params;
+    }
+    
+    function updateFilterTags() {
+        const params = new URLSearchParams();
+        if (quickKeyword.value.trim()) params.append('keyword', quickKeyword.value.trim());
+        if (quickCategorie.value) params.append('categorie', quickCategorie.value);
+        if (budgetMin.value) params.append('budgetMin', budgetMin.value);
+        if (budgetMax.value) params.append('budgetMax', budgetMax.value);
+        if (dateStart.value) params.append('dateStart', dateStart.value);
+        if (dateEnd.value) params.append('dateEnd', dateEnd.value);
+        if (showArchive.checked) params.append('archive', '1');
+        
+        const tags = [];
+        if (params.get('keyword')) tags.push({ label: `🔍 ${params.get('keyword')}`, key: 'keyword' });
+        if (params.get('categorie')) tags.push({ label: `📁 ${params.get('categorie')}`, key: 'categorie' });
+        if (params.get('budgetMin') || params.get('budgetMax')) {
+            const min = params.get('budgetMin') || '0';
+            const max = params.get('budgetMax') || '∞';
+            tags.push({ label: `💰 ${min} - ${max} DT`, key: 'budget' });
+        }
+        if (params.get('dateStart')) tags.push({ label: `📅 Début ≥ ${params.get('dateStart')}`, key: 'dateStart' });
+        if (params.get('dateEnd')) tags.push({ label: `📅 Fin ≤ ${params.get('dateEnd')}`, key: 'dateEnd' });
+        if (params.get('archive')) tags.push({ label: `🗄️ Archives incluses`, key: 'archive' });
+        
+        if (tags.length === 0) {
+            activeTagsDiv.innerHTML = '<small class="text-muted">Aucun filtre actif</small>';
+            return;
+        }
+        let html = '';
+        tags.forEach(tag => {
+            html += `<span class="badge bg-light text-dark p-2 rounded-pill">
+                        ${tag.label}
+                        <i class="fas fa-times-circle ms-2 text-danger" style="cursor:pointer" data-key="${tag.key}"></i>
+                     </span>`;
+        });
+        activeTagsDiv.innerHTML = html;
+        document.querySelectorAll('#activeFiltersTags .fa-times-circle').forEach(icon => {
+            icon.addEventListener('click', (e) => {
+                const key = icon.dataset.key;
+                switch(key) {
+                    case 'keyword': quickKeyword.value = ''; break;
+                    case 'categorie': quickCategorie.value = ''; break;
+                    case 'budget': budgetMin.value = ''; budgetMax.value = ''; break;
+                    case 'dateStart': dateStart.value = ''; break;
+                    case 'dateEnd': dateEnd.value = ''; break;
+                    case 'archive': showArchive.checked = false; break;
+                }
+                currentPage = 1;
+                performAjaxSearch();
+            });
+        });
+    }
+    
+    async function performAjaxSearch() {
+        const params = getFilterParams();
+        const url = `/admin/services/api/search?${params.toString()}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            let html = '';
+            if (data.services.length === 0) {
+                html = `<div class="col-12"><div class="empty-state"><i class="fas fa-inbox fa-3x mb-3 text-muted"></i><h5>Aucun service trouvé</h5><p class="text-muted">Modifiez vos critères ou créez un nouveau service.</p><a href="{{ path('app_service_new') }}" class="btn btn-orange mt-2">Créer un service</a></div></div>`;
+            } else {
+                for (const s of data.services) {
+                    const isNew = s.isNew;
+                    const archiveClass = s.archive ? 'bg-secondary' : 'bg-orange';
+                    const archiveText = s.archive ? 'Archivé' : 'Actif';
+                    const categoryName = s.categorie ? s.categorie : 'Non catégorisé';
+                    const budgetFormatted = parseInt(s.budget).toLocaleString();
+                    html += `
+                        <div class="col-xl-4 col-md-6">
+                            <div class="service-card ${isNew ? 'new-service-glow' : ''}">
+                                <div class="service-card-header">
+                                    <h6 class="service-title">${escapeHtml(s.titre)}</h6>
+                                    <div style="display: flex; gap: 6px;">
+                                        ${isNew ? `<span class="service-badge" style="background: #10b981; color: white;"><i class="fas fa-star-of-life me-1" style="font-size: 10px;"></i>Nouveau</span>` : ''}
+                                        <span class="service-badge ${archiveClass}">${archiveText}</span>
+                                    </div>
+                                </div>
+                                <div class="service-card-body">
+                                    <div class="service-budget"><span class="budget-label">Budget</span><h3 class="budget-value">${budgetFormatted} <small>DT</small></h3></div>
+                                    <div class="service-category-info"><i class="fas fa-tag me-1 text-muted"></i><small class="text-muted">${escapeHtml(categoryName)}</small></div>
+                                    <div class="service-description"><p class="small text-muted">${escapeHtml(s.description).substring(0, 80)}${s.description.length > 80 ? '...' : ''}</p></div>
+                                    <div class="service-date"><i class="fas fa-calendar-alt me-1 text-muted"></i><small class="text-muted">${s.dateDebut} → ${s.dateFin}</small></div>
+                                </div>
+                                <div class="service-card-footer">
+                                    <a href="/admin/services/${s.id}" class="service-btn service-btn-info"><i class="fas fa-eye"></i></a>
+                                    <a href="/admin/services/${s.id}/edit" class="service-btn service-btn-warning"><i class="fas fa-edit"></i></a>
+                                    <form method="post" action="/admin/services/${s.id}/archive" class="d-inline">
+                                        <input type="hidden" name="_token" value="${csrfToken}">
+                                        <button type="submit" class="service-btn service-btn-archive"><i class="fas fa-${s.archive ? 'undo' : 'archive'}"></i></button>
+                                    </form>
+                                </div>
+                                <div class="service-hover-details">
+                                    <div class="hover-content">
+                                        <h5 class="hover-title">${escapeHtml(s.titre)}</h5>
+                                        <div class="hover-badge ${s.archive ? 'archived' : 'active'}">${archiveText}</div>
+                                        <div class="hover-budget"><strong>${budgetFormatted} DT</strong></div>
+                                        <div class="hover-category"><i class="fas fa-tag"></i> ${escapeHtml(categoryName)}</div>
+                                        <div class="hover-description">${escapeHtml(s.description).replace(/\n/g, '<br>')}</div>
+                                        <div class="hover-dates"><i class="fas fa-calendar-alt"></i> ${s.dateDebut} → ${s.dateFin}</div>
+                                        <a href="/admin/services/${s.id}" class="hover-link">Voir détails →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+            }
+            servicesContainer.innerHTML = html;
+            paginationContainer.innerHTML = data.paginationHtml;
+            updateFilterTags();
+            attachPaginationEvents();
+        } catch (error) {
+            console.error('Ajax error:', error);
+            servicesContainer.innerHTML = `<div class="col-12"><div class="alert alert-danger">Erreur de chargement : ${error.message}</div></div>`;
+            paginationContainer.innerHTML = '';
+        }
+    }
+    
+    function attachPaginationEvents() {
+        document.querySelectorAll('#paginationContainer .page-link').forEach(link => {
+            link.removeEventListener('click', handlePaginationClick);
+            link.addEventListener('click', handlePaginationClick);
+        });
+    }
+    
+    function handlePaginationClick(e) {
+        e.preventDefault();
+        const url = this.getAttribute('href');
+        if (url) {
+            const urlParams = new URLSearchParams(url.split('?')[1]);
+            const page = urlParams.get('page');
+            if (page) {
+                currentPage = parseInt(page);
+                performAjaxSearch();
+            }
+        }
+    }
+    
+    function debouncedSearch() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            currentPage = 1;
+            performAjaxSearch();
+        }, 400);
+    }
+    
+    quickKeyword.addEventListener('input', debouncedSearch);
+    quickCategorie.addEventListener('change', () => { currentPage = 1; performAjaxSearch(); });
+    budgetMin.addEventListener('input', debouncedSearch);
+    budgetMax.addEventListener('input', debouncedSearch);
+    dateStart.addEventListener('change', () => { currentPage = 1; performAjaxSearch(); });
+    dateEnd.addEventListener('change', () => { currentPage = 1; performAjaxSearch(); });
+    showArchive.addEventListener('change', () => { currentPage = 1; performAjaxSearch(); });
+    
+    toggleBtn.addEventListener('click', () => {
+        if (advancedDiv.style.display === 'none') {
+            advancedDiv.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i> Moins';
+        } else {
+            advancedDiv.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i> Plus';
+        }
+    });
+    
+    performAjaxSearch();
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const tnd = document.getElementById('montant-tnd');
+        const usd = document.getElementById('montant-usd');
+        const eur = document.getElementById('montant-eur');
+        const btn = document.getElementById('btnConvertir');
+        function convert() { let val = parseFloat(tnd.value) || 0; usd.value = (val * 0.33).toFixed(2); eur.value = (val * 0.31).toFixed(2); }
+        if (btn) btn.addEventListener('click', convert);
+        if (tnd) tnd.addEventListener('keypress', e => { if(e.key === 'Enter') convert(); });
+        convert();
+    });
+    
+    document.getElementById('exportPdfBtn')?.addEventListener('click', function() { window.open('/admin/services/api/export-pdf', '_blank'); });
+    document.getElementById('insightsBtn')?.addEventListener('click', generateInsights);
+</script>
 {% endblock %}

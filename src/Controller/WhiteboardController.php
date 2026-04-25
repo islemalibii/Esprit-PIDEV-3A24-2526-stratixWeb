@@ -23,10 +23,11 @@ class WhiteboardController extends AbstractController
         $tachesTerminees = [];
 
         foreach ($toutesTaches as $tache) {
-            $employe = $utilisateurRepository->find($tache->getEmployeId());
+            $employeId = $tache->getEmployeId();
+            $employe = $employeId ? $utilisateurRepository->find($employeId) : null;
             $employeNom = $employe
                 ? $employe->getPrenom() . ' ' . $employe->getNom()
-                : 'Employé #' . $tache->getEmployeId();
+                : 'Non assigné';
 
             $taskData = [
                 'id'          => $tache->getId(),
@@ -66,14 +67,14 @@ class WhiteboardController extends AbstractController
             $entityManager->flush();
         }
 
-        //  AJAX 
+        // Drag & drop AJAX request → return JSON
         if ($request->isXmlHttpRequest()) {
             return $this->json(['success' => true]);
         }
 
         // Normal button click → redirect
         $this->addFlash('success', '✅ Tâche déplacée avec succès !');
-        return $this->redirectToRoute('admin/app_whiteboard_index');
+        return $this->redirectToRoute('app_whiteboard_index');
     }
 
     #[Route('/delete/{id}', name: 'app_whiteboard_delete', methods: ['POST'])]
@@ -91,6 +92,6 @@ class WhiteboardController extends AbstractController
         }
 
         $this->addFlash('success', '✅ Tâche supprimée avec succès !');
-        return $this->redirectToRoute('admin/app_whiteboard_index');
+        return $this->redirectToRoute('app_whiteboard_index');
     }
 }

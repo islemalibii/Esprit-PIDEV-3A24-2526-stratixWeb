@@ -1,0 +1,16 @@
+{# Macro avatar : affiche photo si dispo, sinon initiales #}
+{% macro show(user, size, fontSize, gradient) %}
+    {% set sz = size|default('34px') %}
+    {% set fs = fontSize|default('.8rem') %}
+    {% set bg = gradient|default('linear-gradient(135deg,#4f46e5,#7c3aed)') %}
+    {% if user.avatar %}
+        <img src="/images/avatar/{{ user.avatar }}"
+             style="width:{{ sz }};height:{{ sz }};border-radius:50%;object-fit:cover;flex-shrink:0;"
+             alt="{{ user.prenom }} {{ user.nom }}">
+    {% else %}
+        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+             style="width:{{ sz }};height:{{ sz }};font-size:{{ fs }};background:{{ bg }};">
+            {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
+        </div>
+    {% endif %}
+{% endmacro %}

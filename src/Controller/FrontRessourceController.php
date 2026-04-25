@@ -13,22 +13,27 @@ class FrontRessourceController extends AbstractController
     #[Route('/catalogue-ressources', name: 'front_ressource_index')]
     public function index(RessourceRepository $repository, Request $request): Response
     {
+        // Récupération du terme de recherche depuis l'URL
         $searchTerm = $request->query->get('q', '');
 
         if ($searchTerm) {
-            // Assure-toi d'avoir findBySearch dans ton RessourceRepository
+            // Assure-toi que findBySearch est bien défini dans ton RessourceRepository
             $ressources = $repository->findBySearch($searchTerm);
         } else {
-            $ressources = $repository->findAll();
+            // Tri par nom ascendant pour une meilleure lisibilité
+            $ressources = $repository->findBy([], ['nom' => 'ASC']);
         }
 
-        // Calcul des stats (Remplacement de mettreAJourStatistiques)
+        // Calcul des statistiques pour la barre du bas
         $total = count($ressources);
         $quantiteTotale = 0;
+        
         foreach ($ressources as $r) {
+            // On additionne les quantités de chaque ressource
             $quantiteTotale += $r->getQuantite();
         }
 
+        // Rendu vers le template employé (Stratix)
         return $this->render('employee/ressource/index.html.twig', [
             'ressources' => $ressources,
             'searchTerm' => $searchTerm,

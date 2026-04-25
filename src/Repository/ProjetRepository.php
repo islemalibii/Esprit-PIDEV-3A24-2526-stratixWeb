@@ -63,24 +63,45 @@ class ProjetRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-public function findActiveWithFilters(?string $search, ?string $statut): array
+    public function findActiveWithFilters(?string $search, ?string $statut)
 {
     $qb = $this->createQueryBuilder('p')
-        ->andWhere('p.isArchived = :archived')
-        ->setParameter('archived', false);
+        ->andWhere('p.isArchived = :val')
+        ->setParameter('val', false);
 
     if ($search) {
+        // Utilisation de trim() pour éviter les espaces inutiles
         $qb->andWhere('p.nom LIKE :search')
-           ->setParameter('search', '%' . $search . '%');
+           ->setParameter('search', '%' . trim($search) . '%');
     }
 
-    if ($statut) {
+    if ($statut && $statut !== '') {
         $qb->andWhere('p.statut = :statut')
            ->setParameter('statut', $statut);
     }
 
-    return $qb->orderBy('p.id', 'DESC')
-              ->getQuery()
-              ->getResult();
+    // On trie par ID décroissant pour voir les nouveaux projets en premier
+    $qb->orderBy('p.id', 'DESC');
+
+    return $qb->getQuery(); 
+}
+
+    public function findProjetsProchesEcheance(int $days = 7): array
+{
+    $dateCible = new \DateTime();
+    $dateCible->modify('+' . $days . ' days');
+
+    // On définit le début et la fin de la journée cible pour être précis
+    $debutJour = (clone $dateCible)->setTime(0, 0, 0);
+    $finJour = (clone $dateCible)->setTime(23, 59, 59);
+
+    return $this->createQueryBuilder('p')
+        ->where('p.dateFin BETWEEN :debut AND :fin')
+        ->andWhere('p.isArchived = :archived')
+        ->setParameter('debut', $debutJour)
+        ->setParameter('fin', $finJour)
+        ->setParameter('archived', false) // On ignore les projets archivés
+        ->getQuery()
+        ->getResult();
 }
 }

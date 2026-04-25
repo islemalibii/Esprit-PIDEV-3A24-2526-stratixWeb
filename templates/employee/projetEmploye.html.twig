@@ -4,16 +4,25 @@
 
 {% block employee_content %}
 <div class="container-fluid py-4 px-4">
-    <div class="mb-4">
-        <h2 class="fw-bold mb-1" style="color: #64748b; font-size: 24px;">
-            Bonjour, {{ app.user.prenom }}
-        </h2>
-        <p style="color: #94a3b8; font-size: 14px;">Espace Collaborateur - Mes Projets</p>
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #64748b; font-size: 24px;">
+                Bonjour, {{ app.user.prenom }}
+            </h2>
+            <p style="color: #94a3b8; font-size: 14px;">
+                Espace Collaborateur - Mes Projets ({{ projets|length }} au total)
+            </p>
+        </div>
+        {# Lien rapide vers la liste complète des favoris pour l'employé #}
+        <a href="{{ path('app_projet_employee_favoris') }}" class="btn btn-outline-danger shadow-sm px-3 fw-bold rounded-3">
+    <i class="ti ti-heart-filled me-1"></i> Mes Favoris
+</a>
     </div>
 
+    {# --- BARRE DE RECHERCHE --- #}
     <div class="mb-5">
-        <div class="input-group shadow-sm rounded-3">
-            <span class="input-group-text border-0 bg-white text-muted">🔍</span>
+        <div class="input-group shadow-sm rounded-3 overflow-hidden border-0">
+            <span class="input-group-text border-0 bg-white text-muted ps-3">🔍</span>
             <input type="text" id="projetSearch" class="form-control border-0 p-3" 
                    placeholder="Rechercher parmi mes projets..." 
                    onkeyup="filterProjets()">
@@ -23,51 +32,108 @@
     <div class="row g-4" id="projetsContainer">
         {% for projet in projets %}
             <div class="col-md-6 col-lg-4 projet-card">
-                <div class="card border-0 shadow-sm rounded-4 h-100 transition-card">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between mb-3">
+                <div class="card border-0 shadow-sm rounded-4 h-100 transition-card bg-white position-relative">
+                    <div class="card-body p-4 d-flex flex-column">
+                        
+                        {# --- STATUT & BUDGET + FAVORI --- #}
+                        <div class="d-flex justify-content-between align-items-start mb-3">
                             <span class="badge rounded-pill px-3 py-2" 
-                                  style="background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0;">
+                                  style="background-color: {{ 
+                                    projet.statut == 'En cours' ? '#dcfce7' : 
+                                    (projet.statut == 'Planifié' ? '#dbeafe' : '#f1f5f9') 
+                                  }}; color: {{ 
+                                    projet.statut == 'En cours' ? '#166534' : 
+                                    (projet.statut == 'Planifié' ? '#1e40af' : '#475569') 
+                                  }}; border: 1px solid rgba(0,0,0,0.05);">
                                 {{ projet.statut }}
                             </span>
-                            <small class="text-muted">{{ projet.budget|number_format(0, '.', ' ') }} DT</small>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <small class="text-success fw-bold">{{ projet.budget|number_format(0, '.', ' ') }} DT</small>
+                                
+                                {# --- LOGIQUE DU COEUR (FAVORI) --- #}
+                                {% set isFav = false %}
+                                {% if user_favoris_ids is defined and projet.id in user_favoris_ids %}
+                                    {% set isFav = true %}
+                                {% endif %}
+                                <a href="{{ path('projet_toggle_favori', {'id': projet.id}) }}" 
+                                   class="js-favori-btn text-decoration-none" 
+                                   title="Ajouter aux favoris">
+                                    <i class="ti {{ isFav ? 'ti-heart-filled text-danger' : 'ti-heart text-secondary' }}" style="font-size: 1.4rem; cursor: pointer;"></i>
+                                </a>
+                            </div>
                         </div>
 
+                        {# --- TITRE & DESCRIPTION --- #}
                         <h5 class="fw-bold text-dark mb-2 card-title-text">{{ projet.nom }}</h5>
-                        <p class="text-muted small mb-4" style="height: 40px; overflow: hidden;">
-                            {{ projet.description|slice(0, 70) }}...
+                        <p class="text-muted small mb-4">
+                            {{ projet.description|slice(0, 80) }}...
                         </p>
 
-                        <div class="p-3 rounded-3 mb-3" style="background-color: #f8fafc;">
+                        {# --- INFOS RESPONSABLE, DATE & SPRINTS --- #}
+                        <div class="p-3 rounded-3 mb-4 mt-auto" style="background-color: #f8fafc;">
                             <div class="d-flex align-items-center mb-2">
                                 <i class="ti ti-crown text-warning me-2"></i>
-                                <span class="small"><strong>Resp :</strong> {{ projet.responsable.prenom }}</span>
+                                <span class="small text-truncate"><strong>Resp :</strong> {{ projet.responsable.prenom }} {{ projet.responsable.nom }}</span>
                             </div>
+
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="ti ti-run text-info me-2"></i>
+                                <span class="small"><strong>Phases:</strong> {{ projet.sprints|length }} cycle(s)</span>
+                            </div>
+
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-calendar-event text-primary me-2"></i>
-                                <span class="small text-muted">{{ projet.dateFin|date('d/m/Y') }}</span>
+                                <span class="small text-muted">Fin : {{ projet.dateFin|date('d/m/Y') }}</span>
                             </div>
                         </div>
 
-                        <a href="{{ path('app_projet_show', {'id': projet.id}) }}" 
-                           class="btn btn-outline-dark w-100 rounded-3 fw-bold">
-                            Voir le projet
-                        </a>
+                        {# --- ACTIONS --- #}
+                        <div class="d-flex gap-2">
+                            <a href="{{ path('app_projet_employe_show', {'id': projet.id}) }}" 
+                               class="btn btn-light border flex-grow-1 rounded-3 fw-bold text-muted small">
+                                Détails
+                            </a>
+                            <a href="{{ path('app_projet_chat', {'id': projet.id}) }}" 
+                               class="btn btn-primary flex-grow-1 rounded-3 fw-bold small d-flex align-items-center justify-content-center">
+                                <i class="ti ti-messages me-2"></i> Chat Projet
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         {% else %}
             <div class="col-12 text-center py-5">
-                <p class="text-muted">Aucun projet trouvé.</p>
+                <div class="text-muted">
+                    <i class="ti ti-folder-off fs-1 mb-2 d-block"></i>
+                    Aucun projet assigné pour le moment.
+                </div>
             </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
-    .transition-card { transition: all 0.3s ease; }
-    .transition-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important; }
-    #projetSearch:focus { box-shadow: none; background-color: #f8fafc; }
+    .transition-card { 
+        transition: transform 0.2s ease, box-shadow 0.2s ease; 
+        border: 1px solid #f1f5f9 !important;
+    }
+    .transition-card:hover { 
+        transform: translateY(-5px); 
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important; 
+        border-color: #e2e8f0 !important;
+    }
+    .btn-primary {
+        background-color: #3b82f6;
+        border: none;
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    #projetSearch:focus { 
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
+        background-color: #fff; 
+    }
 </style>
 
 <script>
@@ -77,12 +143,30 @@ function filterProjets() {
 
     for (let card of cards) {
         let title = card.querySelector('.card-title-text').innerText.toLowerCase();
-        if (title.includes(input)) {
-            card.style.display = "";
-        } else {
-            card.style.display = "none";
-        }
+        card.style.display = title.includes(input) ? "" : "none";
     }
 }
+
+// Gestion AJAX des favoris pour l'espace employé
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.js-favori-btn').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const icon = this.querySelector('i');
+            
+            fetch(this.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.isFavorite) {
+                        icon.classList.remove('ti-heart', 'text-secondary');
+                        icon.classList.add('ti-heart-filled', 'text-danger');
+                    } else {
+                        icon.classList.remove('ti-heart-filled', 'text-danger');
+                        icon.classList.add('ti-heart', 'text-secondary');
+                    }
+                });
+        });
+    });
+});
 </script>
 {% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base_auth.html.twig' %}
+{% block title %}Vérifiez votre email — Stratix{% endblock %}
+
+{% block body %}
+<div style="position:fixed;top:1.5rem;left:1.5rem;z-index:100;">
+    <img src="/images/logo.png" alt="Stratix" style="height:180px;width:auto;">
+</div>
+<div class="d-flex align-items-center justify-content-center min-vh-100 bg-white">
+    <div style="position:relative;width:100%;max-width:520px;padding:2rem;margin:1.5rem;">
+        <div style="position:absolute;top:8px;left:8px;right:-8px;bottom:-8px;background:#e9ecef;border-radius:16px;z-index:0;"></div>
+        <div style="position:relative;z-index:1;background:#fff;border-radius:16px;padding:3.5rem;box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:center;">
+            {% for msg in app.flashes('danger') %}
+                <div class="alert alert-danger small mb-3">{{ msg }}</div>
+            {% endfor %}
+            <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
+            <h2 class="fw-bold mb-2" style="color:#2196f3;">Vérifiez votre email</h2>
+            <p class="text-secondary mb-4">
+                Un lien de réinitialisation a été envoyé à votre adresse email.<br>
+                Ce lien expire dans <strong>1 heure</strong>.
+            </p>
+            <a href="{{ path('app_login') }}" class="btn btn-outline-primary">
+                Retour à la connexion
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

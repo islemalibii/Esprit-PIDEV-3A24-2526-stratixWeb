@@ -17,7 +17,13 @@
         <li>
             <a class="nav-link {% if app.request.attributes.get('_route') == 'app_employee_taches' or app.request.attributes.get('_route') == 'app_employee_plannings' %}active{% endif %}"
                href="{{ path('app_employee_taches') }}">
-                <i class="ti ti-checklist"></i><span class="nav-text">Tâches & Planning</span>
+                <i class="ti ti-checklist"></i><span class="nav-text">Tâches</span>
+            </a>
+        </li>
+        <li>
+            <a class="nav-link {% if app.request.attributes.get('_route') == 'app_employee_plannings' or app.request.attributes.get('_route') == 'app_employee_plannings' %}active{% endif %}"
+               href="{{ path('app_employee_plannings') }}">
+                <i class="ti ti-checklist"></i><span class="nav-text">Planning</span>
             </a>
         </li>
         <li>

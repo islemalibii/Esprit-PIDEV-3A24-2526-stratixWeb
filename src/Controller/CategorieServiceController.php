@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\Repository\ServiceRepository;
 use App\Entity\CategorieService;
 use App\Form\CategorieServiceType;
 use App\Repository\CategorieServiceRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,12 +17,14 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CategorieServiceController extends AbstractController
 {
     #[Route('/', name: 'app_categorie_service_index', methods: ['GET'])]
-    public function index(Request $request, CategorieServiceRepository $categorieServiceRepository): Response
+    public function index(Request $request, CategorieServiceRepository $categorieServiceRepository, PaginatorInterface $paginator, ServiceRepository $serviceRepository): Response
     {
         $search = $request->query->get('search', '');
         $archive = $request->query->get('archive', '0') === '1';
 
         $queryBuilder = $categorieServiceRepository->createQueryBuilder('c')
+            ->leftJoin('c.services', 's')
+            ->addSelect('s')
             ->where('c.archive = :archive')
             ->setParameter('archive', $archive);
 
@@ -29,12 +33,21 @@ final class CategorieServiceController extends AbstractController
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        $categories = $queryBuilder->orderBy('c.nom', 'ASC')->getQuery()->getResult();
+        $queryBuilder->orderBy('c.nom', 'ASC');
+        
+        $categories = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page', 1),
+            6
+        );
+
+        $totalServices = $serviceRepository->count(['archive' => false]);
 
         return $this->render('admin/categorie_service/index.html.twig', [
             'categorie_services' => $categories,
             'search' => $search,
             'showArchives' => $archive,
+            'totalServices' => $totalServices,
         ]);
     }
 

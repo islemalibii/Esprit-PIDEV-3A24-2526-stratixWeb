@@ -4,30 +4,44 @@ namespace App\Service;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Symfony\Component\HttpFoundation\Response;
 
 class PdfService
 {
-    private $domPdf;
+    private function getDompdf($html): Dompdf
+    {
+        $options = new Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isRemoteEnabled', true); 
 
-    public function __construct() {
-        $pdfOptions = new Options();
-        $pdfOptions->set('defaultFont', 'Arial');
-        $pdfOptions->set('isRemoteEnabled', true); // Pour autoriser les images/logos
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
 
-        $this->domPdf = new Dompdf($pdfOptions);
+        return $dompdf;
     }
 
-    public function generateBinaryPdf($html) {
-        $this->domPdf->loadHtml($html);
-        $this->domPdf->render();
-        $this->domPdf->output();
-    }
+    /**
+     * Pour l'usage Web classique (Téléchargement direct)
+     */
+    public function showPdfFile($html, $filename): Response
+    {
+        $dompdf = $this->getDompdf($html);
+        $output = $dompdf->output();
 
-    public function showPdfFile($html, $filename) {
-        $this->domPdf->loadHtml($html);
-        $this->domPdf->render();
-        $this->domPdf->stream($filename . ".pdf", [
-            "Attachment" => false // "false" pour l'ouvrir dans le navigateur, "true" pour forcer le téléchargement
+        return new Response($output, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '.pdf"'
         ]);
+    }
+
+    /**
+     * Pour l'usage API (Récupère le binaire brut)
+     */
+    public function getBinaryContent($html): string
+    {
+        $dompdf = $this->getDompdf($html);
+        return $dompdf->output();
     }
 }

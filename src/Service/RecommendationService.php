@@ -77,7 +77,7 @@ class RecommendationService
             Événements disponibles:
             " . json_encode(array_values($availableList), JSON_UNESCAPED_UNICODE) . "
             
-            Analyse les préférences de l'employé et recommande les 3 événements 
+            Analyse les préférences de l'employé et recommande les 6 événements 
             les plus pertinents pour lui.
             
             Réponds UNIQUEMENT avec un JSON valide dans ce format exact, sans texte avant ou après:
@@ -141,7 +141,7 @@ class RecommendationService
                 'messages'   => [
                     ['role' => 'user', 'content' => $prompt]
                 ],
-                'max_tokens' => 500,
+                'max_tokens' => 1000,
             ]),
         ]);
 

@@ -1,163 +1,439 @@
-{# templates/admin/Projet/detailsProjet.html.twig #}
 {% extends 'base.html.twig' %}
 
 {% block title %}STRATIX - Détails du Projet{% endblock %}
 
 {% block body %}
 <main id="content" class="content py-4">
-<div class="container-fluid">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fs-4 fw-bold text-dark">🔍 Détails : {{ projet.nom }}</h2>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">
-                        <a href="{{ path('app_projet_index') }}" class="text-danger text-decoration-none">Liste des projets</a>
-                    </li>
-                    <li class="breadcrumb-item active">Fiche projet</li>
-                </ol>
-            </nav>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ path('app_projet_edit', {'id': projet.id}) }}" class="btn btn-warning text-white shadow-sm fw-bold">
-                <i class="fas fa-edit me-1"></i> Modifier
-            </a>
-            <a href="{{ path('app_projet_index') }}" class="btn btn-light border shadow-sm fw-bold">
-                <i class="fas fa-arrow-left me-1"></i> Retour
-            </a>
-        </div>
-    </div>
+    <div class="container-fluid">
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            {# Fiche Descriptive #}
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="mb-0 fw-bold text-dark">
-                        <i class="fas fa-info-circle me-2 text-danger"></i>Fiche descriptive
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table align-middle mb-0">
-                        <tbody>
-                            <tr>
-                                <th class="ps-4 py-3 bg-light-subtle text-muted small fw-bold" style="width: 30%;">NOM DU PROJET</th>
-                                <td class="ps-3 fw-bold text-dark">{{ projet.nom }}</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-4 py-3 bg-light-subtle text-muted small fw-bold">DESCRIPTION</th>
-                                <td class="ps-3 text-muted">{{ projet.description|default('Aucune description enregistrée.') }}</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-4 py-3 bg-light-subtle text-muted small fw-bold">BUDGET ESTIMÉ</th>
-                                <td class="ps-3 text-success fw-bold fs-5">{{ projet.budget|number_format(2, ',', ' ') }} DT</td>
-                            </tr>
-                            <tr>
-                                <th class="ps-4 py-3 bg-light-subtle text-muted small fw-bold">STATUT ACTUEL</th>
-                                <td class="ps-3">
-                                    <span class="badge rounded-pill px-3 py-2 
-                                        {% if projet.statut == 'En cours' %}bg-warning text-dark
-                                        {% elseif projet.statut == 'Terminé' %}bg-success
-                                        {% elseif projet.statut == 'Annulé' %}bg-danger
-                                        {% else %}bg-info text-white{% endif %}">
-                                        {{ projet.statut }}
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        {# ── EN-TÊTE ──────────────────────────────────────────── #}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fs-4 fw-bold text-dark">
+                    <i class="fas fa-folder-open me-2 text-warning"></i>{{ projet.nom }}
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_projet_index') }}" class="text-danger text-decoration-none">Liste des projets</a>
+                        </li>
+                        <li class="breadcrumb-item active">Fiche projet</li>
+                    </ol>
+                </nav>
             </div>
+            <div class="d-flex gap-2">
+                <a href="{{ path('app_projet_edit', {'id': projet.id}) }}" class="btn btn-warning text-white shadow-sm fw-bold rounded-3">
+                    <i class="fas fa-edit me-1"></i> Modifier
+                </a>
+                <a href="{{ path('app_projet_index') }}" class="btn btn-light border shadow-sm fw-bold rounded-3">
+                    <i class="fas fa-arrow-left me-1"></i> Retour
+                </a>
+            </div>
+        </div>
 
-            {# Équipe du projet #}
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="mb-0 fw-bold text-dark">
-                        <i class="fas fa-users me-2 text-primary"></i>Équipe du projet
-                    </h5>
+        <div class="row g-4">
+            {# ── COLONNE PRINCIPALE ──────────────────────────────── #}
+            <div class="col-lg-8">
+                
+                {# FICHE DESCRIPTIVE #}
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="fas fa-info-circle me-2 text-danger"></i>Fiche descriptive
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table align-middle mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="ps-4 py-3 bg-light text-muted small fw-bold" style="width:32%;">NOM DU PROJET</th>
+                                    <td class="ps-3 fw-bold text-dark">{{ projet.nom }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-4 py-3 bg-light text-muted small fw-bold">DESCRIPTION</th>
+                                    <td class="ps-3 text-muted">{{ projet.description|default('Aucune description.') }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-4 py-3 bg-light text-muted small fw-bold">BUDGET ESTIMÉ</th>
+                                    <td class="ps-3 text-success fw-bold fs-5">
+                                        {{ projet.budget|number_format(2, ',', ' ') }} DT
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-4 py-3 bg-light text-muted small fw-bold">CAHIER DES CHARGES</th>
+                                    <td class="ps-3">
+                                        {% if projet.cahierDesCharges %}
+                                            <div class="d-flex align-items-center gap-2">
+                                                <a href="{{ asset('uploads/cahiers/' ~ projet.cahierDesCharges) }}" target="_blank" class="btn btn-sm btn-outline-danger rounded-3 fw-bold px-3">
+                                                    <i class="fas fa-file-pdf me-1"></i> PDF
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-dark rounded-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalIA">
+                                                    <i class="fas fa-robot me-1 text-info"></i> Analyser IA
+                                                </button>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Aucun fichier joint.</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if projet.membres|length > 0 %}
-                        <div class="row g-3">
-                            {% for membre in projet.membres %}
-                                {# Vérification de l'existence de l'objet membre pour éviter l'erreur EntityNotFound #}
-                                {% if membre is defined and membre is not null %}
+
+                {# ── SECTION PHASES ────────────────────────────────── #}
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold text-dark">
+                            <i class="fas fa-running me-2 text-success"></i>Phases du projet
+                        </h5>
+                        <button class="btn btn-sm btn-success rounded-3 fw-bold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAddPhase">
+                            <i class="fas fa-plus me-1"></i> Ajouter une phase
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% if projet.phases|length > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="border-0 small fw-bold text-muted">NOM</th>
+                                            <th class="border-0 small fw-bold text-muted">PÉRIODE</th>
+                                            <th class="border-0 small fw-bold text-muted text-center">STATUT</th>
+                                            <th class="border-0 small fw-bold text-muted text-end">ACTIONS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for phase in projet.phases %}
+                                            <tr>
+                                                <td><div class="fw-bold text-dark">{{ phase.nom }}</div></td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ phase.dateDebut|date('d/m/Y') }} - {{ phase.dateFin|date('d/m/Y') }}
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    {% set status = phase.statut|default('En attente') %}
+                                                    <span class="badge rounded-pill {% if status == 'Terminé' %}bg-success{% elseif status == 'En cours' %}bg-primary{% else %}bg-secondary{% endif %}" style="font-size: 0.7rem;">
+                                                        {{ status }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="d-flex justify-content-end gap-2">
+                                                        <button class="btn btn-sm btn-outline-warning border-0" data-bs-toggle="modal" data-bs-target="#modalEditPhase{{ phase.id }}">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger border-0" data-bs-toggle="modal" data-bs-target="#modalDeletePhase{{ phase.id }}">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            {# MODAL ÉDITION PHASE (Généré pour chaque phase) #}
+                                            <div class="modal fade" id="modalEditPhase{{ phase.id }}" tabindex="-1">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content rounded-4 border-0 shadow">
+                                                        <div class="modal-header bg-warning text-white border-0 rounded-top-4">
+                                                            <h5 class="fw-bold mb-0">Modifier {{ phase.nom }}</h5>
+                                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <form method="POST" action="{{ path('app_phase_edit', {id: phase.id}) }}">
+                                                            <div class="modal-body p-4 text-start">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label small fw-bold">Nom de la phase</label>
+                                                                    <input type="text" class="form-control rounded-3" name="nom" value="{{ phase.nom }}" required>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <div class="col-6 mb-3">
+                                                                        <label class="form-label small fw-bold">Début</label>
+                                                                        <input type="date" class="form-control rounded-3" name="dateDebut" value="{{ phase.dateDebut|date('Y-m-d') }}" required>
+                                                                    </div>
+                                                                    <div class="col-6 mb-3">
+                                                                        <label class="form-label small fw-bold">Fin</label>
+                                                                        <input type="date" class="form-control rounded-3" name="dateFin" value="{{ phase.dateFin|date('Y-m-d') }}" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label small fw-bold">Statut</label>
+                                                                    <select class="form-select rounded-3" name="statut">
+                                                                        <option value="En attente" {% if phase.statut == 'En attente' %}selected{% endif %}>En attente</option>
+                                                                        <option value="En cours" {% if phase.statut == 'En cours' %}selected{% endif %}>En cours</option>
+                                                                        <option value="Terminé" {% if phase.statut == 'Terminé' %}selected{% endif %}>Terminé</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label small fw-bold">Objectif</label>
+                                                                    <textarea class="form-control rounded-3" name="objectif" rows="2">{{ phase.objectif }}</textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer border-0 bg-light rounded-bottom-4">
+                                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                                                                <button type="submit" class="btn btn-warning text-white rounded-3 fw-bold px-4">Sauvegarder</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {# MODAL SUPPRESSION PHASE #}
+                                            <div class="modal fade" id="modalDeletePhase{{ phase.id }}" tabindex="-1">
+                                                <div class="modal-dialog modal-sm modal-dialog-centered">
+                                                    <div class="modal-content rounded-4 border-0 shadow">
+                                                        <div class="modal-body p-4 text-center">
+                                                            <div class="text-danger mb-3"><i class="fas fa-exclamation-circle fa-3x"></i></div>
+                                                            <h6 class="fw-bold text-dark">Supprimer cette phase ?</h6>
+                                                            <form method="POST" action="{{ path('app_phase_delete', {id: phase.id}) }}">
+                                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ phase.id) }}">
+                                                                <div class="d-flex gap-2 justify-content-center mt-4">
+                                                                    <button type="button" class="btn btn-light rounded-3 fw-bold" data-bs-dismiss="modal">Non</button>
+                                                                    <button type="submit" class="btn btn-danger rounded-3 fw-bold">Oui, supprimer</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-tasks fa-2x text-light mb-2"></i>
+                                <p class="text-muted fst-italic mb-0">Aucune phase planifiée.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {# ÉQUIPE DU PROJET #}
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-users me-2 text-primary"></i>Équipe</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if projet.membres|length > 0 %}
+                            <div class="row g-3">
+                                {% for membre in projet.membres %}
                                     <div class="col-md-6 col-xl-4">
-                                        <div class="d-flex align-items-center p-3 border rounded-3 bg-light-subtle">
-                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <div class="d-flex align-items-center p-3 border rounded-3 bg-light">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width:40px; height:40px; font-size:0.85rem;">
                                                 {{ membre.prenom|first|upper }}{{ membre.nom|first|upper }}
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-bold text-dark small">{{ membre.prenom }} {{ membre.nom }}</h6>
-                                                <span class="text-muted" style="font-size: 0.75rem;">Collaborateur</span>
+                                                <span class="text-muted" style="font-size:0.72rem;">Collaborateur</span>
                                             </div>
                                         </div>
                                     </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-muted italic mb-0">Aucun membre assigné à ce projet pour le moment.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            {# Responsable - Section avec protection Null Coalesce #}
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="mb-0 fw-bold text-dark">
-                        <i class="fas fa-user-tie me-2 text-warning"></i>Responsable
-                    </h5>
-                </div>
-                <div class="card-body text-center py-4">
-                    <div class="mx-auto bg-warning-subtle text-warning rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
-                        <i class="fas fa-user-shield fs-2"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-1">
-                        {# Utilisation du filtre default et test d'existence #}
-                        {% if projet.responsable %}
-                            {{ projet.responsable.prenom }} {{ projet.responsable.nom }}
+                                {% endfor %}
+                            </div>
                         {% else %}
-                            <span class="text-muted fw-normal italic">Non défini ou supprimé</span>
+                            <p class="text-muted fst-italic mb-0">Aucun membre assigné.</p>
                         {% endif %}
-                    </h5>
-                    <p class="text-muted small text-uppercase fw-bold mb-0">Chef de projet</p>
+                    </div>
                 </div>
             </div>
 
-            {# Planning #}
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="mb-0 fw-bold text-dark">
-                        <i class="fas fa-calendar-alt me-2 text-danger"></i>Planning
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-start mb-4">
-                        <div class="bg-primary-subtle p-2 rounded-3 me-3">
-                            <i class="fas fa-calendar-plus fs-4 text-primary"></i>
-                        </div>
-                        <div>
-                            <label class="text-muted small fw-bold d-block">DATE DE DÉBUT</label>
-                            <span class="fw-bold text-dark fs-6">{{ projet.dateDebut ? projet.dateDebut|date('d/m/Y') : '--/--/----' }}</span>
-                        </div>
+            {# ── COLONNE LATÉRALE ────────────────────────────────── #}
+            <div class="col-lg-4">
+                {# STATUT DU PROJET #}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body">
+                        <label class="text-muted small fw-bold mb-2 d-block text-uppercase">Statut Global</label>
+                        <span class="badge w-100 py-3 fs-6 rounded-3
+                            {% if projet.statut == 'En cours' %}bg-warning text-dark
+                            {% elseif projet.statut == 'Terminé' %}bg-success
+                            {% elseif projet.statut == 'Annulé' %}bg-danger
+                            {% else %}bg-info text-white{% endif %}">
+                            {{ projet.statut|upper }}
+                        </span>
                     </div>
-                    <div class="d-flex align-items-start">
-                        <div class="bg-danger-subtle p-2 rounded-3 me-3">
-                            <i class="fas fa-calendar-check fs-4 text-danger"></i>
+                </div>
+
+                {# RESPONSABLE #}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-user-tie me-2 text-warning"></i>Responsable</h5>
+                    </div>
+                    <div class="card-body text-center py-4">
+                        <div class="mx-auto bg-warning-subtle text-warning rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:64px; height:64px;">
+                            <i class="fas fa-user-shield fs-2"></i>
                         </div>
-                        <div>
-                            <label class="text-muted small fw-bold d-block">DATE DE FIN</label>
-                            <span class="fw-bold text-dark fs-6">{{ projet.dateFin ? projet.dateFin|date('d/m/Y') : '--/--/----' }}</span>
+                        <h5 class="fw-bold text-dark mb-1">{{ projet.responsable ? projet.responsable.prenom ~ ' ' ~ projet.responsable.nom : 'Non défini' }}</h5>
+                        <p class="text-muted small text-uppercase fw-bold mb-0">Chef de projet</p>
+                    </div>
+                </div>
+
+                {# PLANNING #}
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-alt me-2 text-danger"></i>Planning</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-4">
+                            <div class="bg-primary-subtle p-2 rounded-3 me-3"><i class="fas fa-calendar-plus fs-4 text-primary"></i></div>
+                            <div>
+                                <label class="text-muted small fw-bold d-block">DATE DE DÉBUT</label>
+                                <span class="fw-bold text-dark">{{ projet.dateDebut ? projet.dateDebut|date('d/m/Y') : '--/--/----' }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <div class="bg-danger-subtle p-2 rounded-3 me-3"><i class="fas fa-calendar-check fs-4 text-danger"></i></div>
+                            <div>
+                                <label class="text-muted small fw-bold d-block">DATE DE FIN</label>
+                                <span class="fw-bold text-dark">{{ projet.dateFin ? projet.dateFin|date('d/m/Y') : '--/--/----' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    {# ── MODAL AJOUT PHASE ──────────────────────────────── #}
+    <div class="modal fade" id="modalAddPhase" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white border-0 rounded-top-4">
+                    <h5 class="fw-bold mb-0">Planifier une nouvelle phase</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ path('app_phase_new', {'id': projet.id}) }}">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nom de la phase</label>
+                            <input type="text" class="form-control rounded-3" name="nom" placeholder="Ex: Phase 1 - Analyse" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label small fw-bold">Date de début</label>
+                                <input type="date" class="form-control rounded-3" name="dateDebut" required>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label small fw-bold">Date de fin</label>
+                                <input type="date" class="form-control rounded-3" name="dateFin" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Objectif</label>
+                            <textarea class="form-control rounded-3" name="objectif" rows="3" placeholder="Quels sont les objectifs majeurs ?"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light rounded-bottom-4">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success rounded-3 fw-bold px-4">Créer la phase</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ── MODAL ANALYSE IA ── #}
+    <div class="modal fade" id="modalIA" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 bg-dark text-white rounded-top-4">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-robot me-2 text-info"></i>Stratix IA - Analyse</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="ia-loader" class="text-center py-5">
+                        <div class="spinner-border text-danger mb-3" role="status"></div>
+                        <p class="text-muted fw-bold">L'IA analyse le cahier des charges...</p>
+                    </div>
+                    <div id="ia-content" class="d-none">
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-danger border-bottom pb-2 mb-3">Résumé Exécutif</h6>
+                            <div class="p-3 bg-light rounded-3 text-dark border-start border-danger border-4 shadow-sm" id="resumeCourt"></div>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-3">Détails de l'analyse</h6>
+                            <div id="resumeDetaille"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-3 fw-bold" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalIA = document.getElementById('modalIA');
+        if(modalIA) {
+            modalIA.addEventListener('show.bs.modal', function () {
+                const loader = document.getElementById('ia-loader');
+                const content = document.getElementById('ia-content');
+                const resumeCourt = document.getElementById('resumeCourt');
+                const resumeDetaille = document.getElementById('resumeDetaille');
+
+                loader.classList.remove('d-none');
+                content.classList.add('d-none');
+
+                fetch("{{ path('app_projet_analyser_ia', {id: projet.id}) }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            loader.innerHTML = `<div class="alert alert-warning mx-4">${data.error}</div>`;
+                            return;
+                        }
+                        resumeCourt.innerText = data.resume_court || "Analyse terminée.";
+                        
+                        let detailHtml = "";
+                        let details = data.resume_detaille;
+                        if (typeof details === 'string' && details.trim().startsWith('{')) {
+                            try { details = JSON.parse(details); } catch(e) {}
+                        }
+
+                        if (details && typeof details === 'object' && !Array.isArray(details)) {
+                            detailHtml = '<div class="accordion accordion-flush border rounded-3" id="accDetaillesIA">';
+                            Object.entries(details).forEach(([key, value], index) => {
+                                const title = key.replace(/_/g, ' ');
+                                detailHtml += `
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed fw-bold text-capitalize py-3" type="button"
+                                                    data-bs-toggle="collapse" data-bs-target="#collIA${index}">
+                                                <i class="fas fa-chevron-right me-2 small text-danger"></i>${title}
+                                            </button>
+                                        </h2>
+                                        <div id="collIA${index}" class="accordion-collapse collapse" data-bs-parent="#accDetaillesIA">
+                                            <div class="accordion-body bg-light text-muted">
+                                                ${Array.isArray(value) ? `<ul class="mb-0"><li>${value.join('</li><li>')}</li></ul>` : value}
+                                            </div>
+                                        </div>
+                                    </div>`;
+                            });
+                            detailHtml += '</div>';
+                        } else {
+                            detailHtml = `<div class="p-3 bg-light rounded-3 border text-muted">${details || "Pas de détails."}</div>`;
+                        }
+
+                        resumeDetaille.innerHTML = detailHtml;
+                        loader.classList.add('d-none');
+                        content.classList.remove('d-none');
+                    })
+                    .catch(error => {
+                        loader.innerHTML = `<div class="alert alert-danger mx-4">Erreur service IA.</div>`;
+                    });
+            });
+        }
+    });
+    </script>
+
+    <style>
+        .accordion-button:not(.collapsed) {
+            background-color: #fff5f5 !important;
+            color: #dc3545 !important;
+            box-shadow: none;
+        }
+        .accordion-button:focus { box-shadow: none; }
+        .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    </style>
+
 </main>
 {% endblock %}
