@@ -1,20 +1,20 @@
-{# templates/admin/ressource/index.html.twig #}
+{# templates/admin/Ressource/index.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Stratix | Gestion & Recommandation IA{% endblock %}
+{% block title %}Stratix | Gestion & Recommandation IA (Grok){% endblock %}
 
 {% block body %}
 <main id="content" class="content py-4">
     <div class="container mt-4">
         
-        {# --- BANDEAU DE CONSEIL IA (DYNAMIQUE) --- #}
+        {# --- BANDEAU DE CONSEIL IA --- #}
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="alert alert-info d-flex align-items-center shadow-sm border-0" style="background-color: #eef2ff; border-left: 5px solid #6366f1 !important;">
                     <i class="ti ti-sparkles fs-3 me-3" style="color: #6366f1;"></i>
                     <div>
-                        <strong>Assistant Stratix AI :</strong> 
-                        L'analyse prédictive est prête. Consultez l'onglet <strong>"Optimisation de Production"</strong> pour voir les {{ suggestions|length }} suggestions personnalisées.
+                        <strong>Assistant Stratix Grok :</strong> 
+                        L'analyse prédictive est opérationnelle. Consultez l'onglet <strong>"Optimisation de Production"</strong> pour voir les {{ suggestions|length }} suggestions générées par l'IA.
                     </div>
                 </div>
             </div>
@@ -30,11 +30,6 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="production-tab" data-bs-toggle="tab" data-bs-target="#production-content" type="button" role="tab" style="color: #6366f1;">
                     <i class="ti ti-cpu me-1"></i> Optimisation de Production (IA)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold" id="imports-tab" data-bs-toggle="tab" data-bs-target="#imports-content" type="button" role="tab">
-                    <i class="ti ti-mail-download me-1"></i> Catalogues Emails
                 </button>
             </li>
         </ul>
@@ -59,6 +54,9 @@
                                 <a href="{{ path('ressource_form') }}" class="btn btn-success fw-bold shadow-sm">
                                     <i class="ti ti-plus"></i> Nouvelle Ressource
                                 </a>
+                                <a href="{{ path('ressource_pdf') }}" class="btn btn-outline-danger ms-2" target="_blank">
+                                    <i class="ti ti-file-type-pdf"></i> PDF
+                                </a>
                             </div>
                         </form>
 
@@ -69,7 +67,6 @@
                                         <th>Nom du composant</th>
                                         <th>Type</th>
                                         <th>Stock</th>
-                                        <th>Fournisseur</th>
                                         <th class="text-center">Expertise IA</th>
                                         <th class="text-center">Actions</th>
                                     </tr>
@@ -77,26 +74,33 @@
                                 <tbody>
                                     {% for ressource in ressources %}
                                         <tr>
-                                            <td class="fw-bold">{{ ressource.nom }}</td>
+                                            <td class="fw-bold text-dark">{{ ressource.nom }}</td>
                                             <td><span class="badge bg-light text-dark border">{{ ressource.typeRessource }}</span></td>
                                             <td>
-                                                <span class="fw-bold {{ ressource.quantite < 10 ? 'text-danger' : 'text-dark' }}">
+                                                <span class="fw-bold {{ ressource.quantite < 5 ? 'text-danger' : 'text-dark' }}">
                                                     {{ ressource.quantite }}
                                                 </span>
                                             </td>
-                                            <td>{{ ressource.fournisseur }}</td>
                                             <td class="text-center">
                                                 <a href="{{ path('app_ressource_analyser', {'id': ressource.id}) }}" class="btn btn-sm btn-ia-action">
                                                      <i class="ti ti-analyze"></i> Analyser
                                                 </a>
                                             </td>
                                             <td class="text-center">
-                                                <a href="{{ path('ressource_form', {'id': ressource.id}) }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-edit"></i></a>
-                                                <form method="post" action="{{ path('ressource_delete', {'id': ressource.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer ?');">
+                                                <a href="{{ path('ressource_form', {'id': ressource.id}) }}" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="ti ti-edit"></i>
+                                                </a>
+                                                <form method="post" action="{{ path('ressource_delete', {'id': ressource.id}) }}" style="display:inline-block;" onsubmit="return confirm('Supprimer cette ressource ?');">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ ressource.id) }}">
-                                                    <button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                                    <button class="btn btn-sm btn-outline-danger">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
                                                 </form>
                                             </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">Aucune ressource trouvée.</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -106,79 +110,140 @@
                 </div>
             </div>
 
-            {# --- ONGLET 2 : OPTIMISATION DE PRODUCTION (IA DYNAMIQUE) --- #}
+            {# --- ONGLET 2 : OPTIMISATION DE PRODUCTION (IA) --- #}
             <div class="tab-pane fade" id="production-content" role="tabpanel">
                 <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 15px;">
                     <div class="card-header bg-dark py-3">
-                        <h5 class="text-white mb-0"><i class="ti ti-binary me-2"></i> Moteur de Suggestion de Création (Stratix IA)</h5>
+                        <h5 class="text-white mb-0"><i class="ti ti-binary me-2"></i> Moteur de Suggestion </h5>
                     </div>
                     <div class="card-body p-4 bg-light">
-                        
                         {% if suggestions is empty %}
                             <div class="text-center py-5">
                                 <i class="ti ti-refresh rotate fs-1 text-muted"></i>
-                                <p class="mt-3">Aucune suggestion disponible pour le moment. Vérifiez vos stocks.</p>
+                                <p class="mt-3">Génération des idées en cours ou stock insuffisant...</p>
                             </div>
                         {% else %}
                             {% for idea in suggestions %}
-                                <div class="row align-items-center bg-white p-4 rounded shadow-sm border-start border-primary border-5 mb-4">
-                                    <div class="col-md-8">
-                                        <h3 class="fw-bold text-dark">Suggestion : Assembler "{{ idea.titre }}"</h3>
-                                        <p class="text-muted">{{ idea.description }}</p>
-                                        
-                                        <div class="d-flex gap-4 mt-3">
-                                            <div>
-                                                <small class="text-uppercase text-muted d-block">Composants Requis</small>
-                                                <span class="badge bg-light text-primary border p-2">{{ idea.composants }}</span>
-                                            </div>
-                                            <div>
-                                                <small class="text-uppercase text-muted d-block">Potentiel Stratix</small>
-                                                <span class="fs-5 fw-bold text-success"><i class="ti ti-trending-up"></i> Haute Rentabilité</span>
+                                <div class="bg-white p-4 rounded shadow-sm border-start border-primary border-5 mb-4">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h3 class="fw-bold text-dark">{{ idea.titre|default('Projet IoT') }}</h3>
+                                            <p class="text-muted">{{ idea.description|default('Aucune description disponible.') }}</p>
+                                            <div class="mt-3">
+                                                <small class="text-uppercase text-muted d-block mb-1">Composants Requis</small>
+                                                <span class="badge bg-light text-primary border p-2">
+                                                    <i class="ti ti-components me-1"></i> {{ idea.composants|default('N/A') }}
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-4 text-end">
-                                        <button class="btn btn-lg btn-primary shadow px-4">
-                                            <i class="ti ti-player-play"></i> Lancer la création
-                                        </button>
-                                    </div>
-                                    
-                                    {# Barre de progression visuelle pour le jury #}
-                                    <div class="col-12 mt-4">
-                                        <h6>Disponibilité des ressources :</h6>
-                                        <div class="progress" style="height: 10px;">
-                                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" style="width: 85%"></div>
-                                        </div>
-                                        <small class="text-muted">Analyse basée sur votre inventaire actuel ({{ ressources|length }} composants scannés).</small>
                                     </div>
                                 </div>
                             {% endfor %}
                         {% endif %}
-
                     </div>
                 </div>
-            </div>
-
-            {# --- ONGLET 3 : CATALOGUES EMAIL --- #}
-            <div class="tab-pane fade" id="imports-content" role="tabpanel">
-                {# ... (Le reste de ton code reste identique pour les emails) ... #}
             </div>
 
         </div>
     </div>
 </main>
 
+{# --- LE CHATBOT FLOTTANT --- #}
+<div id="chat-wrapper">
+    <div class="card chat-card">
+        <div class="chat-header d-flex justify-content-between align-items-center" onclick="toggleChat()">
+            <div class="d-flex align-items-center">
+                <div class="bg-white rounded-circle p-1 me-2 shadow-sm">
+                    <i class="ti ti-robot text-primary fs-5"></i>
+                </div>
+                <span class="fw-bold">Assistant IA</span>
+            </div>
+            <i id="chat-chevron" class="ti ti-chevron-up"></i>
+        </div>
+        
+        <div id="chat-content" style="display: none;">
+            <div id="chat-body">
+                <div class="msg msg-bot">
+                    Bonjour ! Je suis l'IA Grok. Je connais parfaitement votre stock Stratix. Que voulez-vous savoir ?
+                </div>
+            </div>
+            <div class="p-3 border-top bg-white">
+                <div class="input-group">
+                    <input type="text" id="chat-input" class="form-control border-0 bg-light" 
+                           placeholder="Ex: Que faire avec mes ESP32 ?" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button class="btn btn-primary" onclick="sendChatMessage()">
+                        <i class="ti ti-send"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
-    :root {
-        --primary-color: #6366f1;
-    }
-    .nav-pills .nav-link { color: #64748b; border-radius: 8px; padding: 10px 20px; transition: all 0.3s ease; }
-    .nav-pills .nav-link.active { background-color: var(--primary-color) !important; color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-    .btn-ia-action { background-color: #f5f3ff; color: #6366f1; border: 1px solid #ddd6fe; border-radius: 20px; font-weight: 600; transition: 0.3s; }
+    :root { --primary-color: #6366f1; }
+    
+    .nav-pills .nav-link { color: #64748b; border-radius: 8px; padding: 10px 20px; transition: 0.3s; }
+    .nav-pills .nav-link.active { background-color: var(--primary-color) !important; color: white; }
+    
+    .btn-ia-action { background-color: #f5f3ff; color: #6366f1; border: 1px solid #ddd6fe; border-radius: 20px; font-weight: 600; }
     .btn-ia-action:hover { background-color: #6366f1; color: white; transform: scale(1.05); }
-    .card { border-radius: 12px; }
-    .table-hover tbody tr:hover { background-color: #fcfdff; }
-    .rotate { animation: spin 2s linear infinite; display: inline-block; }
+
+    /* Styles Chatbot */
+    #chat-wrapper { position: fixed !important; bottom: 25px !important; right: 25px !important; z-index: 9999 !important; width: 350px; }
+    .chat-card { border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15); background: white; }
+    .chat-header { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; cursor: pointer; padding: 15px; border-radius: 15px 15px 0 0; }
+    #chat-body { height: 320px; overflow-y: auto; background: #f9fafb; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { padding: 10px 14px; border-radius: 15px; font-size: 0.85rem; max-width: 85%; line-height: 1.4; white-space: pre-wrap; }
+    .msg-user { background: #6366f1; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg-bot { background: white; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e5e7eb; }
+    
+    .dot-typing { height: 6px; width: 6px; border-radius: 50%; background: #6366f1; display: inline-block; animation: typing 1s infinite; }
+    @keyframes typing { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+    .rotate { animation: spin 2s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
+
+<script>
+    function toggleChat() {
+        const content = document.getElementById('chat-content');
+        const icon = document.getElementById('chat-chevron');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.classList.replace('ti-chevron-up', 'ti-chevron-down');
+        } else {
+            content.style.display = 'none';
+            icon.classList.replace('ti-chevron-down', 'ti-chevron-up');
+        }
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const body = document.getElementById('chat-body');
+        const text = input.value.trim();
+        if (!text) return;
+
+        body.innerHTML += `<div class="msg msg-user">${text}</div>`;
+        input.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        const loaderId = 'loader-' + Date.now();
+        body.innerHTML += `<div class="msg msg-bot" id="${loaderId}"><span class="dot-typing"></span><span class="dot-typing mx-1"></span><span class="dot-typing"></span></div>`;
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            const response = await fetch("{{ path('ressource_chat') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: text })
+            });
+            
+            const data = await response.json();
+            document.getElementById(loaderId).innerText = data.reponse; 
+        } catch (e) {
+            document.getElementById(loaderId).innerText = "Erreur de connexion avec l'IA.";
+        }
+        body.scrollTop = body.scrollHeight;
+    }
+</script>
 {% endblock %}

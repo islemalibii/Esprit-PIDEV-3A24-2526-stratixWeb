@@ -47,6 +47,19 @@
         border-radius: 12px;
         border: 1px solid #e5e7eb;
     }
+
+    /* Styles pour les suggestions IA */
+    .ai-suggestion-card {
+        border-top: 4px solid #764ba2 !important;
+        border: none;
+        border-radius: 15px;
+        transition: transform 0.3s ease;
+    }
+    .ai-suggestion-card:hover {
+        transform: scale(1.02);
+    }
+    .text-purple { color: #764ba2; }
+    .bg-purple-light { background-color: #f3f0ff; }
 </style>
 
 <div class="container-fluid content-wrapper-fix">
@@ -56,7 +69,7 @@
         <p class="mb-0 opacity-75 small">Gestion et suivi des stocks de Stratix</p>
     </div>
 
-    {# BARRE DE RECHERCHE (BOUTON PRODUIT RETIRÉ) #}
+    {# BARRE DE RECHERCHE #}
     <div class="search-container shadow-sm mb-4">
         <div class="row g-3 align-items-center">
             <div class="col-md-8">
@@ -77,8 +90,51 @@
         </div>
     </div>
 
+    {# --- NOUVELLE SECTION : SUGGESTIONS IA --- #}
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-4">
+            <h3 class="h4 fw-bold mb-0 text-dark">
+                <i class="ti ti-bulb me-2 text-warning"></i>Idées de Projets IA
+            </h3>
+            <span class="badge bg-purple-light text-purple ms-2 rounded-pill px-3">Gemini Flash 1.5</span>
+        </div>
+
+        <div class="row g-4">
+            {% if suggestions is defined and suggestions is not empty %}
+                {% for suggestion in suggestions %}
+                    <div class="col-md-4">
+                        <div class="card ai-suggestion-card h-100 shadow-sm p-3">
+                            <div class="card-body p-2">
+                                <h5 class="fw-bold text-dark mb-3">{{ suggestion.titre }}</h5>
+                                <p class="text-muted small mb-4" style="line-height: 1.6;">{{ suggestion.description }}</p>
+                                
+                                <div class="mt-auto">
+                                    <div class="p-3 rounded-3 bg-light">
+                                        <label class="text-uppercase fw-bold text-muted d-block mb-2" style="font-size: 0.65rem;">Composants suggérés</label>
+                                        <p class="mb-0 small fw-medium text-dark">{{ suggestion.composants }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="p-5 text-center bg-white rounded-4 border border-dashed shadow-sm">
+                        <i class="ti ti-robot fs-1 text-muted opacity-50"></i>
+                        <p class="mt-3 text-muted">
+                            Aucune suggestion générée. Assurez-vous que l'inventaire contient des ressources ou vérifiez votre clé API.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {# --- FIN SECTION IA --- #}
+
     {# LISTE DES RESSOURCES #}
     <div class="row">
+        <h3 class="h5 fw-bold mb-3 text-dark">Détails du Stock</h3>
         {% for ressource in ressources %}
             <div class="col-12 mb-3">
                 <div class="card-ressource shadow-sm border p-0 overflow-hidden">
