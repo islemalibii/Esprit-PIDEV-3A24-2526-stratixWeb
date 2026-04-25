@@ -20,8 +20,9 @@ class EmployeeController extends AbstractController
     public function dashboard(
         TacheRepository $tacheRepository,
         PlanningRepository $planningRepository,
+        UtilisateurRepository $utilisateurRepository
     ): Response {
-<<<<<<< HEAD
+
         $allUsers = $utilisateurRepository->findAll();
         $employe = !empty($allUsers) ? $allUsers[0] : null;
         
@@ -40,7 +41,7 @@ class EmployeeController extends AbstractController
         $moyenne = 0;
         $basse = 0;
         
-=======
+
         /** @var Utilisateur $employe */
         $employe   = $this->getUser();
         $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
@@ -49,7 +50,6 @@ class EmployeeController extends AbstractController
         $aFaire = 0; $enCours = 0; $terminees = 0;
         $haute  = 0; $moyenne = 0; $basse     = 0;
 
->>>>>>> c75d721 (Fix: Kanban drag&drop + move route + whiteboard Twig)
         foreach ($taches as $tache) {
             if ($tache->getStatut() === 'A_FAIRE')   $aFaire++;
             if ($tache->getStatut() === 'EN_COURS')  $enCours++;
@@ -123,6 +123,7 @@ class EmployeeController extends AbstractController
     public function calendar(
         TacheRepository $tacheRepository,
         PlanningRepository $planningRepository,
+        UtilisateurRepository $utilisateurRepository
     ): Response {
         $allUsers = $utilisateurRepository->findAll();
         $employe = !empty($allUsers) ? $allUsers[0] : null;
