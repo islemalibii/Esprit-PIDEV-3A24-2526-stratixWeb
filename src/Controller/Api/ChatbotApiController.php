@@ -232,6 +232,6 @@ class ChatbotApiController extends AbstractController
         $this->tacheRepository->getEntityManager()->persist($tache);
         $this->tacheRepository->getEntityManager()->flush();
         
-        return ['type' => 'text', 'content' => "✅ Tâche créée : **{$titre}**"];
+        return ['type' => 'text', 'content' => " Tâche créée : **{$titre}**"];
     }
 }
