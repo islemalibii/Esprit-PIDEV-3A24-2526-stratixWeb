@@ -14,6 +14,7 @@ class RecurrenceService
         $recurrence = $original->getRecurrence();
 
         if (!$recurrence || $recurrence === 'none') return;
+        $originalDay = (int) $original->getDateEvent()->format('d');
 
         for ($i = 1; $i <= 4; $i++) {
             $newDate = clone $original->getDateEvent();
@@ -24,18 +25,15 @@ class RecurrenceService
                 $newMonth = (int) $original->getDateEvent()->format('m') + $i;
                 $newYear  = (int) $original->getDateEvent()->format('Y');
     
-                // Handle year overflow (month > 12)
                 while ($newMonth > 12) {
                     $newMonth -= 12;
                     $newYear++;
                 }
     
-                // Get the last day of the target month
                 $lastDayOfMonth = (int) (new \DateTime("{$newYear}-{$newMonth}-01"))
                     ->modify('last day of this month')
                     ->format('d');
     
-                // Use original day OR last day of month if original day doesn't exist
                 $safeDay = min($originalDay, $lastDayOfMonth);
     
                 $newDate = new \DateTime(

@@ -15,7 +15,7 @@
         "endroid/qr-code-bundle": "*",
         "guzzlehttp/guzzle": "^7.10",
         "knplabs/knp-paginator-bundle": "^6.10",
-        "knplabs/knp-snappy-bundle": "*",
+        "knplabs/knp-snappy-bundle": "^1.10",
         "knpuniversity/oauth2-client-bundle": "^2.20",
         "league/oauth2-google": "^5.0",
         "php-imap/php-imap": "^2.0",

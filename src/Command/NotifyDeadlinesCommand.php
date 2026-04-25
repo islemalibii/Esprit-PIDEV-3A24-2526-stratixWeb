@@ -33,7 +33,7 @@ class NotifyDeadlinesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Transport: ' . get_class($this->projetMailer));
-        $projets = $this->projetRepository->findProjetsProchesEcheance(10);
+        $projets = $this->projetRepository->findProjetsProchesEcheance(7);
 
         foreach ($projets as $projet) {
             $output->writeln("<info>--- Projet : " . $projet->getNom() . " ---</info>");
