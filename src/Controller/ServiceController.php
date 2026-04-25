@@ -24,57 +24,61 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ServiceController extends AbstractController
 {
     #[Route('/', name: 'app_service_index', methods: ['GET'])]
-    public function index(Request $request, ServiceRepository $serviceRepository, CategorieServiceRepository $categorieServiceRepository, PaginatorInterface $paginator): Response
-    {
-        $search = $request->query->get('search', '');
-        $categorie = $request->query->get('categorie', '');
-        $archive = $request->query->get('archive', '0') === '1';
+public function index(Request $request, ServiceRepository $serviceRepository, CategorieServiceRepository $categorieServiceRepository, PaginatorInterface $paginator): Response
+{
+    $search = $request->query->get('search', '');
+    $categorie = $request->query->get('categorie', '');
+    $archive = $request->query->get('archive', '0') === '1';
 
-        $queryBuilder = $serviceRepository->createQueryBuilder('s')
-            ->leftJoin('s.categorie', 'c')
-            ->where('s.archive = :archive')
-            ->setParameter('archive', $archive);
+    $queryBuilder = $serviceRepository->createQueryBuilder('s')
+        ->where('s.archive = :archive')
+        ->setParameter('archive', $archive);
 
-        if (!empty($search)) {
-            $queryBuilder->andWhere('s.titre LIKE :search OR s.description LIKE :search')
-                ->setParameter('search', '%' . $search . '%');
-        }
-
-        if (!empty($categorie)) {
-            $queryBuilder->andWhere('c.nom = :categorie')
-                ->setParameter('categorie', $categorie);
-        }
-
-        $queryBuilder->orderBy('s.id', 'DESC');
-        
-        $services = $paginator->paginate(
-            $queryBuilder,
-            $request->query->getInt('page', 1),
-            6
-        );
-        
-        $now = new \DateTime();
-        $sevenDaysAgo = (new \DateTime())->modify('-3 days');
-        $newServiceIds = [];
-        foreach ($services as $service) {
-            $dateCreation = $service->getDateCreation();
-            if ($dateCreation && $dateCreation > $sevenDaysAgo) {
-                $newServiceIds[] = $service->getId();
-            }
-        }
-        
-        $categories = $categorieServiceRepository->findBy(['archive' => false]);
-
-        return $this->render('admin/service/index.html.twig', [
-            'services' => $services,
-            'categories' => $categories,
-            'search' => $search,
-            'selectedCategorie' => $categorie,
-            'showArchives' => $archive,
-            'newServiceIds' => $newServiceIds,  
-        ]);
+    if (!empty($search)) {
+        $queryBuilder->andWhere('s.titre LIKE :search OR s.description LIKE :search')
+            ->setParameter('search', '%' . $search . '%');
     }
 
+    if (!empty($categorie)) {
+        $queryBuilder->leftJoin('s.categorie', 'c')
+            ->andWhere('c.nom = :categorie')
+            ->setParameter('categorie', $categorie);
+    }
+
+    
+    $services = $paginator->paginate(
+        $queryBuilder,
+        $request->query->getInt('page', 1),
+        6
+    );
+    
+    $items = $services->getItems();
+    usort($items, function($a, $b) {
+        return $b->getId() <=> $a->getId();
+    });
+    $services->setItems($items);
+    
+    $now = new \DateTime();
+    $sevenDaysAgo = (new \DateTime())->modify('-7 days');
+    $newServiceIds = [];
+    foreach ($services as $service) {
+        $dateCreation = $service->getDateCreation();
+        if ($dateCreation && $dateCreation > $sevenDaysAgo) {
+            $newServiceIds[] = $service->getId();
+        }
+    }
+    
+    $categories = $categorieServiceRepository->findBy(['archive' => false]);
+
+    return $this->render('admin/service/index.html.twig', [
+        'services' => $services,
+        'categories' => $categories,
+        'search' => $search,
+        'selectedCategorie' => $categorie,
+        'showArchives' => $archive,
+        'newServiceIds' => $newServiceIds,  
+    ]);
+}
     #[Route('/new', name: 'app_service_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -187,7 +191,7 @@ final class ServiceController extends AbstractController
         }
 
         try {
-            $services = $serviceRepository->findBy(['archive' => false]);
+            $services = $serviceRepository->findBy(['archive' => false], null, 500);
             $groqService->setServices($services);
             $response = $groqService->ask($question);
             
@@ -259,7 +263,7 @@ final class ServiceController extends AbstractController
     public function exportPDF(ServiceRepository $serviceRepository, PDFExportService $pdfExportService): Response
     {
         try {
-            $services = $serviceRepository->findBy(['archive' => false]);
+            $services = $serviceRepository->findBy(['archive' => false], null, 500);
             
             $pdfContent = $pdfExportService->exportServicesToPDF($services, 'Liste des Services');
             
