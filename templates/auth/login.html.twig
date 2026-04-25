@@ -29,7 +29,7 @@
             </div>
         {% endif %}
 
-        <form method="post" action="{{ path('app_login') }}">
+        <form method="post" action="{{ path('app_login') }}" id="login-form">
             <div class="mb-3">
                 <label class="form-label fw-semibold">Email</label>
                 <input type="email" name="email" value="{{ last_username }}"
@@ -41,6 +41,7 @@
                        class="form-control form-control-lg" placeholder="Mot de passe" required>
             </div>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <input type="hidden" name="recaptcha_token" id="recaptcha_token_login">
             <button type="submit" class="btn btn-primary w-100 fw-bold text-uppercase btn-lg" style="letter-spacing:1px;">
                 Se connecter
             </button>
@@ -49,15 +50,45 @@
         <p class="text-center text-secondary mt-4 mb-0">
             Pas encore de compte ?
             <a href="{{ path('app_signup') }}" class="text-primary fw-semibold text-decoration-none">S'inscrire</a>
+            &nbsp;·&nbsp;
+            <a href="{{ path('app_forgot_password') }}" class="text-secondary text-decoration-none" style="font-size:.9rem;">Mot de passe oublié ?</a>
         </p>
+
+        <div class="d-flex align-items-center gap-2 my-3">
+            <hr class="flex-fill"><span class="text-secondary small">ou</span><hr class="flex-fill">
+        </div>
+
+        <a href="{{ path('connect_google') }}"
+           class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Continuer avec Google
+        </a>
 
         </div>{# fin formulaire blanc #}
     </div>{# fin wrapper relatif #}
 </div>
 
+<script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
 <script>
 function setValid(el)   { el.classList.remove('is-invalid'); el.classList.add('is-valid'); }
 function setInvalid(el) { el.classList.remove('is-valid');   el.classList.add('is-invalid'); }
+
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const siteKey = '{{ recaptcha_site_key }}';
+    if (!siteKey || siteKey === 'your_site_key_here') { this.submit(); return; }
+    grecaptcha.ready(function() {
+        grecaptcha.execute(siteKey, {action: 'login'}).then(function(token) {
+            document.getElementById('recaptcha_token_login').value = token;
+            document.getElementById('login-form').submit();
+        });
+    });
+});
 
 document.querySelector('[name=email]').addEventListener('blur', function() {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value) ? setValid(this) : setInvalid(this);

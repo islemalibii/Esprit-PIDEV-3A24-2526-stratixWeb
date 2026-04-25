@@ -1,0 +1,73 @@
+{% extends 'employee/base_employee.html.twig' %}
+
+{% block title %}Donner un avis — {{ evenement.titre }}{% endblock %}
+
+{% block employee_content %}
+<div class="container" style="max-width: 600px;">
+
+    <div class="mb-4">
+        <a href="{{ path('emp_event_list') }}" class="text-muted small text-decoration-none">
+            <i class="ti ti-arrow-left me-1"></i> Retour aux événements
+        </a>
+        <h1 class="fs-4 fw-semibold text-dark mt-1 mb-0">Donner un avis</h1>
+        <p class="text-muted small">{{ evenement.titre }}</p>
+    </div>
+
+    {{ form_start(form, {'attr': {'class': 'card border-0 shadow-sm p-4'}}) }}
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Note</label>
+            <div class="star-rating d-flex gap-3 fs-2 mb-2" id="stars">
+                {% for i in 1..5 %}
+                    <i class="ti ti-star text-muted" 
+                       data-value="{{ i }}" 
+                       style="cursor:pointer;"
+                       id="star-{{ i }}"></i>
+                {% endfor %}
+            </div>
+            <div style="display:none;">
+                {{ form_widget(form.rating) }}
+            </div>
+            {{ form_errors(form.rating) }}
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Commentaire</label>
+            {{ form_widget(form.commentaire, {
+                'attr': {'class': 'form-control'}
+            }) }}
+            {{ form_errors(form.commentaire) }}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+            <i class="ti ti-send me-1"></i> Envoyer mon avis
+        </button>
+
+    {{ form_end(form) }}
+</div>
+
+<script>
+    const stars     = document.querySelectorAll('#stars .ti-star, #stars .ti-star-filled');
+    const selectEl  = document.getElementById('{{ form.rating.vars.id }}');
+
+    function updateStars(value) {
+        document.querySelectorAll('#stars i').forEach(s => {
+            const v = parseInt(s.dataset.value);
+            s.className = v <= value
+                ? 'ti ti-star-filled text-warning'
+                : 'ti ti-star text-muted';
+        });
+    }
+
+    document.querySelectorAll('#stars i').forEach(star => {
+        star.addEventListener('mouseover', () => updateStars(star.dataset.value));
+        star.addEventListener('mouseout',  () => updateStars(selectEl.value || 0));
+        star.addEventListener('click', () => {
+            selectEl.value = star.dataset.value;
+            updateStars(star.dataset.value);
+        });
+    });
+
+    if (selectEl.value) updateStars(selectEl.value);
+</script>
+{% endblock %}

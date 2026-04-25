@@ -1,0 +1,149 @@
+{# templates/admin/ressource/import_analyse.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Analyse Multi-Sources - {{ ressource.nom }}{% endblock %}
+
+{% block body %}
+<main id="content" class="content py-4">
+    <div class="container-fluid mt-4">
+        
+        <div class="mb-4">
+            <a href="{{ path('ressource_index') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="ti ti-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-xl-8 col-lg-10">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h4 class="mb-0 fw-bold" style="color: #2c3e50;">
+                            <i class="ti ti-file-analytics text-primary me-2"></i>
+                            Analyse IA Multi-Sources : {{ ressource.nom }}
+                        </h4>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <div class="alert alert-info border-0 shadow-sm mb-4">
+                            <strong>Mode Accumulation :</strong> Vous pouvez ajouter les fichiers un par un. Ils s'ajouteront à la liste ci-dessous.
+                        </div>
+
+                        {# FORMULAIRE #}
+                        <form id="multi-fp-form" action="{{ path('app_ressource_analyser', {'id': ressource.id}) }}" method="POST" enctype="multipart/form-data">
+                            
+                            <div class="upload-zone p-5 border-2 border-dashed rounded text-center bg-light mb-4" id="drop-zone" style="cursor: pointer;">
+                                <i class="ti ti-cloud-upload fs-1 text-primary d-block mb-3"></i>
+                                <label class="form-label fw-bold">Cliquez pour ajouter des catalogues CSV</label>
+                                
+                                {# Input masqué car on va le piloter en JS #}
+                                <input type="file" id="file-selector" class="form-control d-none" accept=".csv" multiple>
+                                
+                                {# C'est cet input invisible qui contiendra TOUS les fichiers au moment du submit #}
+                                <input type="file" name="csv_files[]" id="final-files" class="d-none" multiple>
+                                
+                                <p class="text-muted mb-0">Les fichiers sélectionnés s'accumuleront dans la liste.</p>
+                            </div>
+
+                            {# LISTE DES FICHIERS CUMULÉS #}
+                            <div id="file-list-container" class="mb-4 d-none">
+                                <h6 class="fw-bold mb-3"><i class="ti ti-list-check"></i> Fichiers prêts pour l'analyse :</h6>
+                                <div id="files-display" class="row g-2">
+                                    {# Les badges de fichiers apparaîtront ici #}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                                <a href="{{ path('ressource_index') }}" class="btn btn-secondary px-4">Annuler</a>
+                                <button type="submit" id="submit-btn" class="btn btn-primary px-4 fw-bold shadow-sm" style="background-color: #6366f1; border: none;" disabled>
+                                    <i class="ti ti-bolt"></i> Comparer <span id="file-count" class="badge bg-white text-primary ms-1">0</span> fichiers
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .border-dashed { border: 2px dashed #cbd5e1 !important; transition: 0.2s; }
+    .upload-zone:hover { background-color: #f1f5f9 !important; border-color: #6366f1 !important; }
+    .file-badge { background: #fff; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .fs-1 { font-size: 3rem; }
+</style>
+
+<script>
+    const fileSelector = document.getElementById('file-selector');
+    const finalFilesInput = document.getElementById('final-files');
+    const dropZone = document.getElementById('drop-zone');
+    const filesDisplay = document.getElementById('files-display');
+    const listContainer = document.getElementById('file-list-container');
+    const submitBtn = document.getElementById('submit-btn');
+    const fileCountBadge = document.getElementById('file-count');
+
+    // Objet pour stocker nos fichiers
+    let allFiles = new DataTransfer();
+
+    // Au clic sur la zone, on ouvre l'explorateur
+    dropZone.addEventListener('click', () => fileSelector.click());
+
+    fileSelector.addEventListener('change', function() {
+        // On ajoute les nouveaux fichiers à notre collection existante
+        Array.from(this.files).forEach(file => {
+            // Optionnel : vérifier les doublons par nom
+            let exists = Array.from(allFiles.files).some(f => f.name === file.name);
+            if (!exists) {
+                allFiles.items.add(file);
+            }
+        });
+
+        updateInterface();
+        // On réinitialise le sélecteur pour pouvoir reprendre le même fichier si besoin
+        this.value = ''; 
+    });
+
+    function updateInterface() {
+        filesDisplay.innerHTML = '';
+        const files = allFiles.files;
+
+        if (files.length > 0) {
+            listContainer.classList.remove('d-none');
+            submitBtn.disabled = false;
+            fileCountBadge.innerText = files.length;
+
+            Array.from(files).forEach((file, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                col.innerHTML = `
+                    <div class="file-badge shadow-sm">
+                        <span><i class="ti ti-file-type-csv text-success me-2"></i> ${file.name}</span>
+                        <button type="button" class="btn-close" onclick="removeFile(${index})" style="font-size: 0.7rem;"></button>
+                    </div>
+                `;
+                filesDisplay.appendChild(col);
+            });
+        } else {
+            listContainer.classList.add('d-none');
+            submitBtn.disabled = true;
+            fileCountBadge.innerText = '0';
+        }
+
+        // CRUCIAL : On met à jour l'input réel qui sera envoyé au serveur
+        finalFilesInput.files = allFiles.files;
+    }
+
+    // Fonction pour supprimer un fichier de la liste
+    window.removeFile = function(index) {
+        const newDataTransfer = new DataTransfer();
+        const files = allFiles.files;
+
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) newDataTransfer.items.add(files[i]);
+        }
+
+        allFiles = newDataTransfer;
+        updateInterface();
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Importation Catalogue{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">📥 Importer un catalogue fournisseur</h2>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="mb-3">
+                    {{ form_row(form.fournisseur, {'attr': {'class': 'form-select'}}) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_row(form.fichier, {'attr': {'class': 'form-control'}}) }}
+                </div>
+                <button type="submit" class="btn btn-success w-100">
+                    🚀 Lancer l'importation
+                </button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
-{# templates/projet/new.html.twig #}
-{% extends 'employee/base_employee.html.twig' %}
+{# templates/admin/Projet/ajouterProjet.html.twig #}
+{% extends 'base.html.twig' %}
 
 {% block title %}STRATIX - Nouveau Projet{% endblock %}
 
@@ -7,156 +7,363 @@
     {{ parent() }}
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <style>
+        /* Styles de base du formulaire */
         .form-label {
             letter-spacing: 0.05em;
             font-size: 0.75rem !important;
+            font-weight: 700 !important;
             color: #64748b !important;
-            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-control, .form-select {
+            background-color: #f8fafc !important;
+            border: 1.5px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
         }
 
         .form-control:focus, .form-select:focus {
             background-color: #fff !important;
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1) !important;
             border-color: #f59e0b !important;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12) !important;
             outline: none;
         }
 
-        /* Tom Select Style pour coller à Stratix */
-        .ts-control {
-            border: none !important;
-            background-color: #f8fafc !important;
-            padding: 0.75rem !important;
-            border-radius: 0.5rem !important;
+        /* --- ÉTATS D'ERREUR (ROUGE) --- */
+        .is-invalid {
+            border-color: #ef4444 !important;
+            background-color: #fff5f5 !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+        }
+
+        .field-error {
+            color: #ef4444 !important;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .field-error ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Zone upload */
+        .upload-zone {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 1.2rem;
+            background-color: #f8fafc;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            display: block;
+        }
+
+        .upload-zone:hover {
+            border-color: #f59e0b;
+            background-color: #fffbeb;
+        }
+
+        .upload-zone.error-border {
+            border-color: #ef4444 !important;
+        }
+
+        .file-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
         .btn-confirm-orange {
-            background-color: #f59e0b !important;
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
             color: white !important;
             border: none !important;
+            border-radius: 12px !important;
+            padding: 0.85rem 1.5rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35) !important;
+        /* Bouton IA */
+        .btn-ia-generate {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+        }
+        .btn-ia-generate:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.45);
+        }
+        .btn-ia-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .btn-confirm-orange:hover {
-            background-color: #d97706 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3) !important;
+        /* Feedback IA */
+        .ia-feedback-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            color: #166534;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.8rem;
+        }
+        
+        
+        
         }
     </style>
 {% endblock %}
 
-{% block employee_content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-11 col-xl-10">
-            
-            <div class="page-header mt-2">
-                <h2 class="h4 fw-bold text-dark mb-1">Créer un Nouveau Projet</h2>
-                <p class="text-muted small">Configurez les détails du projet et l'équipe Stratix.</p>
+{% block body %}
+<main id="content" class="content py-4">
+    <div class="container-fluid">
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+                <i class="fas fa-check-circle"></i> {{ message }}
             </div>
+        {% endfor %}
 
-            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-                <div class="card-body">
-                    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-                        
-                        {# Nom #}
-                        <div class="mb-4">
-                            <label class="form-label fw-bold text-uppercase">Nom du Projet</label>
-                            {{ form_widget(form.nom, {'attr': {'class': 'form-control border-0 bg-light p-3 rounded-3', 'placeholder': 'Entrez le nom...'}}) }}
-                            <div class="text-danger mt-1 small">{{ form_errors(form.nom) }}</div>
-                        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-11 col-xl-10">
 
-                        {# Budget et Statut #}
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-uppercase">Budget (DT)</label>
-                                {{ form_widget(form.budget, {'attr': {'class': 'form-control border-0 bg-light p-3 rounded-3'}}) }}
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="h4 fw-bold text-dark mb-1">
+                            <i class="fas fa-plus-circle me-2 text-warning"></i>Créer un Nouveau Projet
+                        </h2>
+                        <p class="text-muted small mb-0">Remplissez les informations pour lancer un nouveau projet Stratix.</p>
+                    </div>
+                    <a href="{{ path('app_projet_index') }}" class="btn btn-light border shadow-sm fw-bold rounded-3">
+                        <i class="fas fa-arrow-left me-1"></i> Retour
+                    </a>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <div class="card-body">
+
+                        {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+                            
+                            {# Nom du Projet #}
+                            <div class="mb-4">
+                                <label class="form-label">Nom du Projet <span class="text-danger">*</span></label>
+                                {{ form_widget(form.nom, {'attr': {'class': 'form-control ' ~ (form.nom.vars.errors|length > 0 ? 'is-invalid' : ''), 'placeholder': 'Ex: Refonte site web'}}) }}
+                                {% if form.nom.vars.errors|length > 0 %}
+                                    <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ form_errors(form.nom) }}</div>
+                                {% endif %}
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-uppercase">Statut Initial</label>
-                                <input type="text" class="form-control border-0 bg-light p-3 rounded-3 fw-bold text-muted" value="Planifié" readonly>
-                            </div>
-                        </div>
 
-                        {# DATES (SANS TEMPS + MINIMUM AUJOURD'HUI) #}
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-uppercase">Date de Début</label>
-                                {{ form_widget(form.dateDebut, {
+                            <div class="row g-4 mb-4">
+                                {# Budget #}
+                                <div class="col-md-6">
+                                    <label class="form-label">Budget (DT) <span class="text-danger">*</span></label>
+                                    {{ form_widget(form.budget, {'attr': {'class': 'form-control ' ~ (form.budget.vars.errors|length > 0 ? 'is-invalid' : '')}}) }}
+                                    {% if form.budget.vars.errors|length > 0 %}
+                                        <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ form_errors(form.budget) }}</div>
+                                    {% endif %}
+                                </div>
+                                {# Statut (Fictif en affichage) #}
+                                <div class="col-md-6">
+                                    <label class="form-label">Statut Initial</label>
+                                    <div class="form-control d-flex align-items-center gap-2" style="background:#f1f5f9; color:#64748b;">
+                                        <span class="badge bg-info text-white px-3 py-2 rounded-pill">Planifié</span>
+                                    </div>
+                                    {% do form.statut.setRendered() %}
+                                </div>
+                            </div>
+
+                            <div class="row g-4 mb-4">
+                                {# Date Début #}
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de Début <span class="text-danger">*</span></label>
+                                    {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control ' ~ (form.dateDebut.vars.errors|length > 0 ? 'is-invalid' : '')}}) }}
+                                    {% if form.dateDebut.vars.errors|length > 0 %}
+                                        <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ form_errors(form.dateDebut) }}</div>
+                                    {% endif %}
+                                </div>
+                                {# Date Fin #}
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de Fin <span class="text-danger">*</span></label>
+                                    {{ form_widget(form.dateFin, {'attr': {'class': 'form-control ' ~ (form.dateFin.vars.errors|length > 0 ? 'is-invalid' : '')}}) }}
+                                    {% if form.dateFin.vars.errors|length > 0 %}
+                                        <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ form_errors(form.dateFin) }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row g-4 mb-4">
+                                {# Responsable #}
+                                <div class="col-md-6">
+                                    <label class="form-label">Responsable <span class="text-danger">*</span></label>
+                                    {{ form_widget(form.responsable, {'attr': {'class': 'form-select ' ~ (form.responsable.vars.errors|length > 0 ? 'is-invalid' : '')}}) }}
+                                    {% if form.responsable.vars.errors|length > 0 %}
+                                        <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ form_errors(form.responsable) }}</div>
+                                    {% endif %}
+                                </div>
+                                {# Membres #}
+                                <div class="col-md-6">
+                                    <label class="form-label">Équipe (Membres)</label>
+                                    {{ form_widget(form.membres, {'attr': {'class': 'tom-select-it'}}) }}
+                                </div>
+                            </div>
+
+                            {# ── Description ──────────────────────────────── #}
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <label class="form-label mb-0">
+                                        Description <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" id="btn-ia" class="btn-ia-generate"
+                                            onclick="genererDescriptionIA()">
+                                        <span id="ia-btn-text">
+                                            <i class="fas fa-magic me-1"></i>Générer avec IA
+                                        </span>
+                                        <span id="ia-btn-loading" style="display:none;">
+                                            <i class="fas fa-spinner fa-spin me-1"></i>Génération...
+                                        </span>
+                                    </button>
+                                </div>
+
+                                {{ form_widget(form.description, {
                                     'attr': {
-                                        'class': 'form-control border-0 bg-light p-3 rounded-3',
-                                        'type': 'date',
-                                        'min': "now"|date("Y-m-d")
+                                        'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'rows': '3',
+                                        'placeholder': 'Décrivez les objectifs du projet ou cliquez sur ✨ Générer avec IA...',
+                                        'id': 'description-field'
                                     }
                                 }) }}
-                                <div class="text-danger mt-1 small">{{ form_errors(form.dateDebut) }}</div>
+
+                                {# Message de feedback IA #}
+                                <div id="ia-feedback" style="display:none;" class="ia-feedback-box mt-2">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    <span id="ia-feedback-text"></span>
+                                </div>
+
+                                {% if form.description.vars.errors|length > 0 %}
+                                    <div class="field-error">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        {{ form_errors(form.description) }}
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-uppercase">Date de Fin</label>
-                                {{ form_widget(form.dateFin, {
-                                    'attr': {
-                                        'class': 'form-control border-0 bg-light p-3 rounded-3',
-                                        'type': 'date',
-                                        'min': "now"|date("Y-m-d")
-                                    }
+
+                            {# Fichier Cahier des charges #}
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-paperclip me-1"></i> Cahier des charges
+                                </label>
+
+                                {{ form_widget(form.cahierDesChargesFile, {
+                                    'id': 'cahierFile',
+                                    'attr': {'style': 'display:none;'}
                                 }) }}
-                                <div class="text-danger mt-1 small">{{ form_errors(form.dateFin) }}</div>
-                            </div>
-                        </div>
 
-                        {# Responsable et Équipe Flexible #}
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-uppercase">Responsable</label>
-                                {{ form_widget(form.responsable, {'attr': {'class': 'form-select border-0 bg-light p-3 rounded-3'}}) }}
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-uppercase">Équipe (Membres)</label>
-                                {{ form_widget(form.membres, {
-                                    'attr': {'class': 'tom-select-it', 'placeholder': 'Ajouter des membres...'}
-                                }) }}
-                            </div>
-                        </div>
+                                <label for="cahierFile" class="upload-zone w-100 {{ form.cahierDesChargesFile.vars.errors|length > 0 ? 'error-border' : '' }}">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-warning-subtle rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px; height:44px;">
+                                            <i class="fas fa-cloud-upload-alt text-warning fs-5"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold text-dark small mb-1">Cliquez pour ajouter un fichier</div>
+                                            <div class="text-muted" style="font-size:0.75rem;">Format PDF ou Word recommandé (Max 10 Mo)</div>
+                                        </div>
+                                        <span class="badge bg-warning text-white px-3 py-2 rounded-3">Parcourir</span>
+                                    </div>
+                                </label>
 
-                        {# Description #}
-                        <div class="mb-4">
-                            <label class="form-label fw-bold text-uppercase">Description</label>
-                            {{ form_widget(form.description, {'attr': {'class': 'form-control border-0 bg-light p-3 rounded-3', 'rows': '3'}}) }}
-                        </div>
-
-                        {# Actions #}
-                        <div class="row g-3 mt-2">
-                            <div class="col-md-8">
-                                <button type="submit" class="btn btn-confirm-orange w-100 p-3 fw-bold rounded-3 shadow-sm text-uppercase">
-                                    <i class="fas fa-check-circle me-2"></i>Lancer le projet
-                                </button>
+                                <div id="file-preview" class="mt-2" style="display:none;">
+                                    <span class="file-badge">
+                                        <i class="fas fa-file-alt"></i>
+                                        <span id="file-name-display"></span>
+                                        <button type="button" id="remove-file" class="btn-close ms-1" style="font-size:0.6rem;"></button>
+                                    </span>
+                                </div>
+                                
+                                {% if form.cahierDesChargesFile.vars.errors|length > 0 %}
+                                    <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ form_errors(form.cahierDesChargesFile) }}</div>
+                                {% endif %}
                             </div>
-                            <div class="col-md-4">
-                                <a href="{{ path('app_projet_index') }}" class="btn btn-light border w-100 p-3 fw-bold rounded-3 text-muted">
-                                    ANNULER
-                                </a>
-                            </div>
-                        </div>
 
-                        {% do form.statut.setRendered() %}
-                        {{ form_rest(form) }}
-                    {{ form_end(form) }}
+                            <div class="row g-3 mt-4">
+                                <div class="col-md-8">
+                                    <button type="submit" class="btn btn-confirm-orange w-100 text-uppercase py-3">
+                                        <i class="fas fa-check-circle me-2"></i>Lancer le projet
+                                    </button>
+                                </div>
+                                <div class="col-md-4">
+                                    <a href="{{ path('app_projet_index') }}" class="btn btn-light border w-100 py-3 fw-bold rounded-3 text-muted">ANNULER</a>
+                                </div>
+                            </div>
+
+                            {{ form_rest(form) }}
+                        {{ form_end(form) }}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            new TomSelect(".tom-select-it", {
+    document.addEventListener("DOMContentLoaded", function () {
+        // Initialisation Tom Select pour l'équipe
+        if(document.querySelector(".tom-select-it")){
+            new TomSelect(".tom-select-it", { 
                 plugins: ['remove_button'],
                 persist: false,
-                create: false,
+                create: false 
             });
-        });
+        }
+
+        // Logique d'affichage du fichier sélectionné
+        const cahierInput = document.getElementById('cahierFile');
+        const filePreview = document.getElementById('file-preview');
+        const fileNameEl  = document.getElementById('file-name-display');
+        const removeBtn   = document.getElementById('remove-file');
+
+        if (cahierInput) {
+            cahierInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    const name = this.files[0].name;
+                    fileNameEl.textContent = name.length > 40 ? name.substring(0, 40) + '...' : name;
+                    filePreview.style.display = 'block';
+                }
+            });
+        }
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                cahierInput.value = '';
+                filePreview.style.display = 'none';
+            });
+        }
+    });
     </script>
 {% endblock %}

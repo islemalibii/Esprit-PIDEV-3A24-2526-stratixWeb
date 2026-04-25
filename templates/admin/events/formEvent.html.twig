@@ -5,8 +5,10 @@
 {% block body %}
 <div id="overlay" class="overlay"></div>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
+
     .form-control, .form-select {
         border-color: #e2e8f0;
         font-size: .875rem;
@@ -73,7 +75,6 @@
 <main id="content" class="content py-10">
     <div class="container-fluid">
 
-        {# Header #}
         <div class="row mb-4">
             <div class="col-12">
                 <a href="{{ path('resp_event_index') }}"
@@ -94,7 +95,7 @@
         </div>
 
         {{ form_start(form, {
-            'action': path('resp_event_new'),
+            'action': evenement.id ? path('resp_event_edit', {'id': evenement.id}) : path('resp_event_new'),
             'method': 'POST',
             'attr': {
                 'novalidate': 'novalidate',
@@ -104,15 +105,12 @@
         }}
         <div class="row g-4">
 
-            {# LEFT column #}
             <div class="col-lg-8 d-flex flex-column gap-4">
 
-                {# General info card #}
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         <p class="section-label">Informations générales</p>
 
-                        {# Titre #}
                         <div class="mb-4">
                             <label class="form-label small fw-semibold text-dark mb-1">
                                 Titre <span class="text-danger">*</span>
@@ -131,7 +129,6 @@
                             {{ form_errors(form.titre) }}
                         </div>
 
-                        {# Description #}
                         <div class="mb-4">
                             <label class="form-label small fw-semibold text-dark mb-1">
                                 Description <span class="text-danger">*</span>
@@ -146,7 +143,6 @@
                             {{ form_errors(form.description) }}
                         </div>
 
-                        {# Date + Lieu #}
                         <div class="row g-3">
                             <div class="col-sm-6">
                                 <label class="form-label small fw-semibold text-dark mb-1">
@@ -162,39 +158,39 @@
                                 </div>
                                 {{ form_errors(form.dateEvent) }}
                             </div>
-                            <div class="col-sm-6">
-                                <label class="form-label small fw-semibold text-dark mb-1">
-                                    Lieu <span class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-muted">
-                                        <i class="ti ti-map-pin"></i>
-                                    </span>
-                                    {{ form_widget(form.lieu, {
-                                        'attr': {
-                                            'class': 'form-control border-start-0 ps-0',
-                                            'placeholder': 'esprit, bloc A'
-                                        }
-                                    }) }}
-                                </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Lieu</label>
+                                {{ form_widget(form.lieu, {
+                                    'attr': {
+                                        'class': 'form-control',
+                                        'placeholder': 'Entrez une adresse...',
+                                        'id': 'lieu-input',
+                                        'autocomplete': 'off'
+                                    }
+                                }) }}
                                 {{ form_errors(form.lieu) }}
+
+                                <div id="suggestions" class="list-group mt-1 position-absolute z-3" style="max-width:400px;"></div>
                             </div>
+
+                            {{ form_widget(form.latitude, {'attr': {'id': 'latitude-input'}}) }}
+                            {{ form_widget(form.longitude, {'attr': {'id': 'longitude-input'}}) }}
+
+                            <div id="map" class="rounded-2 mt-2" style="height:300px; z-index:1;"></div>
                         </div>
 
                     </div>
                 </div>
 
-                {# Image card #}
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         <p class="section-label">Image</p>
                         <div class="d-flex gap-3 align-items-start">
 
-                            {# Preview #}
                             <div id="imgPreview" class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0 overflow-hidden"
                                 style="width:80px; height:80px; background:#f1f5f9; border: 1.5px dashed #cbd5e1;">
                                 {% if evenement.imageUrl %}
-                                    <img src="{{ asset('images/events/' ~ evenement.imageUrl) }}"
+                                    <img src="{{ asset(evenement.imageUrl) }}"
                                         style="width:80px;height:80px;object-fit:cover;"
                                         onerror="this.parentElement.innerHTML='<i class=\'ti ti-photo text-muted fs-3\'></i>'">
                                 {% else %}
@@ -208,26 +204,23 @@
                                 </label>
 
                                 
-                                {{ form_widget(form.imageUrl, {
+                                {{ form_widget(form.image, {
                                     'attr': {
                                         'class': 'form-control form-control-sm',
-                                        'placeholder': 'formation.jpg',
-                                        'id': 'imageUrlInput'
+                                        'id': 'imageUrlInput',
+                                        'accept': 'image/jpeg, image/png, image/webp'
                                     }
                                 }) }}
 
-                     
-                                {{ form_errors(form.imageUrl) }}
+                                {{ form_errors(form.image) }}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {# RIGHT column #}
             <div class="col-lg-4 d-flex flex-column gap-4">
 
-                {# Type card #}
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         <p class="section-label">Type d'événement <span class="text-danger">*</span></p>
@@ -260,7 +253,6 @@
                     </div>
                 </div>
 
-                {# Statut card #}
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         <p class="section-label">Statut <span class="text-danger">*</span></p>
@@ -296,8 +288,19 @@
                         {{ form_errors(form.statut) }}
                     </div>
                 </div>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <p class="section-label">Récurrence</p>
+                        {{ form_widget(form.recurrence, {
+                            'attr': {'class': 'form-select'}
+                        }) }}
+                        {{ form_errors(form.recurrence) }}
+                        <small class="text-muted">
+                            Si vous choisissez une répétition, 4 occurrences seront créées automatiquement.
+                        </small>
+                    </div>
+                </div>
 
-                {# Actions card #}
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4 d-flex flex-column gap-2">
                         <p class="section-label mb-3">Actions</p>
@@ -323,9 +326,9 @@
 
     </div>
 </main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Live image preview from filename input
     const imgInput = document.getElementById('imageUrlInput');
     const imgPreview = document.getElementById('imgPreview');
 
@@ -342,7 +345,6 @@
         });
     }
 
-    // Type radio highlight
     document.querySelectorAll('.type-radio').forEach(radio => {
         const apply = () => {
             document.querySelectorAll('.type-option').forEach(l => {
@@ -358,7 +360,6 @@
         if (radio.checked) apply();
     });
 
-    // Statut radio highlight
     document.querySelectorAll('.statut-radio').forEach(radio => {
         const apply = () => {
             document.querySelectorAll('.statut-option').forEach(l => {
@@ -372,6 +373,95 @@
         };
         radio.addEventListener('change', apply);
         if (radio.checked) apply();
+    });
+
+
+
+
+    const lieuInput = document.querySelector('[name="evenement[lieu]"]');
+    const latInput  = document.querySelector('[name="evenement[latitude]"]');
+    const lngInput  = document.querySelector('[name="evenement[longitude]"]');
+    const suggestions = document.getElementById('suggestions');
+
+    console.log('lieu:', lieuInput);
+    console.log('lat:', latInput);
+    console.log('lng:', lngInput);
+
+    const defaultLat = parseFloat(latInput?.value) || 36.8065;
+    const defaultLng = parseFloat(lngInput?.value) || 10.1815;
+
+    const map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = L.marker([defaultLat, defaultLng]).addTo(map);
+
+    //  map → update address field ---
+    map.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+
+        marker.setLatLng([lat, lng]);
+        latInput.value = lat;
+        lngInput.value = lng;
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+            .then(r => r.json())
+            .then(data => {
+                console.log('Reverse geocode result:', data);
+                lieuInput.value = data.display_name ?? `${lat}, ${lng}`;
+            })
+            .catch(err => console.error('Reverse geocode error:', err));
+    });
+
+    // address → suggestions
+    let debounce;
+    lieuInput.addEventListener('input', function() {
+        clearTimeout(debounce);
+        const query = this.value.trim();
+        console.log('Searching for:', query);
+
+        if (query.length < 3) {
+            suggestions.innerHTML = '';
+            return;
+        }
+
+        debounce = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`)
+                .then(r => r.json())
+                .then(results => {
+                    console.log('Search results:', results);
+                    suggestions.innerHTML = '';
+                    results.forEach(place => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action small';
+                        item.textContent = place.display_name;
+                        item.addEventListener('click', () => {
+                            const lat = parseFloat(place.lat);
+                            const lng = parseFloat(place.lon);
+
+                            lieuInput.value = place.display_name;
+                            latInput.value  = lat;
+                            lngInput.value  = lng;
+
+                            marker.setLatLng([lat, lng]);
+                            map.setView([lat, lng], 14);
+                            suggestions.innerHTML = '';
+                        });
+                        suggestions.appendChild(item);
+                    });
+                })
+                .catch(err => console.error('Search error:', err));
+        }, 400);
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!lieuInput.contains(e.target)) {
+            suggestions.innerHTML = '';
+        }
     });
 </script>
 

@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -45,6 +50,16 @@ class AdminController extends AbstractController
         $recent = $repo->findBy([], ['id' => 'DESC'], 8);
         $lockedUsers = $repo->findBy(['account_locked' => true], ['id' => 'DESC'], 5);
 
+        // Stats émotions du jour
+        $allUsers = $repo->findBy(['statut' => 'actif']);
+        $emotionStats = ['happy' => 0, 'neutral' => 0, 'sad' => 0, 'angry' => 0, 'fearful' => 0, 'surprised' => 0, 'disgusted' => 0, 'unknown' => 0];
+        foreach ($allUsers as $u) {
+            $e = $u->getLastEmotion() ?? 'unknown';
+            if (isset($emotionStats[$e])) $emotionStats[$e]++;
+            else $emotionStats['unknown']++;
+        }
+        $totalEmotions = array_sum($emotionStats);
+
         return $this->render('admin/dashboard.html.twig', [
             'stats' => [
                 'total'       => $total,
@@ -56,6 +71,8 @@ class AdminController extends AbstractController
             'roles'       => $roles,
             'recent'      => $recent,
             'lockedUsers' => $lockedUsers,
+            'emotionStats'   => $emotionStats,
+            'totalEmotions'  => $totalEmotions,
         ]);
     }
 
@@ -97,13 +114,22 @@ class AdminController extends AbstractController
                 $user->setPassword($hasher->hashPassword($user, $plain));
             }
             $user->setDateAjout(new \DateTime());
+
+            /** @var UploadedFile|null $avatarFile */
+            $avatarFile = $request->files->get('avatar');
+            if ($avatarFile && $request->request->get('face_validated') === '1') {
+                $filename = uniqid('avatar_') . '.' . $avatarFile->guessExtension();
+                $avatarFile->move($this->getParameter('kernel.project_dir') . '/public/images/avatar', $filename);
+                $user->setAvatar($filename);
+            }
+
             $em->persist($user);
             $em->flush();
             $this->addFlash('success', 'Utilisateur créé.');
             return $this->redirectToRoute('admin_users');
         }
 
-        return $this->render('admin/user_form.html.twig', ['form' => $form, 'title' => 'Nouvel utilisateur']);
+        return $this->render('admin/user_form.html.twig', ['form' => $form, 'title' => 'Nouvel utilisateur', 'editUser' => null]);
     }
 
     #[Route('/users/{id}/edit', name: 'admin_user_edit', methods: ['GET', 'POST'])]
@@ -117,12 +143,22 @@ class AdminController extends AbstractController
             if ($plain) {
                 $user->setPassword($hasher->hashPassword($user, $plain));
             }
+
+            /** @var UploadedFile|null $avatarFile */
+            $avatarFile = $request->files->get('avatar');
+            if ($avatarFile && $request->request->get('face_validated') === '1') {
+                $filename = uniqid('avatar_') . '.' . $avatarFile->guessExtension();
+                $avatarFile->move($this->getParameter('kernel.project_dir') . '/public/images/avatar', $filename);
+                $user->setAvatar($filename);
+            }
+
+            $user->setUpdatedAt(new \DateTime());
             $em->flush();
             $this->addFlash('success', 'Utilisateur mis à jour.');
             return $this->redirectToRoute('admin_users');
         }
 
-        return $this->render('admin/user_form.html.twig', ['form' => $form, 'title' => 'Modifier l\'utilisateur']);
+        return $this->render('admin/user_form.html.twig', ['form' => $form, 'title' => 'Modifier l\'utilisateur', 'editUser' => $user]);
     }
 
     #[Route('/users/{id}/delete', name: 'admin_user_delete', methods: ['POST'])]
@@ -141,9 +177,12 @@ class AdminController extends AbstractController
     {
         if ($this->isCsrfTokenValid('toggle'.$user->getId(), $request->request->get('_token'))) {
             $user->setAccountLocked(!$user->isAccountLocked());
-            if (!$user->isAccountLocked()) {
+            if ($user->isAccountLocked()) {
+                $user->setLockedAt(new \DateTime()); // date du verrouillage
+            } else {
                 $user->setFailedLoginAttempts(0);
                 $user->setLockedUntil(null);
+                $user->setLockedAt(null);
             }
             $em->flush();
             $this->addFlash('success', 'Statut du compte mis à jour.');
@@ -163,5 +202,106 @@ class AdminController extends AbstractController
             }
         }
         return $this->redirectToRoute('admin_users');
+    }
+
+    #[Route('/users/{id}/qrcode', name: 'admin_user_qrcode', methods: ['GET'])]
+    public function qrcode(Utilisateur $user): Response
+    {
+        $data = json_encode([
+            'id'         => $user->getId(),
+            'nom'        => $user->getNom(),
+            'prenom'     => $user->getPrenom(),
+            'email'      => $user->getEmail(),
+            'poste'      => $user->getPoste(),
+            'department' => $user->getDepartment(),
+            'role'       => $user->getRole(),
+        ]);
+
+        $renderer = new ImageRenderer(
+            new RendererStyle(300),
+            new SvgImageBackEnd()
+        );
+        $writer = new Writer($renderer);
+        $svg = $writer->writeString($data);
+
+        return new Response($svg, 200, ['Content-Type' => 'image/svg+xml']);
+    }
+
+    #[Route('/users/{id}/badge', name: 'admin_user_badge', methods: ['GET'])]
+    public function badge(Utilisateur $user): Response
+    {
+        return $this->render('admin/user_badge.html.twig', ['user' => $user]);
+    }
+
+    #[Route('/organigramme', name: 'admin_organigramme')]
+    public function organigramme(UtilisateurRepository $repo): Response
+    {
+        $users = $repo->findBy(['statut' => 'actif'], ['role' => 'ASC']);
+
+        // Construire la hiérarchie
+        $hierarchy = [
+            'name' => 'Stratix',
+            'title' => 'Entreprise',
+            'avatar' => null,
+            'children' => []
+        ];
+
+        $roleOrder = ['ceo', 'admin', 'responsable_rh', 'responsable_projet', 'responsable_production', 'employe'];
+        $roleLabels = [
+            'admin' => 'Administrateur',
+            'ceo' => 'CEO',
+            'responsable_rh' => 'Responsable RH',
+            'responsable_projet' => 'Responsable Projet',
+            'responsable_production' => 'Responsable Production',
+            'employe' => 'Employé',
+        ];
+
+        $groups = [];
+        foreach ($users as $u) {
+            $role = $u->getRole();
+            if (!isset($groups[$role])) {
+                $groups[$role] = [];
+            }
+            $groups[$role][] = $u;
+        }
+
+        foreach ($roleOrder as $role) {
+            if (empty($groups[$role])) continue;
+            foreach ($groups[$role] as $u) {
+                $node = [
+                    'id'     => $u->getId(),
+                    'name'   => $u->getPrenom() . ' ' . $u->getNom(),
+                    'title'  => $roleLabels[$role] ?? $role,
+                    'dept'   => $u->getDepartment() ?? '',
+                    'avatar' => $u->getAvatar(),
+                    'role'   => $role,
+                ];
+                $hierarchy['children'][] = $node;
+            }
+        }
+
+        return $this->render('admin/organigramme.html.twig', [
+            'hierarchy' => json_encode($hierarchy),
+            'total'     => count($users),
+        ]);
+    }
+
+    #[Route('/notifications/read', name: 'admin_notifications_read')]    public function markNotificationsRead(Request $request, \App\Repository\UtilisateurRepository $repo): Response
+    {
+        $session = $request->getSession();
+        $newUsers = $repo->findBy([], ['id' => 'DESC'], 5);
+        $locked   = $repo->findBy(['account_locked' => true], ['id' => 'DESC'], 5);
+        $updated  = $repo->createQueryBuilder('u')
+            ->where('u.updated_at IS NOT NULL')
+            ->orderBy('u.updated_at', 'DESC')
+            ->setMaxResults(5)->getQuery()->getResult();
+
+        $readIds = array_merge(
+            array_map(fn($u) => 'new_'.$u->getId(), $newUsers),
+            array_map(fn($u) => 'lock_'.$u->getId(), $locked),
+            array_map(fn($u) => 'edit_'.$u->getId(), $updated)
+        );
+        $session->set('notif_read_ids', $readIds);
+        return $this->redirectToRoute('admin_dashboard');
     }
 }

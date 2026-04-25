@@ -6,13 +6,10 @@
 parameters:
 
 services:
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autowire: true
+        autoconfigure: true
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
         exclude:
@@ -20,5 +17,40 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    App\Service\PictureService:
+        arguments:
+            $uploadDir: '%kernel.project_dir%/public/uploads/events'
+
+
+    App\Service\MeetingSummaryService:  
+        arguments:
+            $apiKey: '%env(FEED_GEMINI_API_KEY)%'
+
+    App\Service\RecommendationService:
+        arguments:
+            $apiKey: '%env(REC_GROQ_API_KEY)%'
+
+    App\Service\GroqService:
+        arguments:
+            $apiKey: '%env(GROQ_API_KEY)%'
+            
+    App\Service\AiResumeService:
+        arguments:
+            $apiKey: '%env(OPENAI_API_KEY_PROJET)%'
+
+    App\Service\RecaptchaService:
+        arguments:
+            $recaptchaSecretKey: '%env(RECAPTCHA_SECRET_KEY)%'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Service\ParticipationService:
+        arguments:
+            $eventMailer: '@mailer.transports'
+
+    App\Command\NotifyDeadlinesCommand:
+        arguments:
+            $projetMailer: '@mailer.transports'
+parameters:
+    mail_user: '%env(STRATIX_MAIL_USER)%'
+    mail_pass: '%env(STRATIX_MAIL_PASS)%'
+    catalogues_directory: '%kernel.project_dir%/public/uploads/catalogues'

@@ -10284,3 +10284,28 @@ footer a:hover {
   justify-content: flex-start;
   padding: 5px 0px 20px 39px;
 }
+
+/* ===== DARK MODE ===== */
+[data-theme="dark"] {
+    --bs-body-bg: #1a1a2e;
+    --bs-body-color: #e0e0e0;
+    --bs-card-bg: #16213e;
+    --bs-border-color: #2d2d4e;
+}
+[data-theme="dark"] body { background: #1a1a2e !important; color: #e0e0e0 !important; }
+[data-theme="dark"] .card { background: #16213e !important; border-color: #2d2d4e !important; color: #e0e0e0 !important; }
+[data-theme="dark"] .navbar, [data-theme="dark"] #topbar { background: #16213e !important; border-color: #2d2d4e !important; }
+[data-theme="dark"] .sidebar, [data-theme="dark"] #sidebar { background: #0f3460 !important; }
+[data-theme="dark"] .table { color: #e0e0e0 !important; }
+[data-theme="dark"] .table td, [data-theme="dark"] .table th { border-color: #2d2d4e !important; }
+[data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+    background: #1a1a2e !important; color: #e0e0e0 !important; border-color: #2d2d4e !important;
+}
+[data-theme="dark"] .dropdown-menu { background: #16213e !important; border-color: #2d2d4e !important; }
+[data-theme="dark"] .dropdown-item { color: #e0e0e0 !important; }
+[data-theme="dark"] .dropdown-item:hover { background: #0f3460 !important; }
+[data-theme="dark"] .text-dark { color: #e0e0e0 !important; }
+[data-theme="dark"] .bg-white { background: #16213e !important; }
+[data-theme="dark"] .border-bottom { border-color: #2d2d4e !important; }
+[data-theme="dark"] .list-group-item { background: #16213e !important; border-color: #2d2d4e !important; color: #e0e0e0 !important; }
+[data-theme="dark"] .text-secondary { color: #a0a0b0 !important; }

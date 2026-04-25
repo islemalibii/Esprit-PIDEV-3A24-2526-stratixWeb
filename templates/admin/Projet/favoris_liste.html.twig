@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}STRATIX - Mes Favoris{% endblock %}
+
+{% block body %}
+<main id="content" class="content py-4">
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+            <div>
+                <h2 class="fs-4 mb-0 fw-bold text-dark">Mes Projets Favoris</h2>
+                <p class="text-muted small mb-0">Liste de vos projets prioritaires</p>
+            </div>
+            <a href="{{ path('app_projet_index') }}" class="btn btn-outline-secondary shadow-sm px-3 fw-bold rounded-3">
+                <i class="ti ti-arrow-left me-1"></i> Retour à la liste
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4 py-3 text-muted small fw-bold">PROJET</th>
+                            <th class="py-3 text-muted small fw-bold text-center">BUDGET</th>
+                            <th class="py-3 text-muted small fw-bold text-center">STATUT</th>
+                            <th class="text-end pe-4 py-3 text-muted small fw-bold">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for f in favoris %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center border me-3" style="width: 35px; height: 35px;">
+                                        <i class="ti ti-star-filled text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold d-block">{{ f.projet.nom }}</span>
+                                        <small class="text-muted">Ajouté le {{ f.dateAjout|date('d/m/Y') }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-success fw-bold text-center">
+                                {{ f.projet.budget|number_format(2, ',', ' ') }} DT
+                            </td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill px-3 py-2 
+                                    {% if f.projet.statut == 'En cours' %}bg-warning text-dark
+                                    {% elseif f.projet.statut == 'Terminé' %}bg-success
+                                    {% else %}bg-info text-white{% endif %}">
+                                    {{ f.projet.statut }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group shadow-sm rounded-3 border bg-white">
+                                    <a href="{{ path('app_projet_show', {'id': f.projet.id}) }}" class="btn btn-sm btn-white" title="Voir">
+                                        <i class="ti ti-eye text-primary"></i>
+                                    </a>
+                                    {# Ce bouton utilise le même toggle que la page principale #}
+                                    <a href="{{ path('projet_toggle_favori', {'id': f.projet.id}) }}" class="btn btn-sm btn-white js-favori-btn" title="Retirer des favoris">
+                                        <i class="ti ti-heart-filled text-danger"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="ti ti-heart-off fs-1 d-block mb-2"></i>
+                                Vous n'avez pas encore de projets en favoris.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    // Petit script pour que le retrait d'un favori sur cette page 
+    // fasse disparaître la ligne proprement sans recharger
+    document.querySelectorAll('.js-favori-btn').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const row = this.closest('tr');
+            fetch(this.href).then(response => response.json()).then(data => {
+                if (!data.isFavorite) {
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

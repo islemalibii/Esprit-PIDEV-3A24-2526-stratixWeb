@@ -1,0 +1,33 @@
+
+
+PROJET : StratixFlow - Plateforme de gestion de flux interne
+1. Présentation et Objectif du projet
+L'objectif est de concevoir une application web nommée "StratixFlow" destinée à automatiser l'assignation des tâches au sein du département logistique. Actuellement, la répartition se fait manuellement, ce qui cause des erreurs de planning. La plateforme doit permettre une distribution équitable de la charge de travail en fonction des compétences de chaque employé.
+
+2. Livrables attendus
+
+Une interface de tableau de bord (Dashboard) pour les managers.
+
+Un système de notifications en temps réel (Websockets) pour les collaborateurs.
+
+Une API REST documentée sous Swagger pour l'interconnexion avec l'ERP existant.
+
+Un manuel d'utilisation complet au format PDF.
+
+3. Budget et Ressources
+Le budget total alloué pour ce projet est de 45 000 €. Ce montant inclut les frais de développement, l'hébergement cloud pour la première année et la formation du personnel.
+
+4. Délais et Calendrier
+Le projet doit être livré dans un délai de 4 mois.
+
+Mois 1 : Analyse des besoins et design des maquettes.
+
+Mois 2 et 3 : Développement des fonctionnalités clés.
+
+Mois 4 : Tests utilisateurs (Recette) et mise en production.
+
+5. Risques identifiés
+
+Retard technique : Complexité potentielle de l'intégration avec l'ancien ERP de l'entreprise.
+
+Adoption : Résistance au changement de la part des employés habitués aux méthodes manuelles.

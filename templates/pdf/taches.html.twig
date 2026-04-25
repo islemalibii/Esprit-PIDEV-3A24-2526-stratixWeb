@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Tâches</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #1f3b4c;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .date {
+            text-align: right;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            flex: 1;
+            background: #1f3b4c;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card.info { background: #0dcaf0; }
+        .stat-card.success { background: #198754; }
+        .stat-card.warning { background: #ffc107; color: #333; }
+        .stat-number {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 11px;
+        }
+        th {
+            background: #1f3b4c;
+            color: white;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+        }
+        .badge-warning { background: #ffc107; color: #333; }
+        .badge-info { background: #0dcaf0; color: #333; }
+        .badge-success { background: #198754; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-secondary { background: #6c757d; color: white; }
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 9px;
+            color: #666;
+        }
+        .text-danger { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<h1>Liste des Tâches</h1>
+<div class="date">Exporté le : {{ date_export }}</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <div class="stat-number">{{ total }}</div>
+        <div class="stat-label">Total tâches</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-number">{{ aFaire }}</div>
+        <div class="stat-label">À faire</div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-number">{{ enCours }}</div>
+        <div class="stat-label">En cours</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-number">{{ terminees }}</div>
+        <div class="stat-label">Terminées</div>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Description</th>
+            <th>Deadline</th>
+            <th>Statut</th>
+            <th>Priorité</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tache in taches %}
+        <tr>
+            <td><strong>{{ tache.titre }}</strong></td>
+            <td>{{ tache.description|slice(0, 50) }}{% if tache.description|length > 50 %}...{% endif %}</td>
+            <td>
+                {% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}
+                    <span class="text-danger">⚠️ {{ tache.deadline|date('d/m/Y') }}</span>
+                {% else %}
+                    {{ tache.deadline ? tache.deadline|date('d/m/Y') : '—' }}
+                {% endif %}
+            </td>
+            <td>
+                {% if tache.statut == 'A_FAIRE' %}
+                    <span class="badge badge-warning">📌 À faire</span>
+                {% elseif tache.statut == 'EN_COURS' %}
+                    <span class="badge badge-info">⚡ En cours</span>
+                {% else %}
+                    <span class="badge badge-success">✅ Terminée</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if tache.priorite == 'HAUTE' %}
+                    <span class="badge badge-danger">🔴 Haute</span>
+                {% elseif tache.priorite == 'MOYENNE' %}
+                    <span class="badge badge-warning">🟡 Moyenne</span>
+                {% else %}
+                    <span class="badge badge-secondary">🟢 Basse</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="footer">
+    Document généré par STRATIX - Gestion des tâches et plannings
+</div>
+
+</body>
+</html>

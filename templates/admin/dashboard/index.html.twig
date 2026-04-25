@@ -13,7 +13,6 @@
         position: relative;
         overflow: hidden;
     }
-
     .dashboard-hero::before {
         content: '';
         position: absolute;
@@ -24,7 +23,6 @@
         background: rgba(255,255,255,0.05);
         border-radius: 50%;
     }
-
     .dashboard-hero::after {
         content: '';
         position: absolute;
@@ -35,19 +33,8 @@
         background: rgba(255,255,255,0.05);
         border-radius: 50%;
     }
-
-    .hero-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-
-    .hero-subtitle {
-        font-size: 1rem;
-        opacity: 0.8;
-        margin-bottom: 20px;
-    }
-
+    .hero-title { font-size: 2.2rem; font-weight: 700; margin-bottom: 8px; }
+    .hero-subtitle { font-size: 1rem; opacity: 0.8; margin-bottom: 20px; }
     .quote-box {
         background: rgba(255,255,255,0.15);
         border-left: 4px solid rgba(255,255,255,0.6);
@@ -56,15 +43,7 @@
         font-style: italic;
         backdrop-filter: blur(5px);
     }
-
-    .quote-box .quote-author {
-        font-size: 12px;
-        opacity: 0.7;
-        margin-top: 6px;
-        font-style: normal;
-    }
-
-    /* Search bar */
+    .quote-box .quote-author { font-size: 12px; opacity: 0.7; margin-top: 6px; font-style: normal; }
     .search-section {
         background: white;
         border-radius: 16px;
@@ -72,273 +51,90 @@
         box-shadow: 0 2px 12px rgba(0,0,0,0.07);
         margin-bottom: 28px;
     }
-
-    .search-input-wrapper {
-        position: relative;
-    }
-
-    .search-input-wrapper i {
-        position: absolute;
-        left: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #94a3b8;
-        font-size: 16px;
-    }
-
-    .search-input-wrapper input {
-        padding-left: 45px;
-        border-radius: 12px;
-        border: 2px solid #e2e8f0;
-        height: 48px;
-        font-size: 15px;
-        transition: border-color 0.2s;
-        width: 100%;
-    }
-
-    .search-input-wrapper input:focus {
-        border-color: #1a73e8;
-        box-shadow: none;
-        outline: none;
-    }
-
-    #searchResults {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        z-index: 100;
-        max-height: 300px;
-        overflow-y: auto;
-        display: none;
-        margin-top: 6px;
-    }
-
-    .search-result-item {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f5f9;
-        cursor: pointer;
-        transition: background 0.15s;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-decoration: none;
-        color: inherit;
-    }
-
+    .search-input-wrapper { position: relative; }
+    .search-input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 16px; }
+    .search-input-wrapper input { padding-left: 45px; border-radius: 12px; border: 2px solid #e2e8f0; height: 48px; font-size: 15px; transition: border-color 0.2s; width: 100%; }
+    .search-input-wrapper input:focus { border-color: #1a73e8; box-shadow: none; outline: none; }
+    #searchResults { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100; max-height: 300px; overflow-y: auto; display: none; margin-top: 6px; }
+    .search-result-item { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: inherit; }
     .search-result-item:hover { background: #f8fafc; }
     .search-result-item:last-child { border-bottom: none; }
-
-    /* Stat cards */
-    .stat-card {
-        border-radius: 16px;
-        padding: 24px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: pointer;
-        text-decoration: none;
-        display: block;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 28px rgba(0,0,0,0.15);
-        color: white;
-    }
-
-    .stat-card .stat-icon {
-        font-size: 2.5rem;
-        opacity: 0.3;
-        position: absolute;
-        right: 20px;
-        top: 20px;
-    }
-
-    .stat-card .stat-number {
-        font-size: 2.8rem;
-        font-weight: 700;
-        line-height: 1;
-        margin-bottom: 6px;
-    }
-
-    .stat-card .stat-label {
-        font-size: 14px;
-        opacity: 0.9;
-        font-weight: 500;
-    }
-
+    .stat-card { border-radius: 16px; padding: 24px; color: white; position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; text-decoration: none; display: block; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.15); color: white; }
+    .stat-card .stat-icon { font-size: 2.5rem; opacity: 0.3; position: absolute; right: 20px; top: 20px; }
+    .stat-card .stat-number { font-size: 2.8rem; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+    .stat-card .stat-label { font-size: 14px; opacity: 0.9; font-weight: 500; }
     .card-total    { background: linear-gradient(135deg, #1a73e8, #0d47a1); }
     .card-afaire   { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .card-encours  { background: linear-gradient(135deg, #06b6d4, #0284c7); }
     .card-termine  { background: linear-gradient(135deg, #10b981, #059669); }
     .card-planning { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
-
-    /* Priority section */
-    .priority-card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        height: 100%;
-        margin-bottom: 24px;
-    }
-
-    .priority-bar {
-        height: 10px;
-        border-radius: 5px;
-        margin-top: 6px;
-    }
-
-    .progress-label {
-        display: flex;
-        justify-content: space-between;
-        font-size: 13px;
-        margin-bottom: 4px;
-    }
-
-    /* Recent tasks */
-    .recent-card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .recent-tasks-list {
-        flex: 1;
-    }
-
-    .recent-task-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 0;
-        border-bottom: 1px solid #f1f5f9;
-        transition: background 0.15s;
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .recent-task-item:hover {
-        background: #f8fafc;
-        padding-left: 8px;
-        margin-left: -8px;
-        border-radius: 12px;
-    }
-
+    .priority-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); height: 100%; margin-bottom: 24px; }
+    .priority-bar { height: 10px; border-radius: 5px; margin-top: 6px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+    .recent-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); height: 100%; display: flex; flex-direction: column; }
+    .recent-tasks-list { flex: 1; }
+    .recent-task-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; text-decoration: none; color: inherit; }
+    .recent-task-item:hover { background: #f8fafc; padding-left: 8px; margin-left: -8px; border-radius: 12px; }
     .recent-task-item:last-child { border-bottom: none; }
-
-    .task-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-
+    .task-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .dot-haute   { background: #ef4444; box-shadow: 0 0 0 2px #fee2e2; }
     .dot-moyenne { background: #f59e0b; box-shadow: 0 0 0 2px #fef3c7; }
     .dot-basse   { background: #10b981; box-shadow: 0 0 0 2px #d1fae5; }
-
-    .section-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
+    .section-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
     .badge-statut-afaire  { background: #fef3c7; color: #d97706; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .badge-statut-encours { background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .badge-statut-termine { background: #dcfce7; color: #059669; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-
-    /* Quick actions - CORRIGÉ et bien positionné */
-    .quick-actions {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        height: auto;
-    }
-
-    .quick-btn {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 14px 18px;
-        border-radius: 12px;
-        text-decoration: none;
-        color: #1e293b;
-        background: #f8fafc;
-        margin-bottom: 12px;
+    .quick-actions { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); height: auto; }
+    .quick-btn { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 12px; text-decoration: none; color: #1e293b; background: #f8fafc; margin-bottom: 12px; transition: all 0.2s; font-weight: 500; font-size: 14px; border: 1px solid #e2e8f0; width: 100%; }
+    .quick-btn:last-child { margin-bottom: 0; }
+    .quick-btn:hover { background: #eff6ff; border-color: #1a73e8; color: #1a73e8; transform: translateX(5px); }
+    .quick-btn i { font-size: 18px; width: 28px; text-align: center; }
+    .btn-outline-primary { border-radius: 40px; padding: 8px 20px; }
+    .row.g-4 { margin-bottom: 0; }
+    .container { max-width: 1400px; }
+    .col-lg-7, .col-lg-5 { display: flex; flex-direction: column; }
+    .message { margin-bottom: 12px; display: flex; }
+    .message.user { justify-content: flex-end; }
+    .message.user > div { background: linear-gradient(135deg, #1f3b4c, #2a6f8f); color: white; border-radius: 12px 12px 4px 12px; padding: 8px 12px; max-width: 85%; white-space: pre-wrap; font-size: 13px; }
+    .message.bot > div { background: white; color: #333; border-radius: 12px 12px 12px 4px; padding: 8px 12px; max-width: 85%; white-space: pre-wrap; font-size: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    #chatbotMessages { scroll-behavior: smooth; }
+    #chatbotToggle:hover { transform: scale(1.05); }
+    .badges-section { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); margin-top: 28px; }
+    .badge-card { background: #f8fafc; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; }
+    .badge-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+    .employee-badge-card {
         transition: all 0.2s;
-        font-weight: 500;
-        font-size: 14px;
-        border: 1px solid #e2e8f0;
-        width: 100%;
+        border-left: 4px solid transparent;
     }
-
-    .quick-btn:last-child {
-        margin-bottom: 0;
+    .employee-badge-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     }
-
-    .quick-btn:hover {
-        background: #eff6ff;
-        border-color: #1a73e8;
-        color: #1a73e8;
-        transform: translateX(5px);
-    }
-
-    .quick-btn i { 
-        font-size: 18px; 
-        width: 28px; 
+    .rank-1 { border-left-color: #f59e0b !important; }
+    .rank-2 { border-left-color: #94a3b8 !important; }
+    .rank-3 { border-left-color: #b45309 !important; }
+    .stat-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 15px;
         text-align: center;
+        color: white;
     }
-
-    .btn-outline-primary {
-        border-radius: 40px;
-        padding: 8px 20px;
-    }
-
-    /* Fix pour le bon alignement */
-    .row.g-4 {
-        margin-bottom: 0;
-    }
-    
-    /* Container fix */
-    .container {
-        max-width: 1400px;
-    }
-    
-    /* Pour que les colonnes aient la même hauteur */
-    .col-lg-7, .col-lg-5 {
-        display: flex;
-        flex-direction: column;
-    }
+    .stat-box-primary { background: linear-gradient(135deg, #1a73e8, #0d47a1); }
+    .stat-box-success { background: linear-gradient(135deg, #10b981, #059669); }
+    .stat-box-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-box-info { background: linear-gradient(135deg, #06b6d4, #0284c7); }
 </style>
 {% endblock %}
 
 {% block body %}
 
-{# ===== HERO ===== #}
 <div class="dashboard-hero">
     <div class="row align-items-center">
         <div class="col-md-8">
-            <div class="hero-title">
-                🚀 STRATIX
-            </div>
-            <div class="hero-subtitle">
-                Votre espace de gestion des tâches et plannings — {{ "now"|date("l d F Y") }}
-            </div>
+            <div class="hero-title">🚀 STRATIX</div>
+            <div class="hero-subtitle">Votre espace de gestion des tâches et plannings — {{ "now"|date("l d F Y") }}</div>
             <div class="quote-box">
                 <div>"{{ quote.text }}"</div>
                 <div class="quote-author">— {{ quote.author }}</div>
@@ -350,7 +146,6 @@
     </div>
 </div>
 
-{# ===== SEARCH ===== #}
 <div class="search-section">
     <div class="row g-3">
         <div class="col-md-8 position-relative">
@@ -371,7 +166,6 @@
     </div>
 </div>
 
-{# ===== STAT CARDS ===== #}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-2">
         <a href="{{ path('app_tache_index') }}" class="stat-card card-total">
@@ -410,9 +204,7 @@
     </div>
 </div>
 
-{# ===== MAIN CONTENT ===== #}
 <div class="row g-4">
-    <!-- Colonne de gauche : Tâches récentes -->
     <div class="col-lg-7">
         <div class="recent-card">
             <div class="section-title">
@@ -430,13 +222,8 @@
                             <i class="fas fa-calendar"></i> {{ tache.getDeadline() ? tache.getDeadline()|date('d/m/Y') : 'Pas de deadline' }}
                         </div>
                     </div>
-                    <span class="
-                        {% if tache.getStatut() == 'A_FAIRE' %}badge-statut-afaire
-                        {% elseif tache.getStatut() == 'EN_COURS' %}badge-statut-encours
-                        {% else %}badge-statut-termine{% endif %}">
-                        {% if tache.getStatut() == 'A_FAIRE' %}📌 À faire
-                        {% elseif tache.getStatut() == 'EN_COURS' %}⚡ En cours
-                        {% else %}✅ Terminée{% endif %}
+                    <span class="{% if tache.getStatut() == 'A_FAIRE' %}badge-statut-afaire{% elseif tache.getStatut() == 'EN_COURS' %}badge-statut-encours{% else %}badge-statut-termine{% endif %}">
+                        {% if tache.getStatut() == 'A_FAIRE' %}📌 À faire{% elseif tache.getStatut() == 'EN_COURS' %}⚡ En cours{% else %}✅ Terminée{% endif %}
                     </span>
                 </a>
                 {% else %}
@@ -454,9 +241,7 @@
         </div>
     </div>
 
-    <!-- Colonne de droite : Priorités + Accès rapides -->
     <div class="col-lg-5">
-        <!-- Bloc Priorités -->
         <div class="priority-card">
             <div class="section-title">
                 <i class="fas fa-chart-pie text-danger"></i> Répartition par priorité
@@ -470,7 +255,6 @@
                 <div class="progress mb-3" style="height: 10px;">
                     <div class="progress-bar bg-danger" style="width: {{ (haute / totalP * 100)|round }}%"></div>
                 </div>
-
                 <div class="progress-label">
                     <span><i class="fas fa-circle text-warning" style="font-size: 10px;"></i> Moyenne</span>
                     <span>{{ moyenne }} tâches ({{ (moyenne / totalP * 100)|round }}%)</span>
@@ -478,7 +262,6 @@
                 <div class="progress mb-3" style="height: 10px;">
                     <div class="progress-bar bg-warning" style="width: {{ (moyenne / totalP * 100)|round }}%"></div>
                 </div>
-
                 <div class="progress-label">
                     <span><i class="fas fa-circle text-success" style="font-size: 10px;"></i> Basse</span>
                     <span>{{ basse }} tâches ({{ (basse / totalP * 100)|round }}%)</span>
@@ -491,7 +274,6 @@
             {% endif %}
         </div>
 
-        <!-- Bloc Accès rapides - MAINTENANT BIEN POSITIONNÉ -->
         <div class="quick-actions">
             <div class="section-title">
                 <i class="fas fa-bolt text-warning"></i> ⚡ Actions rapides
@@ -512,7 +294,48 @@
     </div>
 </div>
 
-{# ===== SEARCH JS ===== #}
+<div class="badges-section" style="margin-top: 20px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="section-title mb-0">
+            <i class="fas fa-medal me-2 text-warning"></i> 🥇 Classement des employés avec badges
+        </div>
+        <button onclick="loadEmployeesBadges()" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-sync-alt me-1"></i> Actualiser
+        </button>
+    </div>
+    <div id="employeesBadgesContainer">
+        <div class="text-center text-secondary py-4">
+            <i class="fas fa-spinner fa-spin"></i> Chargement du classement...
+        </div>
+    </div>
+</div>
+
+<div id="chatbotWidget" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <div id="chatbotToggle" style="background: linear-gradient(135deg, #1f3b4c, #2a6f8f); width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;">
+        <i class="fas fa-robot" style="color: white; font-size: 26px;"></i>
+    </div>
+    <div id="chatbotWindow" style="display: none; position: absolute; bottom: 70px; right: 0; width: 380px; height: 500px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; flex-direction: column;">
+        <div style="background: linear-gradient(135deg, #1f3b4c, #2a6f8f); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <div><i class="fas fa-robot" style="margin-right: 8px;"></i><strong>Assistant STRATIX</strong></div>
+            <button id="chatbotClose" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">✕</button>
+        </div>
+        <div id="chatbotMessages" style="flex: 1; overflow-y: auto; padding: 15px; background: #f8f9fa;">
+            <div class="message bot">
+                <div style="background: white; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                    👋 Bonjour ! Je suis votre assistant STRATIX.<br>
+                    Tapez <strong>Aide</strong> pour voir les commandes disponibles.
+                </div>
+            </div>
+        </div>
+        <div style="padding: 12px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 8px;">
+            <input type="text" id="chatbotInput" placeholder="Écrivez votre message..." style="flex: 1; padding: 10px 15px; border: 1px solid #e2e8f0; border-radius: 25px; outline: none; font-size: 13px;">
+            <button id="chatbotSend" style="background: #1f3b4c; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 const taches = [
     {% for tache in taches %}
@@ -534,42 +357,17 @@ const resultsBox = document.getElementById('searchResults');
 function doSearch() {
     const q = searchInput.value.toLowerCase().trim();
     const s = filterStatut.value;
-
-    if (!q && !s) {
-        resultsBox.style.display = 'none';
-        return;
-    }
-
-    const filtered = taches.filter(t => {
-        const matchQ = !q || t.titre.toLowerCase().includes(q);
-        const matchS = !s || t.statut === s;
-        return matchQ && matchS;
-    });
-
+    if (!q && !s) { resultsBox.style.display = 'none'; return; }
+    const filtered = taches.filter(t => (!q || t.titre.toLowerCase().includes(q)) && (!s || t.statut === s));
     if (filtered.length === 0) {
         resultsBox.innerHTML = '<div class="search-result-item text-muted">🔍 Aucune tâche trouvée</div>';
     } else {
         resultsBox.innerHTML = filtered.slice(0, 10).map(t => {
             let badgeClass = '', badgeText = '';
-            if (t.statut === 'A_FAIRE') {
-                badgeClass = 'badge-statut-afaire';
-                badgeText = '📌 À faire';
-            } else if (t.statut === 'EN_COURS') {
-                badgeClass = 'badge-statut-encours';
-                badgeText = '⚡ En cours';
-            } else {
-                badgeClass = 'badge-statut-termine';
-                badgeText = '✅ Terminée';
-            }
-            return `<a href="${t.showUrl}" class="search-result-item">
-                <div>
-                    <div style="font-weight: 600; font-size: 14px;">${t.titre}</div>
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">
-                        <i class="fas fa-user"></i> ${t.employe}
-                    </div>
-                </div>
-                <span class="${badgeClass}">${badgeText}</span>
-            </a>`;
+            if (t.statut === 'A_FAIRE') { badgeClass = 'badge-statut-afaire'; badgeText = '📌 À faire'; }
+            else if (t.statut === 'EN_COURS') { badgeClass = 'badge-statut-encours'; badgeText = '⚡ En cours'; }
+            else { badgeClass = 'badge-statut-termine'; badgeText = '✅ Terminée'; }
+            return `<a href="${t.showUrl}" class="search-result-item"><div><div style="font-weight: 600; font-size: 14px;">${t.titre}</div><div style="font-size: 11px; color: #94a3b8; margin-top: 3px;"><i class="fas fa-user"></i> ${t.employe}</div></div><span class="${badgeClass}">${badgeText}</span></a>`;
         }).join('');
     }
     resultsBox.style.display = 'block';
@@ -577,11 +375,183 @@ function doSearch() {
 
 searchInput.addEventListener('input', doSearch);
 filterStatut.addEventListener('change', doSearch);
+document.addEventListener('click', (e) => { if (!e.target.closest('.search-section')) resultsBox.style.display = 'none'; });
 
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-section')) {
-        resultsBox.style.display = 'none';
+async function loadEmployeesBadges() {
+    const container = document.getElementById('employeesBadgesContainer');
+    container.innerHTML = '<div class="text-center text-secondary py-4"><i class="fas fa-spinner fa-spin"></i> Chargement du classement...</div>';
+    
+    try {
+        const response = await fetch('/api/badges/all-employees');
+        const data = await response.json();
+        
+        if (!data.success) {
+            container.innerHTML = `
+                <div class="text-center text-warning py-4">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
+                    <p>Service des badges non disponible</p>
+                    <small>Veuillez réessayer plus tard</small>
+                    <div class="mt-3">
+                        <button onclick="loadEmployeesBadges()" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-sync-alt me-1"></i> Réessayer
+                        </button>
+                    </div>
+                </div>`;
+            return;
+        }
+        
+        if (data.employees.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-secondary py-4">
+                    <i class="fas fa-medal fa-3x mb-3 opacity-50 d-block"></i>
+                    Aucun badge n'a encore été attribué
+                    <br><small>Encouragez vos collègues à terminer leurs tâches !</small>
+                </div>`;
+            return;
+        }
+        
+        let html = `
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-box stat-box-primary">
+                        <div class="fs-2 fw-bold">${data.stats.total_employees}</div>
+                        <small>Employés avec badges</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box stat-box-success">
+                        <div class="fs-2 fw-bold">${data.stats.total_badges}</div>
+                        <small>Badges distribués</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box stat-box-warning">
+                        <div class="fs-2 fw-bold">${data.stats.avg_badges_per_employee}</div>
+                        <small>Moyenne badges/employé</small>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
+        `;
+        
+        data.employees.forEach((emp, index) => {
+            const rank = index + 1;
+            let rankClass = '';
+            let medalIcon = '';
+            if (rank === 1) { rankClass = 'rank-1'; medalIcon = '🥇'; }
+            else if (rank === 2) { rankClass = 'rank-2'; medalIcon = '🥈'; }
+            else if (rank === 3) { rankClass = 'rank-3'; medalIcon = '🥉'; }
+            
+            const initials = (emp.user.prenom?.charAt(0) || '') + (emp.user.nom?.charAt(0) || '');
+            
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card employee-badge-card ${rankClass} border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width: 50px; height: 50px; font-size: 18px; font-weight: bold;">
+                                    ${initials || '??'}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">${medalIcon} ${emp.user.prenom || ''} ${emp.user.nom || ''}</div>
+                                    <small class="text-muted">${emp.user.email || ''}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold fs-4 text-success">${emp.total_badges}</div>
+                                    <small class="text-muted">badges</small>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>Tâches terminées</span>
+                                    <span class="fw-bold">${emp.terminees}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: ${Math.min(100, (emp.terminees / 100) * 100)}%"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mt-3">
+                                ${emp.badges.map(b => `
+                                    <span class="badge bg-warning-subtle text-warning border border-warning border-opacity-25 p-2" style="font-size: 11px;" title="${b.description}">
+                                        ${b.icone} ${b.nom}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+    } catch(e) {
+        console.error('Error:', e);
+        container.innerHTML = `
+            <div class="text-center text-danger py-4">
+                <i class="fas fa-exclamation-circle fa-3x mb-3 d-block"></i>
+                <p>Erreur de connexion au serveur</p>
+                <div class="mt-3">
+                    <button onclick="loadEmployeesBadges()" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-sync-alt me-1"></i> Réessayer
+                    </button>
+                </div>
+            </div>`;
     }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadEmployeesBadges();
 });
+
+// Chatbot
+const chatbotToggle = document.getElementById('chatbotToggle');
+const chatbotWindow = document.getElementById('chatbotWindow');
+const chatbotClose = document.getElementById('chatbotClose');
+const chatbotInput = document.getElementById('chatbotInput');
+const chatbotSend = document.getElementById('chatbotSend');
+const chatbotMessages = document.getElementById('chatbotMessages');
+
+if (chatbotToggle) chatbotToggle.addEventListener('click', () => { chatbotWindow.style.display = 'flex'; chatbotInput.focus(); });
+if (chatbotClose) chatbotClose.addEventListener('click', () => { chatbotWindow.style.display = 'none'; });
+
+function addMessage(text, isUser = false) {
+    const div = document.createElement('div');
+    div.className = `message ${isUser ? 'user' : 'bot'}`;
+    div.innerHTML = `<div>${text.replace(/\n/g, '<br>')}</div>`;
+    chatbotMessages.appendChild(div);
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+async function sendMessage() {
+    const message = chatbotInput.value.trim();
+    if (!message) return;
+    addMessage(message, true);
+    chatbotInput.value = '';
+    try {
+        const response = await fetch('/api/chatbot/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        addMessage(data.success ? data.response.content : '❌ Erreur: ' + (data.error || 'Problème de connexion'));
+    } catch (error) {
+        addMessage('❌ Erreur de connexion au serveur');
+    }
+}
+
+if (chatbotSend) chatbotSend.addEventListener('click', sendMessage);
+if (chatbotInput) chatbotInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    @keyframes slideIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+    .list-group-item { transition: background-color 0.2s; }
+    .list-group-item:hover { background-color: #f8f9fa; }
+`;
+document.head.appendChild(styleSheet);
 </script>
 {% endblock %}

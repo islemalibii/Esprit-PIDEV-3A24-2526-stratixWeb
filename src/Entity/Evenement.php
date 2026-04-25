@@ -8,9 +8,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\EvenementRepository;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
 #[ORM\Table(name: 'evenement')]
+#[UniqueEntity(fields: ['titre'], message: "Un événement avec ce titre existe déjà.")]  // 👈 here on the class
 class Evenement
 {
     #[ORM\Id]
@@ -55,6 +58,10 @@ class Evenement
     #[Assert\GreaterThanOrEqual(
         value: "today",
         message: "La date de l'événement ne peut pas être dans le passé."
+    )]
+    #[Assert\GreaterThanOrEqual(
+        value: "+3 days",
+        message: "L'événement doit être planifié au moins 3 jours à l'avance."
     )]
     private ?\DateTimeInterface $date_event = null;
 
@@ -158,9 +165,10 @@ class Evenement
         return $this;
     }
 
-    #[ORM\Column(name: 'image_url', type: 'string', nullable: true)]
-    #[Assert\NotBlank(message: "L'image est obligatoire.")]
-    private ?string $image_url = null;
+    public function isArchived(): ?bool
+    {
+        return $this->isArchived;
+    }
 
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 7, nullable: true)]
@@ -199,6 +207,21 @@ class Evenement
         $this->eventFeedbacks = new ArrayCollection();
     }
 
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $recurrence = null; // 'none', 'weekly', 'monthly'
+
+    public function getRecurrence(): ?string
+    {
+        return $this->recurrence;
+    }
+
+    public function setRecurrence(?string $recurrence): static
+    {
+        $this->recurrence = $recurrence;
+        return $this;
+    }
+
     /**
      * @return Collection<int, EventFeedback>
      */
@@ -228,10 +251,10 @@ class Evenement
 
     
 
-    public function isArchived(): ?bool
-    {
-        return $this->isArchived;
-    }
+
+
+    #[ORM\Column(name: 'image_url', type: 'string', nullable: true)]
+    private ?string $image_url = null;
 
     public function getImageUrl(): ?string
     {

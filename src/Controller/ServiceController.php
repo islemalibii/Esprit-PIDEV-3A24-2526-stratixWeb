@@ -54,7 +54,7 @@ final class ServiceController extends AbstractController
         );
         
         $now = new \DateTime();
-        $sevenDaysAgo = (new \DateTime())->modify('-7 days');
+        $sevenDaysAgo = (new \DateTime())->modify('-3 days');
         $newServiceIds = [];
         foreach ($services as $service) {
             $dateCreation = $service->getDateCreation();
