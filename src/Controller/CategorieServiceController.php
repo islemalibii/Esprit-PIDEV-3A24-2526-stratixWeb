@@ -23,8 +23,6 @@ final class CategorieServiceController extends AbstractController
         $archive = $request->query->get('archive', '0') === '1';
 
         $queryBuilder = $categorieServiceRepository->createQueryBuilder('c')
-            ->leftJoin('c.services', 's')
-            ->addSelect('s')
             ->where('c.archive = :archive')
             ->setParameter('archive', $archive);
 
@@ -33,13 +31,18 @@ final class CategorieServiceController extends AbstractController
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        $queryBuilder->orderBy('c.nom', 'ASC');
         
         $categories = $paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
             6
         );
+        
+        $items = $categories->getItems();
+        usort($items, function($a, $b) {
+            return strcasecmp($a->getNom(), $b->getNom());
+        });
+        $categories->setItems($items);
 
         $totalServices = $serviceRepository->count(['archive' => false]);
 
