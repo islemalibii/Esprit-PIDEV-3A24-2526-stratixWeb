@@ -31,7 +31,6 @@ final class CategorieServiceController extends AbstractController
                 ->setParameter('search', '%' . $search . '%');
         }
 
-        
         $categories = $paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
@@ -39,10 +38,11 @@ final class CategorieServiceController extends AbstractController
         );
         
         $items = $categories->getItems();
-        usort($items, function($a, $b) {
+        $itemsArray = is_array($items) ? $items : iterator_to_array($items);
+        usort($itemsArray, function($a, $b) {
             return strcasecmp($a->getNom(), $b->getNom());
         });
-        $categories->setItems($items);
+        $categories->setItems($itemsArray);
 
         $totalServices = $serviceRepository->count(['archive' => false]);
 
@@ -108,7 +108,8 @@ final class CategorieServiceController extends AbstractController
     #[Route('/{id}/archive', name: 'app_categorie_service_archive', methods: ['POST'])]
     public function archive(Request $request, CategorieService $categorieService, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('archive'.$categorieService->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token', '');
+        if (is_string($token) && $this->isCsrfTokenValid('archive' . $categorieService->getId(), $token)) {
             $categorieService->setArchive(!$categorieService->isArchive());
             $entityManager->flush();
 
@@ -122,7 +123,8 @@ final class CategorieServiceController extends AbstractController
     #[Route('/{id}', name: 'app_categorie_service_delete', methods: ['POST'])]
     public function delete(Request $request, CategorieService $categorieService, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$categorieService->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token', '');
+        if (is_string($token) && $this->isCsrfTokenValid('delete' . $categorieService->getId(), $token)) {
             $entityManager->remove($categorieService);
             $entityManager->flush();
 
