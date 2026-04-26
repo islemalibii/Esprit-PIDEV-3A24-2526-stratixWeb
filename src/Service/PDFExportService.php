@@ -7,11 +7,13 @@ use TCPDF;
 
 class PDFExportService
 {
+    /**
+     * @param Service[] $services
+     */
     public function exportServicesToPDF(array $services, string $title = "Liste des Services"): string
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
         
-       
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         
@@ -29,14 +31,17 @@ class PDFExportService
         $pdf->Cell(0, 5, 'Exporté le: ' . date('d/m/Y H:i:s'), 0, 1, 'R');
         $pdf->Ln(10);
         
-        $totalBudget = array_sum(array_map(fn($s) => $s->getBudget(), $services));
+        $totalBudget = array_sum(array_map(fn($s) => $s->getBudget() ?? 0, $services));
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->SetTextColor(44, 62, 80);
         $pdf->Cell(0, 8, ' Informations du Services ', 0, 1, 'L');
         $pdf->SetFont('helvetica', '', 11);
         $pdf->Cell(0, 7, '• Nombre total de services: ' . count($services), 0, 1, 'L');
         $pdf->Cell(0, 7, '• Budget total: ' . number_format($totalBudget, 0, ',', ' ') . ' DT', 0, 1, 'L');
-        $pdf->Cell(0, 7, '• Budget moyen: ' . number_format($totalBudget / count($services), 0, ',', ' ') . ' DT', 0, 1, 'L');
+        
+        if (count($services) > 0) {
+            $pdf->Cell(0, 7, '• Budget moyen: ' . number_format($totalBudget / count($services), 0, ',', ' ') . ' DT', 0, 1, 'L');
+        }
         $pdf->Ln(10);
         
         $pdf->SetFont('helvetica', 'B', 11);
@@ -54,11 +59,13 @@ class PDFExportService
         
         $fill = false;
         foreach ($services as $index => $service) {
-            $pdf->Cell(10, 8, $index + 1, 1, 0, 'C', $fill);
-            $pdf->Cell(80, 8, $service->getTitre(), 1, 0, 'L', $fill);
-            $pdf->Cell(40, 8, number_format($service->getBudget(), 0, ',', ' '), 1, 0, 'R', $fill);
-            $categorie = $service->getCategorie() ? $service->getCategorie()->getNom() : 'Non catégorisé';
-            $pdf->Cell(50, 8, $categorie, 1, 1, 'L', $fill);
+            $pdf->Cell(10, 8, (string)($index + 1), 1, 0, 'C', $fill);
+            $pdf->Cell(80, 8, $service->getTitre() ?? '', 1, 0, 'L', $fill);
+            $pdf->Cell(40, 8, number_format($service->getBudget() ?? 0, 0, ',', ' '), 1, 0, 'R', $fill);
+            
+            $categorie = $service->getCategorie() !== null ? ($service->getCategorie()->getNom() ?? 'Non catégorisé') : 'Non catégorisé';
+            $pdf->Cell(50, 8, (string)$categorie, 1, 1, 'L', $fill);
+            
             $fill = !$fill;
         }
         
@@ -66,7 +73,6 @@ class PDFExportService
         
         $pdf->SetFont('helvetica', 'I', 8);
         $pdf->SetTextColor(128, 128, 128);
-      
         
         return $pdf->Output('', 'S');
     }
