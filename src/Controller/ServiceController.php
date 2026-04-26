@@ -24,61 +24,62 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ServiceController extends AbstractController
 {
     #[Route('/', name: 'app_service_index', methods: ['GET'])]
-public function index(Request $request, ServiceRepository $serviceRepository, CategorieServiceRepository $categorieServiceRepository, PaginatorInterface $paginator): Response
-{
-    $search = $request->query->get('search', '');
-    $categorie = $request->query->get('categorie', '');
-    $archive = $request->query->get('archive', '0') === '1';
+    public function index(Request $request, ServiceRepository $serviceRepository, CategorieServiceRepository $categorieServiceRepository, PaginatorInterface $paginator): Response
+    {
+        $search = $request->query->get('search', '');
+        $categorie = $request->query->get('categorie', '');
+        $archive = $request->query->get('archive', '0') === '1';
 
-    $queryBuilder = $serviceRepository->createQueryBuilder('s')
-        ->where('s.archive = :archive')
-        ->setParameter('archive', $archive);
+        $queryBuilder = $serviceRepository->createQueryBuilder('s')
+            ->where('s.archive = :archive')
+            ->setParameter('archive', $archive);
 
-    if (!empty($search)) {
-        $queryBuilder->andWhere('s.titre LIKE :search OR s.description LIKE :search')
-            ->setParameter('search', '%' . $search . '%');
-    }
-
-    if (!empty($categorie)) {
-        $queryBuilder->leftJoin('s.categorie', 'c')
-            ->andWhere('c.nom = :categorie')
-            ->setParameter('categorie', $categorie);
-    }
-
-    
-    $services = $paginator->paginate(
-        $queryBuilder,
-        $request->query->getInt('page', 1),
-        6
-    );
-    
-    $items = $services->getItems();
-    usort($items, function($a, $b) {
-        return $b->getId() <=> $a->getId();
-    });
-    $services->setItems($items);
-    
-    $now = new \DateTime();
-    $sevenDaysAgo = (new \DateTime())->modify('-7 days');
-    $newServiceIds = [];
-    foreach ($services as $service) {
-        $dateCreation = $service->getDateCreation();
-        if ($dateCreation && $dateCreation > $sevenDaysAgo) {
-            $newServiceIds[] = $service->getId();
+        if (!empty($search)) {
+            $queryBuilder->andWhere('s.titre LIKE :search OR s.description LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
         }
-    }
-    
-    $categories = $categorieServiceRepository->findBy(['archive' => false]);
 
-    return $this->render('admin/service/index.html.twig', [
-        'services' => $services,
-        'categories' => $categories,
-        'search' => $search,
-        'selectedCategorie' => $categorie,
-        'showArchives' => $archive,
-        'newServiceIds' => $newServiceIds,  
-    ]);
-}
+        if (!empty($categorie)) {
+            $queryBuilder->leftJoin('s.categorie', 'c')
+                ->andWhere('c.nom = :categorie')
+                ->setParameter('categorie', $categorie);
+        }
+
+        $services = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page', 1),
+            6
+        );
+        
+        $items = $services->getItems();
+        $itemsArray = is_array($items) ? $items : iterator_to_array($items);
+        usort($itemsArray, function($a, $b) {
+            return $b->getId() <=> $a->getId();
+        });
+        $services->setItems($itemsArray);
+        
+        $now = new \DateTime();
+        $sevenDaysAgo = (new \DateTime())->modify('-7 days');
+        $newServiceIds = [];
+        foreach ($services as $service) {
+            $dateCreation = $service->getDateCreation();
+            if ($dateCreation && $dateCreation > $sevenDaysAgo) {
+                $newServiceIds[] = $service->getId();
+            }
+        }
+        
+        $categories = $categorieServiceRepository->findBy(['archive' => false]);
+
+        return $this->render('admin/service/index.html.twig', [
+            'services' => $services,
+            'categories' => $categories,
+            'search' => $search,
+            'selectedCategorie' => $categorie,
+            'showArchives' => $archive,
+            'newServiceIds' => $newServiceIds,  
+        ]);
+    }
+
     #[Route('/new', name: 'app_service_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -133,7 +134,8 @@ public function index(Request $request, ServiceRepository $serviceRepository, Ca
     #[Route('/{id}/archive', name: 'app_service_archive', methods: ['POST'])]
     public function archive(Request $request, Service $service, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('archive'.$service->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token', '');
+        if (is_string($token) && $this->isCsrfTokenValid('archive' . $service->getId(), $token)) {
             $service->setArchive(!$service->isArchive());
             $entityManager->flush();
 
@@ -147,7 +149,8 @@ public function index(Request $request, ServiceRepository $serviceRepository, Ca
     #[Route('/{id}', name: 'app_service_delete', methods: ['POST'])]
     public function delete(Request $request, Service $service, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$service->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token', '');
+        if (is_string($token) && $this->isCsrfTokenValid('delete' . $service->getId(), $token)) {
             $entityManager->remove($service);
             $entityManager->flush();
 
@@ -192,7 +195,10 @@ public function index(Request $request, ServiceRepository $serviceRepository, Ca
 
         try {
             $services = $serviceRepository->findBy(['archive' => false], null, 500);
-            $groqService->setServices($services);
+            $serviceArray = array_values(array_filter($services, function($item) {
+                return $item instanceof \App\Entity\Service;
+            }));
+            $groqService->setServices($serviceArray);
             $response = $groqService->ask($question);
             
             return $this->json(['response' => $response]);
@@ -206,12 +212,18 @@ public function index(Request $request, ServiceRepository $serviceRepository, Ca
     public function ajaxSearch(Request $request, ServiceRepository $serviceRepository, PaginatorInterface $paginator): JsonResponse
     {
         $keyword = $request->query->get('keyword');
+        $keyword = is_string($keyword) ? $keyword : null;
         $categorie = $request->query->get('categorie');
+        $categorie = is_string($categorie) ? $categorie : null;
         $archive = $request->query->get('archive') === '1';
         $budgetMin = $request->query->get('budgetMin') ? (float) $request->query->get('budgetMin') : null;
         $budgetMax = $request->query->get('budgetMax') ? (float) $request->query->get('budgetMax') : null;
-        $dateStart = $request->query->get('dateStart') ? new \DateTime($request->query->get('dateStart')) : null;
-        $dateEnd = $request->query->get('dateEnd') ? new \DateTime($request->query->get('dateEnd')) : null;
+        
+        $dateStartValue = $request->query->get('dateStart');
+        $dateStart = ($dateStartValue && is_string($dateStartValue)) ? new \DateTime($dateStartValue) : null;
+        $dateEndValue = $request->query->get('dateEnd');
+        $dateEnd = ($dateEndValue && is_string($dateEndValue)) ? new \DateTime($dateEndValue) : null;
+        
         $page = $request->query->getInt('page', 1);
         $limit = 6;
 
@@ -250,12 +262,14 @@ public function index(Request $request, ServiceRepository $serviceRepository, Ca
             ];
         }
 
+        $pageCount = method_exists($pagination, 'getPageCount') ? $pagination->getPageCount() : 1;
+
         return $this->json([
             'services' => $data,
             'paginationHtml' => $paginationHtml,
             'total' => $pagination->getTotalItemCount(),
             'currentPage' => $pagination->getCurrentPageNumber(),
-            'pageCount' => $pagination->getPageCount(),
+            'pageCount' => $pageCount,
         ]);
     }
 
@@ -264,8 +278,11 @@ public function index(Request $request, ServiceRepository $serviceRepository, Ca
     {
         try {
             $services = $serviceRepository->findBy(['archive' => false], null, 500);
+            $serviceArray = array_values(array_filter($services, function($item) {
+                return $item instanceof \App\Entity\Service;
+            }));
             
-            $pdfContent = $pdfExportService->exportServicesToPDF($services, 'Liste des Services');
+            $pdfContent = $pdfExportService->exportServicesToPDF($serviceArray, 'Liste des Services');
             
             return new Response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
