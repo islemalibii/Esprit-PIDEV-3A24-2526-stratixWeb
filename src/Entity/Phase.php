@@ -66,10 +66,10 @@ class Phase
         return $this->dateDebut;
     }
 
-    public function setDateDebut(\DateTimeInterface $dateDebut): static
+    public function setDateDebut(\DateTimeInterface $dateDebut): self
     {
-        $this->dateDebut = $dateDebut;
-        return $this;
+    $this->dateDebut = $dateDebut;
+    return $this;
     }
 
     public function getDateFin(): ?\DateTimeInterface

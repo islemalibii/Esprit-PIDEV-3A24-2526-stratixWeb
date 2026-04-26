@@ -21,7 +21,7 @@ class Projet
     private ?int $id = null;
 
     // --- CORRECTION : Nom de variable corrigé et relation cible Phase ---
-    #[ORM\OneToMany(mappedBy: 'projet', targetEntity: Phase::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'projet', targetEntity: Phase::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $phases;
 
     #[ORM\Column(length: 255, unique: true)]
@@ -112,7 +112,7 @@ class Projet
     public function getDescription(): ?string { return $this->description; }
     public function setDescription(?string $description): self { $this->description = $description; return $this; }
     public function getDateDebut(): ?\DateTimeInterface { return $this->dateDebut; }
-    public function setDateDebut(?\DateTimeInterface $dateDebut): self { $this->dateDebut = $dateDebut; return $this; }
+    public function setDateDebut(\DateTimeInterface $dateDebut): self {$this->dateDebut = $dateDebut;return $this;}
     public function getDateFin(): ?\DateTimeInterface { return $this->dateFin; }
     public function setDateFin(?\DateTimeInterface $dateFin): self { $this->dateFin = $dateFin; return $this; }
     public function getBudget(): ?float { return $this->budget; }
