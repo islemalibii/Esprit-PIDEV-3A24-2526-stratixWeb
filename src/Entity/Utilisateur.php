@@ -229,16 +229,16 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero(message: 'Le salaire doit être positif.')]
-    private ?float $salaire = null;
+    private ?string $salaire = null;
 
     public function getSalaire(): ?float
     {
-        return $this->salaire;
+        return $this->salaire !== null ? (float)$this->salaire : null;
     }
 
     public function setSalaire(?float $salaire): self
     {
-        $this->salaire = $salaire;
+        $this->salaire = $salaire !== null ? (string)$salaire : null;
         return $this;
     }
 

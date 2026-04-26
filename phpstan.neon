@@ -1,0 +1,10 @@
+parameters:
+    level: 3
+    paths:
+        - src/Entity/Utilisateur.php
+        - src/Controller/AdminController.php
+        - src/Controller/AuthController.php
+        - src/Service/RecaptchaService.php
+    ignoreErrors:
+        - '#should return DateTime\|null but returns DateTimeInterface\|null#'
+        - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getRole\(\)#'
