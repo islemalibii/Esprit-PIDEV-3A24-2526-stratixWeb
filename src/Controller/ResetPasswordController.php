@@ -10,8 +10,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Component\Mime\Address;use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
@@ -24,12 +25,13 @@ class ResetPasswordController extends AbstractController
 
     public function __construct(
         private ResetPasswordHelperInterface $resetPasswordHelper,
-        private EntityManagerInterface $em
+        private EntityManagerInterface $em,
+        private TransportInterface $defaultTransport
     ) {}
 
     // Étape 1 — Formulaire email
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
-    public function request(Request $request, UtilisateurRepository $repo, MailerInterface $mailer): Response
+    public function request(Request $request, UtilisateurRepository $repo): Response
     {
         if ($request->isMethod('POST')) {
             $email = trim($request->request->get('email', ''));
@@ -38,21 +40,28 @@ class ResetPasswordController extends AbstractController
             if ($user) {
                 try {
                     $resetToken = $this->resetPasswordHelper->generateResetToken($user);
-
                     $resetUrl = $this->generateUrl('app_reset_password', ['token' => $resetToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-                    $mail = (new TemplatedEmail())
-                        ->from(new Address('noreply@stratix.com', 'Stratix'))
-                        ->to($user->getEmail())
-                        ->subject('Réinitialisation de votre mot de passe — Stratix')
-                        ->htmlTemplate('auth/reset_password_email.html.twig')
-                        ->context(['resetToken' => $resetToken, 'user' => $user, 'resetUrl' => $resetUrl]);
+                    try {
+                        $mailer = new Mailer($this->defaultTransport);
+                        $mail = (new TemplatedEmail())
+                            ->from(new Address('noreply@stratix.com', 'Stratix'))
+                            ->to($user->getEmail())
+                            ->subject('Réinitialisation de votre mot de passe — Stratix')
+                            ->htmlTemplate('auth/reset_password_email.html.twig')
+                            ->context(['resetToken' => $resetToken, 'user' => $user, 'resetUrl' => $resetUrl]);
+                        $mailer->send($mail);
+                    } catch (\Exception $mailError) {
+                        // Email échoue → lien affiché directement
+                    }
 
-                    $mailer->send($mail);
+                    $this->addFlash('info', 'Lien : <a href="' . $resetUrl . '">' . $resetUrl . '</a>');
                     $this->setTokenObjectInSession($resetToken);
+
                 } catch (ResetPasswordExceptionInterface $e) {
-                    // Debug temporaire — afficher l'erreur
-                    $this->addFlash('danger', 'Erreur: ' . $e->getReason());
+                    $this->addFlash('danger', 'Erreur reset: ' . $e->getReason());
+                } catch (\Exception $e) {
+                    $this->addFlash('danger', 'Erreur: ' . $e->getMessage());
                 }
             }
 

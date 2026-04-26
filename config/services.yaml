@@ -41,6 +41,10 @@ services:
     App\Service\RecaptchaService:
         arguments:
             $recaptchaSecretKey: '%env(RECAPTCHA_SECRET_KEY)%'
+
+    App\Controller\ResetPasswordController:
+        arguments:
+            $defaultTransport: '@mailer.default_transport'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     App\Service\ParticipationService:
