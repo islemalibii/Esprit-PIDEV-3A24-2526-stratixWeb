@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 
 use App\Repository\ParticipationRepository;
 
@@ -29,9 +27,9 @@ class Participation
     }
 
     #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $event_id = null;
+    private int $event_id;
 
-    public function getEvent_id(): ?int
+    public function getEvent_id(): int
     {
         return $this->event_id;
     }
@@ -43,9 +41,9 @@ class Participation
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $user_email = null;
+    private string $user_email;
 
-    public function getUser_email(): ?string
+    public function getUser_email(): string
     {
         return $this->user_email;
     }
@@ -57,14 +55,14 @@ class Participation
     }
 
     #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $participation_date = null;
+    private \DateTimeInterface $participation_date;
 
-    public function getParticipation_date(): ?\DateTimeInterface
+    protected function getParticipation_date(): \DateTimeInterface
     {
         return $this->participation_date;
     }
 
-    public function setParticipation_date(\DateTimeInterface $participation_date): self
+    protected function setParticipation_date(\DateTimeInterface $participation_date): self
     {
         $this->participation_date = $participation_date;
         return $this;
