@@ -2,11 +2,7 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\EventFeedbackRepository;
 
 #[ORM\Entity(repositoryClass: EventFeedbackRepository::class)]
@@ -75,26 +71,15 @@ class EventFeedback
     #[ORM\Column(type: 'date', nullable: true)]
     private ?\DateTimeInterface $date_feedback = null;
 
-    public function getDate_feedback(): ?\DateTimeInterface
+    // ✅ FIX: un seul getter/setter avec DateTimeInterface
+    public function getDateFeedback(): ?\DateTimeInterface
     {
         return $this->date_feedback;
     }
 
-    public function setDate_feedback(?\DateTimeInterface $date_feedback): self
+    public function setDateFeedback(?\DateTimeInterface $date_feedback): static
     {
         $this->date_feedback = $date_feedback;
-        return $this;
-    }
-
-    public function getDateFeedback(): ?\DateTime
-    {
-        return $this->date_feedback;
-    }
-
-    public function setDateFeedback(?\DateTime $date_feedback): static
-    {
-        $this->date_feedback = $date_feedback;
-
         return $this;
     }
 
@@ -111,5 +96,4 @@ class EventFeedback
         $this->user_email = $user_email;
         return $this;
     }
-
 }

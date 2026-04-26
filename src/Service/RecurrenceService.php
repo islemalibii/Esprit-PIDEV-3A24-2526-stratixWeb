@@ -36,6 +36,7 @@ class RecurrenceService
                     ->format('d');
     
                 // Use original day OR last day of month if original day doesn't exist
+                $originalDay = (int) $original->getDateEvent()->format('d');
                 $safeDay = min($originalDay, $lastDayOfMonth);
     
                 $newDate = new \DateTime(

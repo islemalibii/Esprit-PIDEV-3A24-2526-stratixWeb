@@ -232,7 +232,7 @@ class ProjetController extends AbstractController
         }
 
         return $this->render('employee/projetEmploye.html.twig', [
-            'projets' => $repo->findProjetsPourEmploye($user),
+            'projets' => $user instanceof \App\Entity\Utilisateur ? $repo->findProjetsPourEmploye($user) : [],
             'user_favoris_ids' => $userFavorisIds,
         ]);
     }
@@ -282,7 +282,9 @@ class ProjetController extends AbstractController
             $isFavorite = false;
         } else {
             $favori = new Favori();
-            $favori->setUtilisateur($user);
+            if ($user instanceof \App\Entity\Utilisateur) {
+    $favori->setUtilisateur($user);
+}
             $favori->setProjet($projet);
             $em->persist($favori);
             $isFavorite = true;
@@ -348,7 +350,8 @@ class ProjetController extends AbstractController
                     'id' => $projet->getId(),
                     'title' => $projet->getNom(),
                     'start' => $projet->getDateDebut()->format('Y-m-d'),
-                    'end' => $projet->getDateFin()->modify('+1 day')->format('Y-m-d'),
+                    'end' => \DateTime::createFromInterface($projet->getDateFin())->modify('+1 day')->format('Y-m-d'),
+
                     'backgroundColor' => $this->getColorByStatut($projet->getStatut() ?? 'default'),
                     'borderColor' => $this->getColorByStatut($projet->getStatut() ?? 'default'),
                     'url' => $this->generateUrl('app_projet_show', ['id' => $projet->getId()]),

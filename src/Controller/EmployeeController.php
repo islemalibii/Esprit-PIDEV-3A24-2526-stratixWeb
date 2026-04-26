@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Utilisateur;
 use App\Repository\TacheRepository;
 use App\Repository\PlanningRepository;
+use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -87,19 +88,12 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/employee/taches', name: 'app_employee_taches')]
-    public function mesTaches(
-        TacheRepository $tacheRepository,
-        UtilisateurRepository $utilisateurRepository
-    ): Response {
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
-        }
-        
+    public function mesTaches(TacheRepository $tacheRepository): Response
+    {
+        /** @var Utilisateur $employe */
+        $employe = $this->getUser();
+        $taches  = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+
         return $this->render('employee/taches.html.twig', [
             'taches'    => $taches,
             'hasTaches' => count($taches) > 0,
