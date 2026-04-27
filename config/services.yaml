@@ -24,4 +24,6 @@ services:
 
     # --- MODIFICATION ICI ---
     # On remplace GeminiService par GrokService
-   
+    App\Service\GrokService:
+        arguments:
+            $apiKey: '%grok_api_key%'

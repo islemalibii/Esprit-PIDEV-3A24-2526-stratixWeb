@@ -5,7 +5,7 @@ namespace App\Controller;
 use App\Entity\Ressource;
 use App\Form\RessourceType;
 use App\Repository\RessourceRepository;
-use App\Service\GrokService; // Changement ici
+use App\Service\GrokService;
 use App\Service\PdfService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,30 +13,26 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class RessourceController extends AbstractController
 {
-    private $httpClient;
-
-    public function __construct(HttpClientInterface $httpClient)
-    {
-        $this->httpClient = $httpClient;
-    }
-
     /**
      * Liste de l'inventaire et suggestions via Grok
      */
     #[Route('/ressource', name: 'ressource_index', methods: ['GET'])]
     public function index(RessourceRepository $repository, Request $request, GrokService $grokIA): Response 
     {
-        $searchTerm = $request->query->get('q', '');
-        $ressources = !empty($searchTerm) ? $repository->findBySearch($searchTerm) : $repository->findAll();
+        //  On force le type string pour éviter l'erreur de type mixte
+        $searchTerm = (string) $request->query->get('q', '');
+        
+        $ressources = !empty($searchTerm) 
+            ? $repository->findBySearch($searchTerm) 
+            : $repository->findAll();
 
         $suggestions = [];
         if (!empty($ressources)) {
             try {
-                // Utilisation du nouveau service Grok
+                // Utilisation du service Grok pour les suggestions
                 $suggestions = $grokIA->suggererProduits($ressources);
             } catch (\Exception $e) { 
                 $suggestions = []; 
@@ -62,13 +58,14 @@ class RessourceController extends AbstractController
     }
 
     /**
-     * API pour le Chatbot Assistant Stratix (Powered by Grok)
+     * API pour le Chatbot 
      */
     #[Route('/ressource/chat', name: 'ressource_chat', methods: ['POST'])]
     public function chat(Request $request, RessourceRepository $repo, GrokService $grok): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $question = $data['question'] ?? '';
+        $content = (string) $request->getContent();
+        $data = json_decode($content, true);
+        $question = (string) ($data['question'] ?? '');
 
         if (empty($question)) {
             return new JsonResponse(['reponse' => "Posez une question à Grok sur votre stock !"]);
@@ -77,7 +74,7 @@ class RessourceController extends AbstractController
         $ressources = $repo->findAll();
         
         try {
-            // Appel à Grok
+            // Appel au service centralisé
             $reponse = $grok->repondreQuestionStock($question, $ressources);
         } catch (\Exception $e) {
             $reponse = "Désolé, erreur technique avec Grok : " . $e->getMessage();
@@ -90,7 +87,7 @@ class RessourceController extends AbstractController
      * Formulaire Ajout / Edition
      */
     #[Route('/ressource/form/{id?}', name: 'ressource_form')]
-    public function form(Ressource $ressource = null, Request $request, EntityManagerInterface $em): Response
+    public function form(?Ressource $ressource, Request $request, EntityManagerInterface $em): Response
     {
         if (!$ressource) {
             $ressource = new Ressource();
@@ -117,18 +114,21 @@ class RessourceController extends AbstractController
      * Analyse via Python
      */
     #[Route('/ressource/{id}/analyser', name: 'app_ressource_analyser')]
-    public function analyser(Ressource $ressource, Request $request): Response
+    public function analyser(Ressource $ressource): Response
     {
         return $this->render('admin/Ressource/import_analyse.html.twig', ['ressource' => $ressource]);
     }
 
     /**
-     * Suppression
+     * Suppression sécurisée
      */
     #[Route('/ressource/delete/{id}', name: 'ressource_delete', methods: ['POST'])]
     public function delete(Ressource $ressource, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$ressource->getId(), $request->request->get('_token'))) {
+        // On récupère le token et on force le type string
+        $token = (string) $request->request->get('_token', '');
+        
+        if ($this->isCsrfTokenValid('delete' . $ressource->getId(), $token)) {
             $em->remove($ressource);
             $em->flush();
             $this->addFlash('success', 'Ressource supprimée.');
@@ -145,19 +145,5 @@ class RessourceController extends AbstractController
         $ressources = $repository->findAll();
         $html = $this->renderView('admin/Ressource/pdf.html.twig', ['ressources' => $ressources]);
         return $pdf->showPdfFile($html, 'Inventaire_Stratix_' . date('d-m-Y'));
-    }
-
-    /**
-     * Taux de change (USD/TND)
-     */
-    private function getExchangeRate(): float
-    {
-        try {
-            $response = $this->httpClient->request('GET', 'https://open.er-api.com/v6/latest/USD');
-            $data = $response->toArray();
-            return (float) ($data['rates']['TND'] ?? 3.12);
-        } catch (\Exception $e) {
-            return 3.12;
-        }
     }
 }

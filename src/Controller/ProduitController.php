@@ -21,8 +21,10 @@ class ProduitController extends AbstractController
     #[Route('/produit', name: 'produit_index')]
     public function index(ProduitRepository $repository, Request $request): Response
     {
-        $searchTerm = $request->query->get('q', '');
-        $produits = $searchTerm ? $repository->findBySearch($searchTerm) : $repository->findAll();
+        //  : On force le type string (Casting)
+        $searchTerm = (string) $request->query->get('q', '');
+        
+        $produits = !empty($searchTerm) ? $repository->findBySearch($searchTerm) : $repository->findAll();
 
         $stats = ['total' => count($produits), 'stockFaible' => 0, 'valeurStock' => 0];
         foreach ($produits as $p) {
@@ -38,25 +40,25 @@ class ProduitController extends AbstractController
     }
 
     /**
-     * Assistant IA utilisant le service centralisé GrokService
+     * Assistant IA
      */
     #[Route('/produit/chat', name: 'produit_chat', methods: ['POST'])]
     public function chatIA(Request $request, ProduitRepository $repository, GrokService $grok): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $question = $data['question'] ?? '';
+        $content = (string) $request->getContent();
+        $data = json_decode($content, true);
+        
+        //  : On force le type string pour la question
+        $question = (string) ($data['question'] ?? '');
 
         if (empty($question)) {
             return $this->json(['reponse' => "Veuillez poser une question."]);
         }
 
-        // On récupère les données de l'inventaire
         $produits = $repository->findAll();
         
         try {
-            /** * On appelle la méthode repondreQuestionStock du service.
-             * Elle fonctionnera aussi pour les produits car elle prend un tableau d'objets.
-             */
+            // : Passer la question castée en string
             $aiResponse = $grok->repondreQuestionStock($question, $produits);
         } catch (\Exception $e) {
             $aiResponse = "Erreur via GrokService : " . $e->getMessage();
@@ -115,7 +117,10 @@ class ProduitController extends AbstractController
     #[Route('/produit/{id}', name: 'produit_delete', methods: ['POST'])]
     public function delete(Request $request, Produit $produit, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $produit->getId(), $request->request->get('_token'))) {
+        // CORRECTION 4 : On force le type string pour le token CSRF
+        $token = (string) $request->request->get('_token', '');
+
+        if ($this->isCsrfTokenValid('delete' . $produit->getId(), $token)) {
             $entityManager->remove($produit);
             $entityManager->flush();
             $this->addFlash('success', 'Produit supprimé.');
@@ -130,7 +135,6 @@ class ProduitController extends AbstractController
     #[Route('/produit/export/pdf', name: 'produit_pdf')]
     public function exportPdf(): Response
     {
-        // Tu peux injecter ton PdfService ici si nécessaire
         return new Response("Exportation PDF...");
     }
 }

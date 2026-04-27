@@ -16,38 +16,18 @@ class ProduitRepository extends ServiceEntityRepository
         parent::__construct($registry, Produit::class);
     }
 
-    //    /**
-    //     * @return Produit[] Returns an array of Produit objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('p.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Produit
-    //    {
-    //        return $this->createQueryBuilder('p')
-    //            ->andWhere('p.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
-    public function findBySearch(string $term)
-{
-    return $this->createQueryBuilder('p')
-        ->where('p.nom LIKE :t')
-        ->orWhere('p.description LIKE :t')
-        ->orWhere('p.categorie LIKE :t')
-        ->setParameter('t', '%'.$term.'%')
-        ->getQuery()
-        ->getResult();
-}
+    /**
+     * @param string $term
+     * @return Produit[] Returns an array of Produit objects
+     */
+    public function findBySearch(string $term): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.nom LIKE :t')
+            ->orWhere('p.description LIKE :t')
+            ->orWhere('p.categorie LIKE :t')
+            ->setParameter('t', '%'.$term.'%')
+            ->getQuery()
+            ->getResult();
+    }
 }
