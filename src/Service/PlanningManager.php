@@ -11,31 +11,29 @@ class PlanningManager
     
     public function validate(Planning $planning): bool
     {
-        // Règle 1: Date obligatoire
-        if ($planning->getDate() === null) {
+        $date = $planning->getDate();
+        if ($date === null) {
             throw new \InvalidArgumentException('La date du planning est obligatoire.');
         }
         
-        // Règle 2: Date dans le futur
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
-        if ($planning->getDate() < $today) {
+        if ($date < $today) {
             throw new \InvalidArgumentException('La date doit être aujourd\'hui ou dans le futur.');
         }
         
-        // Règle 3: Type shift obligatoire
-        if (empty($planning->getTypeShift())) {
+        $typeShift = $planning->getTypeShift();
+        if ($typeShift === null || $typeShift === '') {
             throw new \InvalidArgumentException('Le type de shift est obligatoire.');
         }
         
-        // Règle 4: Type shift valide
         $validShifts = ['MATIN', 'SOIR', 'NUIT', 'RTT', 'CONGE'];
-        if (!in_array($planning->getTypeShift(), $validShifts)) {
+        if (!in_array($typeShift, $validShifts, true)) {
             throw new \InvalidArgumentException('Type de shift invalide. Utilisez MATIN, SOIR, NUIT, RTT ou CONGE.');
         }
         
-        // Règle 5: Employé obligatoire
-        if (empty($planning->getEmployeId())) {
+        $employeId = $planning->getEmployeId();
+        if ($employeId === null || $employeId === 0) {
             throw new \InvalidArgumentException('L\'employé assigné est obligatoire.');
         }
         
@@ -46,13 +44,14 @@ class PlanningManager
     
     public function isShiftDeNuit(Planning $planning): bool
     {
-        if ($planning->getHeureDebut() === null) {
+        $heureDebut = $planning->getHeureDebut();
+        if ($heureDebut === null) {
             return false;
         }
         
-        $heureDebut = (int) $planning->getHeureDebut()->format('H');
+        $heure = (int) $heureDebut->format('H');
         
-        return $heureDebut >= 20 || $heureDebut <= 5;
+        return $heure >= 20 || $heure <= 5;
     }
     
     public function getHeuresSupplementaires(Planning $planning): int
@@ -61,11 +60,14 @@ class PlanningManager
             return 0;
         }
         
-        if ($planning->getHeureDebut() === null || $planning->getHeureFin() === null) {
+        $heureDebut = $planning->getHeureDebut();
+        $heureFin = $planning->getHeureFin();
+        
+        if ($heureDebut === null || $heureFin === null) {
             return 0;
         }
         
-        $diff = $planning->getHeureDebut()->diff($planning->getHeureFin());
+        $diff = $heureDebut->diff($heureFin);
         $heuresTravaillees = $diff->h;
         $heuresNormales = 7;
         
@@ -78,15 +80,19 @@ class PlanningManager
     
     public function isCongesOuRTT(Planning $planning): bool
     {
-        return in_array($planning->getTypeShift(), ['RTT', 'CONGE']);
+        $typeShift = $planning->getTypeShift();
+        return in_array($typeShift, ['RTT', 'CONGE'], true);
     }
     
     // ========== GESTION DES CONFLITS ==========
     
     public function estEnConflit(Planning $p1, Planning $p2): bool
     {
-        if ($p1->getDate() && $p2->getDate() && 
-            $p1->getDate()->format('Y-m-d') === $p2->getDate()->format('Y-m-d')) {
+        $date1 = $p1->getDate();
+        $date2 = $p2->getDate();
+        
+        if ($date1 !== null && $date2 !== null && 
+            $date1->format('Y-m-d') === $date2->format('Y-m-d')) {
             
             if ($p1->getEmployeId() === $p2->getEmployeId()) {
                 return true;
@@ -100,20 +106,27 @@ class PlanningManager
     
     public function getTempsRepos(Planning $p1, Planning $p2): ?int
     {
-        if ($p1->getHeureFin() === null || $p2->getHeureDebut() === null) {
+        $heureFin1 = $p1->getHeureFin();
+        $heureDebut2 = $p2->getHeureDebut();
+        
+        if ($heureFin1 === null || $heureDebut2 === null) {
             return null;
         }
         
-        $fin = clone $p1->getHeureFin();
-        $debut = clone $p2->getHeureDebut();
+        $fin = clone $heureFin1;
+        $debut = clone $heureDebut2;
         
-        if ($p2->getDate() > $p1->getDate()) {
+        $date2 = $p2->getDate();
+        $date1 = $p1->getDate();
+        
+        if ($date2 !== null && $date1 !== null && $date2 > $date1) {
+            $debut = new \DateTime($debut->format('Y-m-d H:i:s'));
             $debut->modify('+1 day');
         }
         
         $diff = $fin->diff($debut);
         
-        return $diff->h + ($diff->i / 60);
+        return $diff->h + (int)($diff->i / 60);
     }
     
     // ========== GESTION DES CONGÉS ==========
@@ -140,19 +153,25 @@ class PlanningManager
     
     public function verifierConformiteLegale(Planning $planning): bool
     {
-        if ($planning->getHeureDebut() === null || $planning->getHeureFin() === null) {
+        $heureDebut = $planning->getHeureDebut();
+        $heureFin = $planning->getHeureFin();
+        
+        if ($heureDebut === null || $heureFin === null) {
             return true;
         }
         
-        $diff = $planning->getHeureDebut()->diff($planning->getHeureFin());
+        $diff = $heureDebut->diff($heureFin);
         $heuresTravaillees = $diff->h;
         
-        // Durée maximale légale: 10h par jour
         return $heuresTravaillees <= 10;
     }
     
     // ========== DÉTECTION DES TROUS ==========
     
+    /**
+     * @param Planning[] $plannings
+     * @return array<int, array{debut: string, fin: string, jours: int}>
+     */
     public function detecterTrous(array $plannings): array
     {
         if (empty($plannings)) {
@@ -160,22 +179,38 @@ class PlanningManager
         }
         
         // Trier par date
-        usort($plannings, function($a, $b) {
-            return $a->getDate() <=> $b->getDate();
+        usort($plannings, function(Planning $a, Planning $b) {
+            $dateA = $a->getDate();
+            $dateB = $b->getDate();
+            if ($dateA === null || $dateB === null) {
+                return 0;
+            }
+            return $dateA <=> $dateB;
         });
         
         $trous = [];
-        $datePrecedente = $plannings[0]->getDate();
+        $premierPlanning = $plannings[0];
+        $datePrecedente = $premierPlanning->getDate();
+        
+        if ($datePrecedente === null) {
+            return [];
+        }
         
         for ($i = 1; $i < count($plannings); $i++) {
-            $dateCourante = $plannings[$i]->getDate();
+            $planningCourant = $plannings[$i];
+            $dateCourante = $planningCourant->getDate();
+            
+            if ($dateCourante === null) {
+                continue;
+            }
+            
             $diff = $datePrecedente->diff($dateCourante)->days;
             
             if ($diff > 1) {
-                $dateDebutTrou = clone $datePrecedente;
+                $dateDebutTrou = new \DateTime($datePrecedente->format('Y-m-d'));
                 $dateDebutTrou->modify('+1 day');
                 
-                $dateFinTrou = clone $dateCourante;
+                $dateFinTrou = new \DateTime($dateCourante->format('Y-m-d'));
                 $dateFinTrou->modify('-1 day');
                 
                 $trous[] = [
@@ -193,17 +228,23 @@ class PlanningManager
     
     // ========== OPTIMISATION ==========
     
+    /**
+     * @param Planning[] $plannings
+     * @return array{charge_par_employe: array<int, int>, total_shifts: int, employes_concernes: int}
+     */
     public function optimiserRepartition(array $plannings): array
     {
+        /** @var array<int, int> $chargeParEmploye */
         $chargeParEmploye = [];
         
         foreach ($plannings as $planning) {
             $employeId = $planning->getEmployeId();
-            if (!isset($chargeParEmploye[$employeId])) {
-                $chargeParEmploye[$employeId] = 0;
+            if ($employeId !== null) {
+                if (!isset($chargeParEmploye[$employeId])) {
+                    $chargeParEmploye[$employeId] = 0;
+                }
+                $chargeParEmploye[$employeId] += 1;
             }
-            
-            $chargeParEmploye[$employeId] += 1;
         }
         
         return [
@@ -215,18 +256,27 @@ class PlanningManager
     
     // ========== ROTATION ==========
     
+    /**
+     * @param array<int> $employes
+     * @param array<string> $shifts
+     * @return array<int, array{jour: int, employe: int, shift: string}>
+     */
     public function genererRotation(array $employes, array $shifts, int $nbJours): array
     {
         $rotation = [];
         $indexEmploye = 0;
         $indexShift = 0;
+        $nbEmployes = count($employes);
+        $nbShifts = count($shifts);
         
         for ($jour = 1; $jour <= $nbJours; $jour++) {
-            $rotation[] = [
-                'jour' => $jour,
-                'employe' => $employes[$indexEmploye % count($employes)],
-                'shift' => $shifts[$indexShift % count($shifts)]
-            ];
+            if ($nbEmployes > 0 && $nbShifts > 0) {
+                $rotation[] = [
+                    'jour' => $jour,
+                    'employe' => $employes[$indexEmploye % $nbEmployes],
+                    'shift' => $shifts[$indexShift % $nbShifts]
+                ];
+            }
             
             $indexEmploye++;
             $indexShift++;
@@ -237,9 +287,13 @@ class PlanningManager
     
     // ========== PRÉDICTION ==========
     
+    /**
+     * @param array<int, array{employe: int, date: string, type: string}> $historique
+     * @return array{probabilite: int, message?: string, prochaine_prevue?: ?string, intervalle_moyen_jours?: float}
+     */
     public function predireProchaineAbsence(array $historique, int $employeId): array
     {
-        $absencesEmploye = array_filter($historique, function($absence) use ($employeId) {
+        $absencesEmploye = array_filter($historique, function(array $absence) use ($employeId): bool {
             return $absence['employe'] === $employeId;
         });
         
@@ -267,10 +321,15 @@ class PlanningManager
         
         $intervalleMoyen = array_sum($intervalles) / count($intervalles);
         
+        $prochainePrevue = null;
+        if ($intervalleMoyen > 0) {
+            $prochainePrevue = (new \DateTime())->modify("+{$intervalleMoyen} days")->format('Y-m-d');
+        }
+        
         return [
             'probabilite' => min(80, $nbAbsences * 15),
             'intervalle_moyen_jours' => round($intervalleMoyen),
-            'prochaine_prevue' => (new \DateTime())->modify("+{$intervalleMoyen} days")->format('Y-m-d')
+            'prochaine_prevue' => $prochainePrevue
         ];
     }
 }

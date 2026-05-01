@@ -11,47 +11,45 @@ class TacheManager
     
     public function validate(Tache $tache): bool
     {
-        // Règle 1: Titre obligatoire
-        if (empty($tache->getTitre())) {
+        $titre = $tache->getTitre();
+        if ($titre === null || $titre === '') {
             throw new \InvalidArgumentException('Le titre de la tâche est obligatoire.');
         }
         
-        // Règle 2: Titre >= 3 caractères
-        if (strlen($tache->getTitre()) < 3) {
+        if (strlen($titre) < 3) {
             throw new \InvalidArgumentException('Le titre doit contenir au moins 3 caractères.');
         }
         
-        // Règle 3: Description obligatoire
-        if (empty($tache->getDescription())) {
+        $description = $tache->getDescription();
+        if ($description === null || $description === '') {
             throw new \InvalidArgumentException('La description de la tâche est obligatoire.');
         }
         
-        // Règle 4: Deadline obligatoire
-        if ($tache->getDeadline() === null) {
+        $deadline = $tache->getDeadline();
+        if ($deadline === null) {
             throw new \InvalidArgumentException('La deadline est obligatoire.');
         }
         
-        // Règle 5: Deadline dans le futur
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
-        if ($tache->getDeadline() < $today) {
+        if ($deadline < $today) {
             throw new \InvalidArgumentException('La deadline doit être aujourd\'hui ou dans le futur.');
         }
         
-        // Règle 6: Statut valide
+        $statut = $tache->getStatut();
         $validStatuts = ['A_FAIRE', 'EN_COURS', 'TERMINEE'];
-        if (!in_array($tache->getStatut(), $validStatuts)) {
+        if (!in_array($statut, $validStatuts, true)) {
             throw new \InvalidArgumentException('Statut invalide. Utilisez A_FAIRE, EN_COURS ou TERMINEE.');
         }
         
-        // Règle 7: Priorité valide
+        $priorite = $tache->getPriorite();
         $validPriorites = ['HAUTE', 'MOYENNE', 'BASSE'];
-        if (!in_array($tache->getPriorite(), $validPriorites)) {
+        if (!in_array($priorite, $validPriorites, true)) {
             throw new \InvalidArgumentException('Priorité invalide. Utilisez HAUTE, MOYENNE ou BASSE.');
         }
         
-        // Règle 8: Employé obligatoire
-        if (empty($tache->getEmployeId())) {
+        $employeId = $tache->getEmployeId();
+        if ($employeId === null || $employeId === 0) {
             throw new \InvalidArgumentException('L\'employé assigné est obligatoire.');
         }
         
@@ -66,14 +64,15 @@ class TacheManager
             return false;
         }
         
-        if ($tache->getDeadline() === null) {
+        $deadline = $tache->getDeadline();
+        if ($deadline === null) {
             return false;
         }
         
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
         
-        return $tache->getDeadline() < $today;
+        return $deadline < $today;
     }
     
     public function getJoursRetard(Tache $tache): int
@@ -82,31 +81,33 @@ class TacheManager
             return 0;
         }
         
+        $deadline = $tache->getDeadline();
+        if ($deadline === null) {
+            return 0;
+        }
+        
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
-        $deadline = clone $tache->getDeadline();
-        $deadline->setTime(0, 0, 0);
         
-        // Calcul du nombre de jours de retard
-        $diff = $deadline->diff($today);
-        
-        return (int) $diff->days;
+        $interval = $deadline->diff($today);
+        return (int) $interval->days;
     }
     
     public function getJoursRestants(Tache $tache): ?int
     {
-        if ($tache->getDeadline() === null || $tache->getStatut() === 'TERMINEE') {
+        $deadline = $tache->getDeadline();
+        if ($deadline === null || $tache->getStatut() === 'TERMINEE') {
             return null;
         }
         
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
-        $deadline = clone $tache->getDeadline();
-        $deadline->setTime(0, 0, 0);
         
-        $diff = $today->diff($deadline);
+        if ($deadline < $today) {
+            return -((int) $deadline->diff($today)->days);
+        }
         
-        return (int) $diff->format('%r%a');
+        return (int) $today->diff($deadline)->days;
     }
     
     // ========== MATRICE DE PRIORITÉ ==========
@@ -166,7 +167,7 @@ class TacheManager
     {
         $validStatuts = ['A_FAIRE', 'EN_COURS', 'TERMINEE'];
         
-        if (!in_array($nouveauStatut, $validStatuts)) {
+        if (!in_array($nouveauStatut, $validStatuts, true)) {
             throw new \InvalidArgumentException('Statut invalide.');
         }
         
@@ -183,7 +184,7 @@ class TacheManager
             return 0;
         }
         
-        return round(($terminees / $total) * 100);
+        return (int) round(($terminees / $total) * 100);
     }
     
     // ========== SCORE DE COMPLEXITÉ ==========
@@ -192,12 +193,16 @@ class TacheManager
     {
         $score = 0;
         
-        $score += min(strlen($tache->getTitre()) * 2, 20);
-        $score += min(strlen($tache->getDescription() ?? '') / 5, 30);
+        $titre = $tache->getTitre() ?? '';
+        $score += min(strlen($titre) * 2, 20);
         
-        if ($tache->getPriorite() === 'HAUTE') {
+        $description = $tache->getDescription() ?? '';
+        $score += min(strlen($description) / 5, 30);
+        
+        $priorite = $tache->getPriorite();
+        if ($priorite === 'HAUTE') {
             $score += 30;
-        } elseif ($tache->getPriorite() === 'MOYENNE') {
+        } elseif ($priorite === 'MOYENNE') {
             $score += 15;
         } else {
             $score += 5;
@@ -213,11 +218,15 @@ class TacheManager
         $base = 8;
         $complexite = $this->calculerScoreComplexite($tache);
         
-        return max(1, (int)($base * ($complexite / 50)));
+        return max(1, (int)($base * ((float)$complexite / 60.0)));
     }
     
     // ========== BURNDOWN CHART ==========
     
+    /**
+     * @param array<Tache> $taches
+     * @return array<string, int>
+     */
     public function calculerBurndown(array $taches): array
     {
         $totalEstime = 0;
@@ -232,39 +241,7 @@ class TacheManager
             'total_estime' => $totalEstime,
             'total_passe' => $totalPasse,
             'variance' => $totalEstime - $totalPasse,
-            'progression' => $totalEstime > 0 ? round(($totalPasse / $totalEstime) * 100) : 0
+            'progression' => $totalEstime > 0 ? (int) round(($totalPasse / $totalEstime) * 100) : 0
         ];
-    }
-    
-    // ========== DÉPENDANCES CIRCULAIRES ==========
-    
-    public function detecterDependancesCirculaires(array $dependances): bool
-    {
-        $visite = [];
-        $enCours = [];
-        
-        $dfs = function($node) use (&$dfs, &$visite, &$enCours, $dependances) {
-            $visite[$node] = true;
-            $enCours[$node] = true;
-            
-            foreach ($dependances[$node] ?? [] as $voisin) {
-                if (!isset($visite[$voisin])) {
-                    if ($dfs($voisin)) return true;
-                } elseif (isset($enCours[$voisin])) {
-                    return true;
-                }
-            }
-            
-            unset($enCours[$node]);
-            return false;
-        };
-        
-        foreach (array_keys($dependances) as $node) {
-            if (!isset($visite[$node])) {
-                if ($dfs($node)) return true;
-            }
-        }
-        
-        return false;
     }
 }

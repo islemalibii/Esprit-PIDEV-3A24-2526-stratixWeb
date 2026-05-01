@@ -12,7 +12,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/planning')]
 final class PlanningController extends AbstractController
@@ -25,10 +24,15 @@ final class PlanningController extends AbstractController
         $searchType = $request->query->get('search_type', '');
         $searchEmploye = $request->query->get('search_employe', '');
         
+        // FORCER LES TYPES EN STRING
+        $searchDate = is_string($searchDate) ? $searchDate : '';
+        $searchType = is_string($searchType) ? $searchType : '';
+        $searchEmploye = is_string($searchEmploye) ? $searchEmploye : '';
+        
         // Construire la requête avec filtres
         $qb = $planningRepository->createQueryBuilder('p');
         
-        // Filtre par date
+        // Filtre par date (CORRIGÉ)
         if (!empty($searchDate)) {
             $date = new \DateTime($searchDate);
             $qb->andWhere('p.date = :date')
@@ -68,7 +72,7 @@ final class PlanningController extends AbstractController
     }
 
     #[Route('/new', name: 'app_planning_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $planning = new Planning();
         $form = $this->createForm(PlanningType::class, $planning);
@@ -102,7 +106,7 @@ final class PlanningController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_planning_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Planning $planning, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
+    public function edit(Request $request, Planning $planning, EntityManagerInterface $entityManager): Response
     {
         $form = $this->createForm(PlanningType::class, $planning);
         $form->handleRequest($request);
@@ -122,7 +126,8 @@ final class PlanningController extends AbstractController
     #[Route('/{id}', name: 'app_planning_delete', methods: ['POST'])]
     public function delete(Request $request, Planning $planning, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $planning->getId(), $request->getPayload()->getString('_token'))) {
+        $token = $request->request->get('_token');
+        if ($token !== null && is_string($token) && $this->isCsrfTokenValid('delete' . $planning->getId(), $token)) {
             $entityManager->remove($planning);
             $entityManager->flush();
             $this->addFlash('success', '✅ Planning supprimé avec succès !');
