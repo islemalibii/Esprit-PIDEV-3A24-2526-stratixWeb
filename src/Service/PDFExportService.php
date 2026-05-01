@@ -31,7 +31,7 @@ class PDFExportService
         $pdf->Cell(0, 5, 'Exporté le: ' . date('d/m/Y H:i:s'), 0, 1, 'R');
         $pdf->Ln(10);
         
-        $totalBudget = array_sum(array_map(fn($s) => $s->getBudget() ?? 0, $services));
+        $totalBudget = array_sum(array_map(fn($s) => (float)($s->getBudget() ?? 0), $services));
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->SetTextColor(44, 62, 80);
         $pdf->Cell(0, 8, ' Informations du Services ', 0, 1, 'L');
@@ -61,7 +61,7 @@ class PDFExportService
         foreach ($services as $index => $service) {
             $pdf->Cell(10, 8, (string)($index + 1), 1, 0, 'C', $fill);
             $pdf->Cell(80, 8, $service->getTitre() ?? '', 1, 0, 'L', $fill);
-            $pdf->Cell(40, 8, number_format($service->getBudget() ?? 0, 0, ',', ' '), 1, 0, 'R', $fill);
+            $pdf->Cell(40, 8, number_format((float)($service->getBudget() ?? 0), 0, ',', ' '), 1, 0, 'R', $fill);
             
             $categorie = $service->getCategorie() !== null ? ($service->getCategorie()->getNom() ?? 'Non catégorisé') : 'Non catégorisé';
             $pdf->Cell(50, 8, (string)$categorie, 1, 1, 'L', $fill);
