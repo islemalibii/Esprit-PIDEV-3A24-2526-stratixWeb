@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class PDFExportServiceTest extends TestCase
 {
-    private function createMockService(int $id, string $title, float $budget, ?string $categorieName = null): Service
+    private function createMockService(int $id, string $title, string $budget, ?string $categorieName = null): Service
     {
         $categorie = null;
         if ($categorieName) {
@@ -32,7 +32,7 @@ class PDFExportServiceTest extends TestCase
     public function testExportServicesToPDFReturnsString(): void
     {
         $services = [
-            $this->createMockService(1, 'Service 1', 1000, 'Développement'),
+            $this->createMockService(1, 'Service 1', '1000', 'Développement'),
         ];
         
         $pdfService = new PDFExportService();
@@ -46,14 +46,13 @@ class PDFExportServiceTest extends TestCase
     public function testExportServicesToPDFReturnsValidPDF(): void
     {
         $services = [
-            $this->createMockService(1, 'Service Test', 1500, 'Développement'),
+            $this->createMockService(1, 'Service Test', '1500', 'Développement'),
         ];
         
         $pdfService = new PDFExportService();
         $result = $pdfService->exportServicesToPDF($services, 'Test PDF');
         
         $this->assertStringStartsWith('%PDF-', $result);
-        
         $this->assertStringEndsWith('%%EOF', trim($result));
     }
     
@@ -70,9 +69,9 @@ class PDFExportServiceTest extends TestCase
     public function testExportServicesToPDFWithMultipleServices(): void
     {
         $services = [
-            $this->createMockService(1, 'Service A', 1000, 'Développement'),
-            $this->createMockService(2, 'Service B', 2000, 'Design'),
-            $this->createMockService(3, 'Service C', 3000, 'Marketing'),
+            $this->createMockService(1, 'Service A', '1000', 'Développement'),
+            $this->createMockService(2, 'Service B', '2000', 'Design'),
+            $this->createMockService(3, 'Service C', '3000', 'Marketing'),
         ];
         
         $pdfService = new PDFExportService();
@@ -86,7 +85,7 @@ class PDFExportServiceTest extends TestCase
     public function testExportServicesToPDFTitleAppears(): void
     {
         $services = [
-            $this->createMockService(1, 'Service 1', 1000, 'Développement'),
+            $this->createMockService(1, 'Service 1', '1000', 'Développement'),
         ];
         
         $title = 'Mon Rapport Personnalisé';
@@ -94,7 +93,6 @@ class PDFExportServiceTest extends TestCase
         $result = $pdfService->exportServicesToPDF($services, $title);
         
         $this->assertStringStartsWith('%PDF', $result);
-       
         $this->assertNotEmpty($result);
     }
 }

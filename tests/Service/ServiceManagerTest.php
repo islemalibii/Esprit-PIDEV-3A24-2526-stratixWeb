@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class ServiceManagerTest extends TestCase
 {
-    private function createServiceWithBudget(float $budget): Service
+    private function createServiceWithBudget(string $budget): Service
     {
         $service = new Service();
         $service->setBudget($budget);
@@ -22,7 +22,7 @@ class ServiceManagerTest extends TestCase
         $service = new Service();
         $service->setDateDebut(new \DateTime($start));
         $service->setDateFin(new \DateTime($end));
-        $service->setBudget(1000);
+        $service->setBudget('1000');
         $service->setTitre('Service Test');
         return $service;
     }
@@ -31,14 +31,14 @@ class ServiceManagerTest extends TestCase
     {
         $service = new Service();
         $service->setTitre($title);
-        $service->setBudget(1000);
+        $service->setBudget('1000');
         return $service;
     }
 
     public function testValidService(): void
     {
         $service = $this->createServiceWithDates('2026-04-01', '2026-04-30');
-        $service->setBudget(1000);
+        $service->setBudget('1000');
         $manager = new ServiceManager();
         $this->assertTrue($manager->validate($service));
     }
@@ -48,7 +48,7 @@ class ServiceManagerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Le budget doit être supérieur à zéro.');
         $service = $this->createServiceWithDates('2026-04-01', '2026-04-30');
-        $service->setBudget(0);
+        $service->setBudget('0');
         $manager = new ServiceManager();
         $manager->validate($service);
     }
@@ -57,7 +57,7 @@ class ServiceManagerTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $service = $this->createServiceWithDates('2026-04-01', '2026-04-30');
-        $service->setBudget(-500);
+        $service->setBudget('-500');
         $manager = new ServiceManager();
         $manager->validate($service);
     }
@@ -65,7 +65,7 @@ class ServiceManagerTest extends TestCase
     public function testServiceWithEndDateAfterStartDate(): void
     {
         $service = $this->createServiceWithDates('2026-04-01', '2026-05-01');
-        $service->setBudget(1000);
+        $service->setBudget('1000');
         $manager = new ServiceManager();
         $this->assertTrue($manager->validate($service));
     }
@@ -75,7 +75,7 @@ class ServiceManagerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('La date de fin doit être postérieure à la date de début.');
         $service = $this->createServiceWithDates('2026-05-01', '2026-04-01');
-        $service->setBudget(1000);
+        $service->setBudget('1000');
         $manager = new ServiceManager();
         $manager->validate($service);
     }
@@ -83,22 +83,22 @@ class ServiceManagerTest extends TestCase
     public function testCalculateTotalBudget(): void
     {
         $services = [
-            $this->createServiceWithBudget(1000),
-            $this->createServiceWithBudget(2000),
-            $this->createServiceWithBudget(3000),
+            $this->createServiceWithBudget('1000'),
+            $this->createServiceWithBudget('2000'),
+            $this->createServiceWithBudget('3000'),
         ];
-        $total = array_sum(array_map(fn($s) => $s->getBudget(), $services));
+        $total = array_sum(array_map(fn($s) => (float)$s->getBudget(), $services));
         $this->assertEquals(6000, $total);
     }
 
     public function testCalculateAverageBudget(): void
     {
         $services = [
-            $this->createServiceWithBudget(1000),
-            $this->createServiceWithBudget(2000),
-            $this->createServiceWithBudget(3000),
+            $this->createServiceWithBudget('1000'),
+            $this->createServiceWithBudget('2000'),
+            $this->createServiceWithBudget('3000'),
         ];
-        $total = array_sum(array_map(fn($s) => $s->getBudget(), $services));
+        $total = array_sum(array_map(fn($s) => (float)$s->getBudget(), $services));
         $average = $total / count($services);
         $this->assertEquals(2000, $average);
     }
@@ -107,7 +107,7 @@ class ServiceManagerTest extends TestCase
     {
         $services = [];
         $average = count($services) > 0 
-            ? array_sum(array_map(fn($s) => $s->getBudget(), $services)) / count($services) 
+            ? array_sum(array_map(fn($s) => (float)$s->getBudget(), $services)) / count($services) 
             : 0;
         $this->assertEquals(0, $average);
     }
@@ -115,24 +115,24 @@ class ServiceManagerTest extends TestCase
     public function testSortServicesByBudgetDescending(): void
     {
         $services = [
-            $this->createServiceWithBudget(3000),
-            $this->createServiceWithBudget(1000),
-            $this->createServiceWithBudget(2000),
+            $this->createServiceWithBudget('3000'),
+            $this->createServiceWithBudget('1000'),
+            $this->createServiceWithBudget('2000'),
         ];
-        usort($services, fn($a, $b) => $b->getBudget() <=> $a->getBudget());
-        $this->assertEquals(3000, $services[0]->getBudget());
-        $this->assertEquals(2000, $services[1]->getBudget());
-        $this->assertEquals(1000, $services[2]->getBudget());
+        usort($services, fn($a, $b) => (float)$b->getBudget() <=> (float)$a->getBudget());
+        $this->assertEquals('3000', $services[0]->getBudget());
+        $this->assertEquals('2000', $services[1]->getBudget());
+        $this->assertEquals('1000', $services[2]->getBudget());
     }
 
     public function testBudgetDistribution(): void
     {
         $services = [
-            $this->createServiceWithBudget(1000),
-            $this->createServiceWithBudget(5000),
-            $this->createServiceWithBudget(2000),
+            $this->createServiceWithBudget('1000'),
+            $this->createServiceWithBudget('5000'),
+            $this->createServiceWithBudget('2000'),
         ];
-        $budgets = array_map(fn($s) => $s->getBudget(), $services);
+        $budgets = array_map(fn($s) => (float)$s->getBudget(), $services);
         $min = min($budgets);
         $max = max($budgets);
         $range = $max - $min;
@@ -144,13 +144,13 @@ class ServiceManagerTest extends TestCase
 
     public function testBudgetThresholds(): void
     {
-        $lowBudget = $this->createServiceWithBudget(500);
-        $mediumBudget = $this->createServiceWithBudget(5000);
-        $highBudget = $this->createServiceWithBudget(50000);
+        $lowBudget = $this->createServiceWithBudget('500');
+        $mediumBudget = $this->createServiceWithBudget('5000');
+        $highBudget = $this->createServiceWithBudget('50000');
         
-        $this->assertLessThan(1000, $lowBudget->getBudget());
-        $this->assertGreaterThanOrEqual(1000, $mediumBudget->getBudget());
-        $this->assertGreaterThan(10000, $highBudget->getBudget());
+        $this->assertLessThan(1000, (float)$lowBudget->getBudget());
+        $this->assertGreaterThanOrEqual(1000, (float)$mediumBudget->getBudget());
+        $this->assertGreaterThan(10000, (float)$highBudget->getBudget());
     }
 
     public function testSearchServicesByKeyword(): void
@@ -187,21 +187,22 @@ class ServiceManagerTest extends TestCase
         
         $this->assertEquals(29, $daysDiff);
     }
+
     public function testFindMostExpensiveService(): void
-{
-    $services = [
-        $this->createServiceWithBudget(1000),
-        $this->createServiceWithBudget(5000),
-        $this->createServiceWithBudget(3000),
-    ];
-    
-    $mostExpensive = $services[0];
-    foreach ($services as $service) {
-        if ($service->getBudget() > $mostExpensive->getBudget()) {
-            $mostExpensive = $service;
+    {
+        $services = [
+            $this->createServiceWithBudget('1000'),
+            $this->createServiceWithBudget('5000'),
+            $this->createServiceWithBudget('3000'),
+        ];
+        
+        $mostExpensive = $services[0];
+        foreach ($services as $service) {
+            if ((float)$service->getBudget() > (float)$mostExpensive->getBudget()) {
+                $mostExpensive = $service;
+            }
         }
+        
+        $this->assertEquals('5000', $mostExpensive->getBudget());
     }
-    
-    $this->assertEquals(5000, $mostExpensive->getBudget());
-}
 }

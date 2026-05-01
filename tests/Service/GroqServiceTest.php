@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class GroqServiceTest extends TestCase
 {
-    private function createMockService(float $budget, string $title, ?Utilisateur $user = null): Service
+    private function createMockService(string $budget, string $title, ?Utilisateur $user = null): Service
     {
         $service = $this->createMock(Service::class);
         $service->method('getBudget')->willReturn($budget);
@@ -39,8 +39,8 @@ class GroqServiceTest extends TestCase
         $groqService = new GroqService($apiKey);
         
         $services = [
-            $this->createMockService(1000, 'Service 1'),
-            $this->createMockService(2000, 'Service 2'),
+            $this->createMockService('1000', 'Service 1'),
+            $this->createMockService('2000', 'Service 2'),
         ];
         $groqService->setServices($services);
         
@@ -57,12 +57,12 @@ class GroqServiceTest extends TestCase
         $groqService = new GroqService($apiKey);
         
         $services = [
-            $this->createMockService(1000, 'Service A'),
-            $this->createMockService(2000, 'Service B'),
-            $this->createMockService(3000, 'Service C'),
+            $this->createMockService('1000', 'Service A'),
+            $this->createMockService('2000', 'Service B'),
+            $this->createMockService('3000', 'Service C'),
         ];
         $groqService->setServices($services);
-       
+        
         $question = 'budget total';
         $response = $groqService->ask($question);
         
@@ -76,8 +76,8 @@ class GroqServiceTest extends TestCase
         $groqService = new GroqService($apiKey);
         
         $services = [
-            $this->createMockService(1000, 'Formation Java'),
-            $this->createMockService(2000, 'Formation PHP'),
+            $this->createMockService('1000', 'Formation Java'),
+            $this->createMockService('2000', 'Formation PHP'),
         ];
         $groqService->setServices($services);
         
@@ -95,9 +95,9 @@ class GroqServiceTest extends TestCase
         $user = $this->createMockUser('John', 'Doe');
         
         $services = [
-            $this->createMockService(1000, 'Service A', null), 
-            $this->createMockService(2000, 'Service B', $user), 
-            $this->createMockService(3000, 'Service C', null), 
+            $this->createMockService('1000', 'Service A', null),
+            $this->createMockService('2000', 'Service B', $user),
+            $this->createMockService('3000', 'Service C', null),
         ];
         $groqService->setServices($services);
         
@@ -114,9 +114,9 @@ class GroqServiceTest extends TestCase
         $groqService = new GroqService($apiKey);
         
         $services = [
-            $this->createMockService(1000, 'Petit budget'),
-            $this->createMockService(5000, 'Moyen budget'),
-            $this->createMockService(10000, 'Grand budget'),
+            $this->createMockService('1000', 'Petit budget'),
+            $this->createMockService('5000', 'Moyen budget'),
+            $this->createMockService('10000', 'Grand budget'),
         ];
         $groqService->setServices($services);
         
@@ -132,8 +132,8 @@ class GroqServiceTest extends TestCase
         $groqService = new GroqService($apiKey);
         
         $services = [
-            $this->createMockService(1000, 'Service 1'),
-            $this->createMockService(2000, 'Service 2'),
+            $this->createMockService('1000', 'Service 1'),
+            $this->createMockService('2000', 'Service 2'),
         ];
         
         $groqService->setServices($services);
