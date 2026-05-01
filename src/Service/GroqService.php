@@ -37,108 +37,113 @@ class GroqService
     }
 
     private function callGroqAPI(string $question): ?string
-{
-    $servicesArray = [];
-    foreach ($this->services as $service) {
-        $responsable = null;
-        if ($service->getUtilisateur() !== null) {
-            try {
-                $utilisateur = $service->getUtilisateur();
-                $responsable = $utilisateur->getPrenom() . ' ' . $utilisateur->getNom();
-            } catch (\Exception $e) {
-                $responsable = null;
+    {
+        $servicesArray = [];
+        foreach ($this->services as $service) {
+            $responsable = null;
+            if ($service->getUtilisateur() !== null) {
+                try {
+                    $utilisateur = $service->getUtilisateur();
+                    $responsable = $utilisateur->getPrenom() . ' ' . $utilisateur->getNom();
+                } catch (\Exception $e) {
+                    $responsable = null;
+                }
             }
+            
+            $servicesArray[] = [
+                'titre' => $service->getTitre(),
+                'budget' => (float)($service->getBudget() ?? 0), // Cast to float for JSON
+                'description' => $service->getDescription() ?: 'Aucune description',
+                'categorie' => $service->getCategorie() !== null ? $service->getCategorie()->getNom() : null,
+                'responsable' => $responsable
+            ];
         }
         
-        $servicesArray[] = [
-            'titre' => $service->getTitre(),
-            'budget' => $service->getBudget(),
-            'description' => $service->getDescription() ?: 'Aucune description',
-            'categorie' => $service->getCategorie() !== null ? $service->getCategorie()->getNom() : null,
-            'responsable' => $responsable
-        ];
-    }
-    
-    $contexte = json_encode($servicesArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    
-    $prompt = "Tu es un assistant spécialisé dans la gestion de services. " .
-              "Voici les données actuelles des services au format JSON :\n\n" . $contexte .
-              "\n\nRéponds à cette question en français de façon naturelle et utile : " . $question;
-    
-    $data = [
-        'model' => 'llama-3.3-70b-versatile',
-        'messages' => [
-            [
-                'role' => 'system',
-                'content' => 'Tu es un assistant IA spécialisé dans l\'analyse de données de services. Tu réponds toujours en français de façon claire, précise et utile.'
+        $contexte = json_encode($servicesArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        
+        $prompt = "Tu es un assistant spécialisé dans la gestion de services. " .
+                  "Voici les données actuelles des services au format JSON :\n\n" . $contexte .
+                  "\n\nRéponds à cette question en français de façon naturelle et utile : " . $question;
+        
+        $data = [
+            'model' => 'llama-3.3-70b-versatile',
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'Tu es un assistant IA spécialisé dans l\'analyse de données de services. Tu réponds toujours en français de façon claire, précise et utile.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
             ],
-            [
-                'role' => 'user',
-                'content' => $prompt
-            ]
-        ],
-        'max_tokens' => 800,
-        'temperature' => 0.7
-    ];
-    
-    try {
-        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
-        if ($ch === false) {
-            return null;
-        }
+            'max_tokens' => 800,
+            'temperature' => 0.7
+        ];
         
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $this->apiKey,
-            'Content-Type: application/json'
-        ]);
-        
-        $jsonData = json_encode($data);
-        if ($jsonData === false) {
-            curl_close($ch);
-            return null;
-        }
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        
-        $response = curl_exec($ch);
-        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode === 200 && $response !== false && is_string($response)) {
-            $result = json_decode($response, true);
-            if (is_array($result) && isset($result['choices'][0]['message']['content'])) {
-                return (string)$result['choices'][0]['message']['content'];
+        try {
+            $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+            if ($ch === false) {
+                return null;
             }
+            
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $this->apiKey,
+                'Content-Type: application/json'
+            ]);
+            
+            $jsonData = json_encode($data);
+            if ($jsonData === false) {
+                curl_close($ch);
+                return null;
+            }
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            
+            $response = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode === 200 && $response !== false && is_string($response)) {
+                $result = json_decode($response, true);
+                if (is_array($result) && isset($result['choices'][0]['message']['content'])) {
+                    return (string)$result['choices'][0]['message']['content'];
+                }
+            }
+            
+            return null;
+            
+        } catch (\Exception $e) {
+            return null;
         }
-        
-        return null;
-        
-    } catch (\Exception $e) {
-        return null;
     }
-}
+    
     private function getLocalFallback(string $question): string
     {
         $q = strtolower(trim($question));
         $services = $this->services;
         
         if (str_contains($q, 'budget total') || str_contains($q, 'total')) {
-            $total = array_sum(array_map(fn($s) => $s->getBudget() ?? 0, $services));
+            // Fix: Cast budget to float for sum
+            $total = array_sum(array_map(fn($s) => (float)($s->getBudget() ?? 0), $services));
             return "💰 *Budget total* : " . number_format($total, 0, ',', ' ') . " DT";
         }
         
         if (str_contains($q, 'max') || str_contains($q, 'plus gros')) {
             $max = null;
+            $maxBudget = -1;
             foreach ($services as $s) {
-                if ($max === null || ($s->getBudget() !== null && $s->getBudget() > ($max->getBudget() ?? 0))) {
+                $budget = (float)($s->getBudget() ?? 0);
+                if ($budget > $maxBudget) {
+                    $maxBudget = $budget;
                     $max = $s;
                 }
             }
-            if ($max !== null && $max->getBudget() !== null) {
-                return "🏆 *Plus gros budget* : " . ($max->getTitre() ?? 'N/A') . " - " . number_format($max->getBudget(), 0, ',', ' ') . " DT";
+            if ($max !== null && $maxBudget > 0) {
+                return "🏆 *Plus gros budget* : " . ($max->getTitre() ?? 'N/A') . " - " . number_format($maxBudget, 0, ',', ' ') . " DT";
             }
         }
         
@@ -146,7 +151,8 @@ class GroqService
             $result = "📋 *Liste des " . count($services) . " services* :\n\n";
             $index = 1;
             foreach ($services as $s) {
-                $result .= (string)$index . ". *" . ($s->getTitre() ?? 'Sans titre') . "* - " . number_format($s->getBudget() ?? 0, 0, ',', ' ') . " DT\n";
+                $budget = (float)($s->getBudget() ?? 0);
+                $result .= (string)$index . ". *" . ($s->getTitre() ?? 'Sans titre') . "* - " . number_format($budget, 0, ',', ' ') . " DT\n";
                 $index++;
             }
             return $result;
