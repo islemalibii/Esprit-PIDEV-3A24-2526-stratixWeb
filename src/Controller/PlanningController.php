@@ -1,4 +1,5 @@
 <?php
+// src/Controller/PlanningController.php
 
 namespace App\Controller;
 
@@ -17,18 +18,52 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class PlanningController extends AbstractController
 {
     #[Route(name: 'app_planning_index', methods: ['GET'])]
-    public function index(PlanningRepository $planningRepository, UtilisateurRepository $utilisateurRepository): Response
+    public function index(Request $request, PlanningRepository $planningRepository, UtilisateurRepository $utilisateurRepository): Response
     {
-        $plannings = $planningRepository->findAll();
-
+        // ========== RECHERCHE PHP (côté serveur) ==========
+        $searchDate = $request->query->get('search_date', '');
+        $searchType = $request->query->get('search_type', '');
+        $searchEmploye = $request->query->get('search_employe', '');
+        
+        // Construire la requête avec filtres
+        $qb = $planningRepository->createQueryBuilder('p');
+        
+        // Filtre par date
+        if (!empty($searchDate)) {
+            $date = new \DateTime($searchDate);
+            $qb->andWhere('p.date = :date')
+               ->setParameter('date', $date);
+        }
+        
+        // Filtre par type de shift
+        if (!empty($searchType)) {
+            $qb->andWhere('p.typeShift = :type')
+               ->setParameter('type', $searchType);
+        }
+        
+        // Filtre par employé
+        if (!empty($searchEmploye)) {
+            $qb->andWhere('p.employeId = :employe')
+               ->setParameter('employe', (int)$searchEmploye);
+        }
+        
+        // Trier par date décroissante
+        $qb->orderBy('p.date', 'DESC');
+        
+        $plannings = $qb->getQuery()->getResult();
+        
+        // Récupérer tous les employés
         $employes = [];
         foreach ($utilisateurRepository->findAll() as $u) {
             $employes[$u->getId()] = $u->getPrenom() . ' ' . $u->getNom();
         }
-
+        
         return $this->render('admin/planning/index.html.twig', [
             'plannings' => $plannings,
-            'employes'  => $employes,
+            'employes' => $employes,
+            'search_date' => $searchDate,
+            'search_type' => $searchType,
+            'search_employe' => $searchEmploye,
         ]);
     }
 
@@ -39,25 +74,16 @@ final class PlanningController extends AbstractController
         $form = $this->createForm(PlanningType::class, $planning);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted()) {
-            // Validation manuelle
-            $errors = $validator->validate($planning);
-            
-            if (count($errors) === 0) {
-                $entityManager->persist($planning);
-                $entityManager->flush();
-                $this->addFlash('success', '✅ Planning ajouté avec succès !');
-                return $this->redirectToRoute('app_planning_index');
-            } else {
-                foreach ($errors as $error) {
-                    $this->addFlash('danger', $error->getMessage());
-                }
-            }
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($planning);
+            $entityManager->flush();
+            $this->addFlash('success', '✅ Planning ajouté avec succès !');
+            return $this->redirectToRoute('app_planning_index');
         }
 
         return $this->render('admin/planning/new.html.twig', [
             'planning' => $planning,
-            'form'     => $form,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -81,23 +107,15 @@ final class PlanningController extends AbstractController
         $form = $this->createForm(PlanningType::class, $planning);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted()) {
-            $errors = $validator->validate($planning);
-            
-            if (count($errors) === 0) {
-                $entityManager->flush();
-                $this->addFlash('success', '✅ Planning modifié avec succès !');
-                return $this->redirectToRoute('app_planning_index');
-            } else {
-                foreach ($errors as $error) {
-                    $this->addFlash('danger', $error->getMessage());
-                }
-            }
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', '✅ Planning modifié avec succès !');
+            return $this->redirectToRoute('app_planning_index');
         }
 
         return $this->render('admin/planning/edit.html.twig', [
             'planning' => $planning,
-            'form'     => $form,
+            'form' => $form->createView(),
         ]);
     }
 
