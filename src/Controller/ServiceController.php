@@ -252,7 +252,7 @@ final class ServiceController extends AbstractController
             $data[] = [
                 'id'          => $service->getId(),
                 'titre'       => $service->getTitre(),
-                'budget'      => $service->getBudget(),
+                'budget'      => (float)$service->getBudget(), // FIX: Cast to float for JSON
                 'categorie'   => $service->getCategorie() ? $service->getCategorie()->getNom() : null,
                 'description' => $service->getDescription(),
                 'dateDebut'   => $service->getDateDebut() ? $service->getDateDebut()->format('d/m/Y') : 'N/A',
