@@ -1,5 +1,6 @@
 parameters:
-    level: 3
+    level: 8
+    treatPhpDocTypesAsCertain: false
     paths:
         - src/Entity/Utilisateur.php
         - src/Controller/AdminController.php

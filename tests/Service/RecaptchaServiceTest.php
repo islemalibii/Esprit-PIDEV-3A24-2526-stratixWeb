@@ -28,6 +28,7 @@ class RecaptchaServiceTest extends TestCase
 
         $httpClient = $this->createMock(HttpClientInterface::class);
         $httpClient->method('request')->willReturn($response);
+        
 
         $service = new RecaptchaService($httpClient, 'fake_secret');
         $this->assertFalse($service->isHuman('fake_token'));

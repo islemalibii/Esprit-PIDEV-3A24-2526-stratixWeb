@@ -118,8 +118,10 @@ class AdminController extends AbstractController
             /** @var UploadedFile|null $avatarFile */
             $avatarFile = $request->files->get('avatar');
             if ($avatarFile && $request->request->get('face_validated') === '1') {
-                $filename = uniqid('avatar_') . '.' . $avatarFile->guessExtension();
-                $avatarFile->move($this->getParameter('kernel.project_dir') . '/public/images/avatar', $filename);
+                $filename = uniqid('avatar_') . '.' . ($avatarFile->guessExtension() ?? 'jpg');
+                /** @var string $projectDir */
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $avatarFile->move($projectDir . '/public/images/avatar', $filename);
                 $user->setAvatar($filename);
             }
 
@@ -147,8 +149,10 @@ class AdminController extends AbstractController
             /** @var UploadedFile|null $avatarFile */
             $avatarFile = $request->files->get('avatar');
             if ($avatarFile && $request->request->get('face_validated') === '1') {
-                $filename = uniqid('avatar_') . '.' . $avatarFile->guessExtension();
-                $avatarFile->move($this->getParameter('kernel.project_dir') . '/public/images/avatar', $filename);
+                $filename = uniqid('avatar_') . '.' . ($avatarFile->guessExtension() ?? 'jpg');
+                /** @var string $projectDir */
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $avatarFile->move($projectDir . '/public/images/avatar', $filename);
                 $user->setAvatar($filename);
             }
 
@@ -164,7 +168,7 @@ class AdminController extends AbstractController
     #[Route('/users/{id}/delete', name: 'admin_user_delete', methods: ['POST'])]
     public function deleteUser(Utilisateur $user, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$user->getId(), (string)$request->request->get('_token'))) {
             $em->remove($user);
             $em->flush();
             $this->addFlash('success', 'Utilisateur supprimé.');
@@ -175,7 +179,7 @@ class AdminController extends AbstractController
     #[Route('/users/{id}/toggle-lock', name: 'admin_user_toggle_lock', methods: ['POST'])]
     public function toggleLock(Utilisateur $user, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('toggle'.$user->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('toggle'.$user->getId(), (string)$request->request->get('_token'))) {
             $user->setAccountLocked(!$user->isAccountLocked());
             if ($user->isAccountLocked()) {
                 $user->setLockedAt(new \DateTime()); // date du verrouillage
@@ -193,8 +197,8 @@ class AdminController extends AbstractController
     #[Route('/users/{id}/change-role', name: 'admin_user_change_role', methods: ['POST'])]
     public function changeRole(Utilisateur $user, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('role'.$user->getId(), $request->request->get('_token'))) {
-            $role = $request->request->get('role');
+        if ($this->isCsrfTokenValid('role'.$user->getId(), (string)$request->request->get('_token'))) {
+            $role = (string)$request->request->get('role');
             if (in_array($role, ['admin', 'employe', 'responsable_rh', 'responsable_projet', 'responsable_production', 'ceo'])) {
                 $user->setRole($role);
                 $em->flush();
@@ -207,7 +211,7 @@ class AdminController extends AbstractController
     #[Route('/users/{id}/qrcode', name: 'admin_user_qrcode', methods: ['GET'])]
     public function qrcode(Utilisateur $user): Response
     {
-        $data = json_encode([
+        $data = (string)json_encode([
             'id'         => $user->getId(),
             'nom'        => $user->getNom(),
             'prenom'     => $user->getPrenom(),
@@ -271,7 +275,7 @@ class AdminController extends AbstractController
                 $node = [
                     'id'     => $u->getId(),
                     'name'   => $u->getPrenom() . ' ' . $u->getNom(),
-                    'title'  => $roleLabels[$role] ?? $role,
+                    'title'  => $roleLabels[$role],
                     'dept'   => $u->getDepartment() ?? '',
                     'avatar' => $u->getAvatar(),
                     'role'   => $role,
