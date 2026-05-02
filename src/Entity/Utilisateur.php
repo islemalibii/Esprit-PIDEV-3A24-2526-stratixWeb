@@ -342,7 +342,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDateAjout(): ?\DateTime
+    public function getDateAjout(): ?\DateTimeInterface
     {
         return $this->date_ajout;
     }
@@ -354,7 +354,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDateEmbauche(): ?\DateTime
+    public function getDateEmbauche(): ?\DateTimeInterface
     {
         return $this->date_embauche;
     }
@@ -390,7 +390,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getLockedUntil(): ?\DateTime
+    public function getLockedUntil(): ?\DateTimeInterface
     {
         return $this->locked_until;
     }

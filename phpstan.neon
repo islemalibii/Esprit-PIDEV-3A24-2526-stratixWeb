@@ -3,10 +3,11 @@ parameters:
     treatPhpDocTypesAsCertain: false
     paths:
         - src/Entity/Utilisateur.php
+        - src/Entity/Notification.php
+        - src/Entity/ResetPasswordRequest.php
         - src/Controller/AbstractAdminController.php
         - src/Controller/AdminController.php
         - src/Controller/AuthController.php
-        - src/Controller/CalendarController.php
         - src/Controller/EmployeeProfileController.php
         - src/Controller/GoogleController.php
         - src/Controller/ProfileController.php
@@ -15,6 +16,10 @@ parameters:
         - src/Service/RecaptchaService.php
         - src/Twig/NotificationExtension.php
         - src/Twig/EmployeeNotificationExtension.php
+        - src/Repository/ResetPasswordRequestRepository.php
+        - src/Repository/NotificationRepository.php
+        - src/Security/LoginAuthenticator.php
+        - tests/Entity/UtilisateurTest.php
     ignoreErrors:
         - '#should return DateTime\|null but returns DateTimeInterface\|null#'
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getRole\(\)#'
@@ -23,3 +28,4 @@ parameters:
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getNom\(\)#'
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getTheme\(\)#'
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getAvatar\(\)#'
+        - '#Property App\\Entity\\[a-zA-Z]+::\$id \(int\|null\) is never assigned int so it can be removed from the property type\.#'

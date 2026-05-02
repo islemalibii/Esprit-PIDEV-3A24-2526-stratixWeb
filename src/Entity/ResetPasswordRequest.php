@@ -15,7 +15,7 @@ class ResetPasswordRequest implements ResetPasswordRequestInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private ?int $id = null; // @phpstan-ignore-line
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
@@ -28,5 +28,5 @@ class ResetPasswordRequest implements ResetPasswordRequestInterface
     }
 
     public function getId(): ?int { return $this->id; }
-    public function getUser(): object { return $this->user; }
+    public function getUser(): Utilisateur { return $this->user ?? throw new \LogicException('User not set'); }
 }
