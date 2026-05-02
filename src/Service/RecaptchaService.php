@@ -19,10 +19,13 @@ class RecaptchaService
      * Vérifie le token reCAPTCHA v3 et retourne le score (0.0 à 1.0)
      * Score >= 0.5 = humain, < 0.5 = bot probable
      */
+    /**
+     * @return array{success: bool, score: float, action: string, error: string|null}
+     */
     public function verify(string $token, string $action = ''): array
     {
         if (empty($token)) {
-            return ['success' => false, 'score' => 0.0, 'error' => 'Token manquant'];
+            return ['success' => false, 'score' => 0.0, 'action' => '', 'error' => 'Token manquant'];
         }
 
         $response = $this->httpClient->request('POST', 'https://www.google.com/recaptcha/api/siteverify', [

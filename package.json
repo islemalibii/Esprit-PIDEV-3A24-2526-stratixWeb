@@ -8,6 +8,7 @@
     "sass": "^1.82.0"
   },
   "dependencies": {
+    "@vladmandic/face-api": "^1.7.15",
     "face-api.js": "^0.22.2"
   }
 }

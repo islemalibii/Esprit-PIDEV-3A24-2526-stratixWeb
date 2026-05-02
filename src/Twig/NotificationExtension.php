@@ -4,6 +4,7 @@ namespace App\Twig;
 
 use App\Repository\UtilisateurRepository;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Security\Core\Security;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 
@@ -11,16 +12,22 @@ class NotificationExtension extends AbstractExtension implements GlobalsInterfac
 {
     public function __construct(
         private UtilisateurRepository $repo,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private Security $security
     ) {}
 
     public function getGlobals(): array
     {
-        $notifications = [];
-
         try {
+            // Charger uniquement pour les admins
+            $user = $this->security->getUser();
+            if (!$user || !$this->security->isGranted('ROLE_ADMIN')) {
+                return ['admin_notifications' => []];
+            }
+
             $session = $this->requestStack->getSession();
             $readIds = $session->get('notif_read_ids', []);
+            $notifications = [];
 
             // Nouveaux utilisateurs
             $newUsers = $this->repo->findBy([], ['id' => 'DESC'], 5);
@@ -35,7 +42,7 @@ class NotificationExtension extends AbstractExtension implements GlobalsInterfac
                 ];
             }
 
-            // Modifications récentes (updated_at non null)
+            // Modifications récentes
             $updated = $this->repo->createQueryBuilder('u')
                 ->where('u.updated_at IS NOT NULL')
                 ->orderBy('u.updated_at', 'DESC')
@@ -65,17 +72,18 @@ class NotificationExtension extends AbstractExtension implements GlobalsInterfac
                 ];
             }
 
-            // Trier par date décroissante et limiter à 5
+            // Trier par date et limiter à 5
             usort($notifications, function($a, $b) {
                 if (!$a['date'] && !$b['date']) return 0;
                 if (!$a['date']) return 1;
                 if (!$b['date']) return -1;
                 return $b['date'] <=> $a['date'];
             });
-            $notifications = array_slice($notifications, 0, 5);
 
-        } catch (\Exception $e) {}
+            return ['admin_notifications' => array_slice($notifications, 0, 5)];
 
-        return ['admin_notifications' => $notifications];
+        } catch (\Exception $e) {
+            return ['admin_notifications' => []];
+        }
     }
 }

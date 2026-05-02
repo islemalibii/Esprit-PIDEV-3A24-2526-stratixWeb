@@ -55,15 +55,31 @@ class AuthController extends AbstractController
         return $this->redirectToRoute('app_employee_dashboard');
     }
 
-    #[Route('/theme/toggle', name: 'app_theme_toggle', methods: ['POST'])]
-    public function toggleTheme(Request $request, EntityManagerInterface $em): \Symfony\Component\HttpFoundation\JsonResponse
+    #[Route('/emotion/save', name: 'app_emotion_save', methods: ['POST'])]
+    public function saveEmotion(Request $request, EntityManagerInterface $em): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        /** @var \App\Entity\Utilisateur $user */
+        $user = $this->getUser();
+        if (!$user) return $this->json(['error' => 'Non connecté'], 401);
+
+        $emotion = (string)$request->request->get('emotion', 'neutral');
+        $allowed = ['happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'neutral'];
+        if (!in_array($emotion, $allowed)) $emotion = 'neutral';
+
+        $user->setLastEmotion($emotion);
+        $em->flush();
+
+        return $this->json(['ok' => true, 'emotion' => $emotion]);
+    }
+
+    #[Route('/theme/toggle', name: 'app_theme_toggle', methods: ['POST'])]    public function toggleTheme(Request $request, EntityManagerInterface $em): \Symfony\Component\HttpFoundation\JsonResponse
     {
         /** @var \App\Entity\Utilisateur $user */
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['error' => 'Non connecté'], 401);
         }
-        $theme = $request->request->get('theme', 'light');
+        $theme = (string)$request->request->get('theme', 'light');
         $user->setTheme(in_array($theme, ['light', 'dark']) ? $theme : 'light');
         $em->flush();
         return $this->json(['theme' => $user->getTheme()]);
@@ -99,17 +115,17 @@ class AuthController extends AbstractController
 
         if ($request->isMethod('POST')) {
             // Vérification reCAPTCHA
-            $recaptchaToken = $request->request->get('recaptcha_token', '');
+            $recaptchaToken = (string)$request->request->get('recaptcha_token', '');
             if ($recaptchaToken && !$recaptcha->isHuman($recaptchaToken)) {
                 $errors['recaptcha'] = 'Activité suspecte détectée. Veuillez réessayer.';
             }
 
-            $nom      = trim($request->request->get('nom', ''));
-            $prenom   = trim($request->request->get('prenom', ''));
-            $email    = trim($request->request->get('email', ''));
-            $cin      = trim($request->request->get('cin', ''));
-            $password = $request->request->get('password', '');
-            $confirm  = $request->request->get('confirm', '');
+            $nom      = trim((string)$request->request->get('nom', ''));
+            $prenom   = trim((string)$request->request->get('prenom', ''));
+            $email    = trim((string)$request->request->get('email', ''));
+            $cin      = trim((string)$request->request->get('cin', ''));
+            $password = (string)$request->request->get('password', '');
+            $confirm  = (string)$request->request->get('confirm', '');
 
             if (!$nom)    $errors['nom']    = 'Le nom est obligatoire.';
             elseif (!preg_match('/^[a-zA-ZÀ-ÿ\s\-]+$/', $nom)) $errors['nom'] = 'Lettres uniquement.';
@@ -151,8 +167,10 @@ class AuthController extends AbstractController
 
                 // Sauvegarde de la photo si uploadée
                 if ($avatarFile) {
-                    $filename = uniqid('avatar_') . '.' . $avatarFile->guessExtension();
-                    $avatarFile->move($this->getParameter('kernel.project_dir') . '/public/images/avatar', $filename);
+                    $filename = uniqid('avatar_') . '.' . ($avatarFile->guessExtension() ?? 'jpg');
+                    /** @var string $projectDir */
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    $avatarFile->move($projectDir . '/public/images/avatar', $filename);
                     $user->setAvatar($filename);
                 }
 

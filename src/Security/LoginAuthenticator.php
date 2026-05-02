@@ -35,9 +35,9 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
         $password = $request->request->get('password', '');
         $token    = $request->request->get('_csrf_token', '');
 
-        // Vérification reCAPTCHA v3
+        // Vérification reCAPTCHA v3 — seuil bas (0.1) pour compatibilité localhost
         $recaptchaToken = $request->request->get('recaptcha_token', '');
-        if ($recaptchaToken && !$this->recaptcha->isHuman($recaptchaToken)) {
+        if ($recaptchaToken && !$this->recaptcha->isHuman($recaptchaToken, 0.1)) {
             throw new CustomUserMessageAuthenticationException(
                 'Activité suspecte détectée. Veuillez réessayer.'
             );
