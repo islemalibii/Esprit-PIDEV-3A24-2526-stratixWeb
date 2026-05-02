@@ -6,14 +6,21 @@ use App\Entity\Service;
 
 class GroqService
 {
+    /**
+     * @var Service[]
+     */
     private array $services = [];
+    
     private string $apiKey;
 
-    public function __construct()
+    public function __construct(string $apiKey)
     {
-        $this->apiKey = '';
+        $this->apiKey = $apiKey;
     }
 
+    /**
+     * @param Service[] $services
+     */
     public function setServices(array $services): void
     {
         $this->services = $services;
@@ -22,7 +29,7 @@ class GroqService
     public function ask(string $question): string
     {
         $apiResponse = $this->callGroqAPI($question);
-        if ($apiResponse) {
+        if ($apiResponse !== null && $apiResponse !== '') {
             return $apiResponse;
         }
         
@@ -34,9 +41,10 @@ class GroqService
         $servicesArray = [];
         foreach ($this->services as $service) {
             $responsable = null;
-            if ($service->getUtilisateur()) {
+            if ($service->getUtilisateur() !== null) {
                 try {
-                    $responsable = $service->getUtilisateur()->getPrenom() . ' ' . $service->getUtilisateur()->getNom();
+                    $utilisateur = $service->getUtilisateur();
+                    $responsable = $utilisateur->getPrenom() . ' ' . $utilisateur->getNom();
                 } catch (\Exception $e) {
                     $responsable = null;
                 }
@@ -44,9 +52,9 @@ class GroqService
             
             $servicesArray[] = [
                 'titre' => $service->getTitre(),
-                'budget' => $service->getBudget(),
+                'budget' => (float)($service->getBudget() ?? 0), // Cast to float for JSON
                 'description' => $service->getDescription() ?: 'Aucune description',
-                'categorie' => $service->getCategorie() ? $service->getCategorie()->getNom() : null,
+                'categorie' => $service->getCategorie() !== null ? $service->getCategorie()->getNom() : null,
                 'responsable' => $responsable
             ];
         }
@@ -75,24 +83,34 @@ class GroqService
         
         try {
             $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+            if ($ch === false) {
+                return null;
+            }
+            
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Authorization: Bearer ' . $this->apiKey,
                 'Content-Type: application/json'
             ]);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            
+            $jsonData = json_encode($data);
+            if ($jsonData === false) {
+                curl_close($ch);
+                return null;
+            }
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             
             $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
             
-            if ($httpCode === 200) {
+            if ($httpCode === 200 && $response !== false && is_string($response)) {
                 $result = json_decode($response, true);
-                if (isset($result['choices'][0]['message']['content'])) {
-                    return $result['choices'][0]['message']['content'];
+                if (is_array($result) && isset($result['choices'][0]['message']['content'])) {
+                    return (string)$result['choices'][0]['message']['content'];
                 }
             }
             
@@ -102,33 +120,40 @@ class GroqService
             return null;
         }
     }
-
+    
     private function getLocalFallback(string $question): string
     {
         $q = strtolower(trim($question));
         $services = $this->services;
         
         if (str_contains($q, 'budget total') || str_contains($q, 'total')) {
-            $total = array_sum(array_map(fn($s) => $s->getBudget(), $services));
-            return "💰 **Budget total** : " . number_format($total, 0, ',', ' ') . " DT";
+            // Fix: Cast budget to float for sum
+            $total = array_sum(array_map(fn($s) => (float)($s->getBudget() ?? 0), $services));
+            return "💰 *Budget total* : " . number_format($total, 0, ',', ' ') . " DT";
         }
         
         if (str_contains($q, 'max') || str_contains($q, 'plus gros')) {
             $max = null;
+            $maxBudget = -1;
             foreach ($services as $s) {
-                if ($max === null || $s->getBudget() > $max->getBudget()) {
+                $budget = (float)($s->getBudget() ?? 0);
+                if ($budget > $maxBudget) {
+                    $maxBudget = $budget;
                     $max = $s;
                 }
             }
-            if ($max) {
-                return "🏆 **Plus gros budget** : " . $max->getTitre() . " - " . number_format($max->getBudget(), 0, ',', ' ') . " DT";
+            if ($max !== null && $maxBudget > 0) {
+                return "🏆 *Plus gros budget* : " . ($max->getTitre() ?? 'N/A') . " - " . number_format($maxBudget, 0, ',', ' ') . " DT";
             }
         }
         
         if (str_contains($q, 'liste') || str_contains($q, 'tous les services')) {
-            $result = "📋 **Liste des " . count($services) . " services** :\n\n";
-            foreach ($services as $index => $s) {
-                $result .= ($index + 1) . ". **" . $s->getTitre() . "** - " . number_format($s->getBudget(), 0, ',', ' ') . " DT\n";
+            $result = "📋 *Liste des " . count($services) . " services* :\n\n";
+            $index = 1;
+            foreach ($services as $s) {
+                $budget = (float)($s->getBudget() ?? 0);
+                $result .= (string)$index . ". *" . ($s->getTitre() ?? 'Sans titre') . "* - " . number_format($budget, 0, ',', ' ') . " DT\n";
+                $index++;
             }
             return $result;
         }
@@ -140,7 +165,7 @@ class GroqService
             }
             $result = "⚠️ " . count($without) . " services sans responsable** :\n\n";
             foreach ($without as $s) {
-                $result .= "• " . $s->getTitre() . "\n";
+                $result .= "• " . ($s->getTitre() ?? 'Sans titre') . "\n";
             }
             return $result;
         }

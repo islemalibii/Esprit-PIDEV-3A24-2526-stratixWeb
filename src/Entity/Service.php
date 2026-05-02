@@ -45,12 +45,12 @@ class Service
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $type_service = null;
 
-    public function getType_service(): ?string
+    public function getTypeService(): ?string
     {
         return $this->type_service;
     }
 
-    public function setType_service(?string $type_service): self
+    public function setTypeService(?string $type_service): static
     {
         $this->type_service = $type_service;
         return $this;
@@ -71,42 +71,42 @@ class Service
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_creation = null;
+    private ?\DateTime $date_creation = null;
 
-    public function getDate_creation(): ?\DateTimeInterface
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTime $date_debut = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTime $date_fin = null;
+
+    public function getDateCreation(): ?\DateTime
     {
         return $this->date_creation;
     }
 
-    public function setDate_creation(?\DateTimeInterface $date_creation): self
+    public function setDateCreation(?\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_debut = null;
-
-    public function getDate_debut(): ?\DateTimeInterface
+    public function getDateDebut(): ?\DateTime
     {
         return $this->date_debut;
     }
 
-    public function setDate_debut(?\DateTimeInterface $date_debut): self
+    public function setDateDebut(?\DateTime $date_debut): static
     {
         $this->date_debut = $date_debut;
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_fin = null;
-
-    public function getDate_fin(): ?\DateTimeInterface
+    public function getDateFin(): ?\DateTime
     {
         return $this->date_fin;
     }
 
-    public function setDate_fin(?\DateTimeInterface $date_fin): self
+    public function setDateFin(?\DateTime $date_fin): static
     {
         $this->date_fin = $date_fin;
         return $this;
@@ -119,12 +119,12 @@ class Service
     #[ORM\JoinColumn(name: 'utilisateur_id', referencedColumnName: 'id', nullable: true)]
     private ?Utilisateur $utilisateur = null;
 
-    public function getUtilisateur_id(): ?int
+    public function getUtilisateurId(): ?int
     {
         return $this->utilisateur_id;
     }
 
-    public function setUtilisateur_id(?int $utilisateur_id): self
+    public function setUtilisateurId(?int $utilisateur_id): static
     {
         $this->utilisateur_id = $utilisateur_id;
         return $this;
@@ -143,14 +143,14 @@ class Service
     }
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?float $budget = null;
+    private ?string $budget = null;
 
-    public function getBudget(): ?float
+    public function getBudget(): ?string
     {
         return $this->budget;
     }
 
-    public function setBudget(?float $budget): self
+    public function setBudget(?string $budget): self
     {
         $this->budget = $budget;
         return $this;
@@ -163,12 +163,12 @@ class Service
     #[ORM\JoinColumn(name: 'categorie_id', referencedColumnName: 'id', nullable: true)]
     private ?CategorieService $categorie = null;
 
-    public function getCategorie_id(): ?int
+    public function getCategorieId(): ?int
     {
         return $this->categorie_id;
     }
 
-    public function setCategorie_id(?int $categorie_id): self
+    public function setCategorieId(?int $categorie_id): static
     {
         $this->categorie_id = $categorie_id;
         return $this;
@@ -199,77 +199,4 @@ class Service
         $this->archive = $archive;
         return $this;
     }
-
-    public function getTypeService(): ?string
-    {
-        return $this->type_service;
-    }
-
-    public function setTypeService(?string $type_service): static
-    {
-        $this->type_service = $type_service;
-
-        return $this;
-    }
-
-    public function getDateCreation(): ?\DateTime
-    {
-        return $this->date_creation;
-    }
-
-    public function setDateCreation(?\DateTime $date_creation): static
-    {
-        $this->date_creation = $date_creation;
-
-        return $this;
-    }
-
-    public function getDateDebut(): ?\DateTime
-    {
-        return $this->date_debut;
-    }
-
-    public function setDateDebut(?\DateTime $date_debut): static
-    {
-        $this->date_debut = $date_debut;
-
-        return $this;
-    }
-
-    public function getDateFin(): ?\DateTime
-    {
-        return $this->date_fin;
-    }
-
-    public function setDateFin(?\DateTime $date_fin): static
-    {
-        $this->date_fin = $date_fin;
-
-        return $this;
-    }
-
-    public function getUtilisateurId(): ?int
-    {
-        return $this->utilisateur_id;
-    }
-
-    public function setUtilisateurId(?int $utilisateur_id): static
-    {
-        $this->utilisateur_id = $utilisateur_id;
-
-        return $this;
-    }
-
-    public function getCategorieId(): ?int
-    {
-        return $this->categorie_id;
-    }
-
-    public function setCategorieId(?int $categorie_id): static
-    {
-        $this->categorie_id = $categorie_id;
-
-        return $this;
-    }
-
 }
