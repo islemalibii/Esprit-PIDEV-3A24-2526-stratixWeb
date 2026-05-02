@@ -9,9 +9,9 @@ class GroqService
     private array $services = [];
     private string $apiKey;
 
-    public function __construct(string $apiKey)
+    public function __construct()
     {
-        $this->apiKey = $apiKey;
+        $this->apiKey = '';
     }
 
     public function setServices(array $services): void
@@ -110,7 +110,7 @@ class GroqService
         
         if (str_contains($q, 'budget total') || str_contains($q, 'total')) {
             $total = array_sum(array_map(fn($s) => $s->getBudget(), $services));
-            return "💰 *Budget total* : " . number_format($total, 0, ',', ' ') . " DT";
+            return "💰 **Budget total** : " . number_format($total, 0, ',', ' ') . " DT";
         }
         
         if (str_contains($q, 'max') || str_contains($q, 'plus gros')) {
@@ -121,14 +121,14 @@ class GroqService
                 }
             }
             if ($max) {
-                return "🏆 *Plus gros budget* : " . $max->getTitre() . " - " . number_format($max->getBudget(), 0, ',', ' ') . " DT";
+                return "🏆 **Plus gros budget** : " . $max->getTitre() . " - " . number_format($max->getBudget(), 0, ',', ' ') . " DT";
             }
         }
         
         if (str_contains($q, 'liste') || str_contains($q, 'tous les services')) {
-            $result = "📋 *Liste des " . count($services) . " services* :\n\n";
+            $result = "📋 **Liste des " . count($services) . " services** :\n\n";
             foreach ($services as $index => $s) {
-                $result .= ($index + 1) . ". *" . $s->getTitre() . "* - " . number_format($s->getBudget(), 0, ',', ' ') . " DT\n";
+                $result .= ($index + 1) . ". **" . $s->getTitre() . "** - " . number_format($s->getBudget(), 0, ',', ' ') . " DT\n";
             }
             return $result;
         }
