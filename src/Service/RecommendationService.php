@@ -131,22 +131,33 @@ class RecommendationService
     {
         $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
 
+        if ($ch === false) {
+            return null;
+        }
+
+        $payload = json_encode([
+            'model'      => 'llama-3.3-70b-versatile',
+            'messages'   => [
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'max_tokens' => 1000,
+        ]);
+
+        // Correction CRITICAL : On vérifie l'échec du JSON avant l'utilisation
+        if ($payload === false) {
+            curl_close($ch);
+            return null;
+        }
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
-            CURLOPT_SSL_VERIFYPEER => 0,
-            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
             ],
-            CURLOPT_POSTFIELDS => json_encode([
-                'model'      => 'llama-3.3-70b-versatile',
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt]
-                ],
-                'max_tokens' => 1000,
-            ]),
+            CURLOPT_POSTFIELDS => $payload,
         ]);
 
         $result = curl_exec($ch);
@@ -157,6 +168,7 @@ class RecommendationService
             return null;
         }
 
+        /** @var array{choices?: array<array{message?: array{content?: string}}>} $data */
         $data = json_decode($result, true);
         return $data['choices'][0]['message']['content'] ?? null;
     }

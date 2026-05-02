@@ -47,7 +47,7 @@ class GroqServiceTest extends TestCase
         $question = 'Budget total';
         $response = $groqService->ask($question);
         
-        $this->assertIsString($response);
+        // FIX: Remove assertIsString since response is always string
         $this->assertNotEmpty($response);
     }
     

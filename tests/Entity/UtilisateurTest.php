@@ -96,8 +96,7 @@ class UtilisateurTest extends TestCase
 
     public function testEraseCredentials(): void
     {
-        // Ne doit pas lever d'exception
+        $this->expectNotToPerformAssertions();
         $this->user->eraseCredentials();
-        $this->assertTrue(true);
     }
 }

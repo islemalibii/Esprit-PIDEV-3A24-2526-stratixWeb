@@ -65,7 +65,7 @@ class EmployeeNotificationExtension extends AbstractExtension implements Globals
                 elseif ($t->getPriorite() === 'haute' || $t->getPriorite() === 'urgente') {
                     $notifs[] = [
                         'title'   => 'Tâche urgente : ' . $t->getTitre(),
-                        'message' => 'Priorité : ' . strtoupper($t->getPriorite() ?? ''),
+                        'message' => 'Priorité : ' . strtoupper((string)$t->getPriorite()),
                         'date'    => null,
                         'color'   => '#f97316',
                         'icon'    => 'ti-alert-triangle',

@@ -1,7 +1,7 @@
 <?php
- 
+
 namespace App\Controller;
- 
+
 use App\Entity\Produit;
 use App\Form\ProduitType;
 use App\Repository\ProduitRepository;
@@ -12,9 +12,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
- 
+
 class ProduitController extends AbstractController
 {
+    /**
+     * Liste des produits avec recherche et statistiques
+     */
     #[Route('/produit', name: 'produit_index')]
     public function index(ProduitRepository $repository, Request $request): Response
     {
@@ -28,11 +31,11 @@ class ProduitController extends AbstractController
             if ($p->getStockActuel() <= $p->getStockMin()) $stats['stockFaible']++;
             $stats['valeurStock'] += ($p->getPrix() * $p->getStockActuel());
         }
- 
+
         return $this->render('admin/produit/index.html.twig', [
-            'produits'   => $produits,
+            'produits' => $produits,
             'searchTerm' => $searchTerm,
-            'stats'      => $stats,
+            'stats' => $stats
         ]);
     }
 
@@ -73,7 +76,7 @@ class ProduitController extends AbstractController
         $produit = new Produit();
         $form = $this->createForm(ProduitType::class, $produit);
         $form->handleRequest($request);
- 
+
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($produit);
             $entityManager->flush();

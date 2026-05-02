@@ -81,7 +81,11 @@ class CategorieManagerTest extends TestCase
         $categorie1 = $this->createCategorieWithName('Développement');
         $categorie2 = $this->createCategorieWithName('développement');
         
-        $this->assertEquals(strtolower($categorie1->getNom()), strtolower($categorie2->getNom()));
+        // FIX: Add null coalescing operator
+        $this->assertEquals(
+            strtolower($categorie1->getNom() ?? ''),
+            strtolower($categorie2->getNom() ?? '')
+        );
     }
 
     public function testRemoveServiceFromCategory(): void

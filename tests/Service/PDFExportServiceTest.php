@@ -38,7 +38,7 @@ class PDFExportServiceTest extends TestCase
         $pdfService = new PDFExportService();
         $result = $pdfService->exportServicesToPDF($services, 'Test PDF');
         
-        $this->assertIsString($result);
+        // FIX: Remove assertIsString
         $this->assertNotEmpty($result);
         $this->assertStringStartsWith('%PDF', $result);
     }
@@ -61,7 +61,7 @@ class PDFExportServiceTest extends TestCase
         $pdfService = new PDFExportService();
         $result = $pdfService->exportServicesToPDF([], 'Empty PDF');
         
-        $this->assertIsString($result);
+        // FIX: Remove assertIsString
         $this->assertNotEmpty($result);
         $this->assertStringStartsWith('%PDF', $result);
     }
@@ -77,7 +77,8 @@ class PDFExportServiceTest extends TestCase
         $pdfService = new PDFExportService();
         $result = $pdfService->exportServicesToPDF($services, 'Multiple Services');
         
-        $this->assertIsString($result);
+        // FIX: Remove assertIsString
+        $this->assertNotEmpty($result);
         $this->assertStringStartsWith('%PDF', $result);
         $this->assertStringEndsWith('%%EOF', trim($result));
     }
@@ -95,4 +96,4 @@ class PDFExportServiceTest extends TestCase
         $this->assertStringStartsWith('%PDF', $result);
         $this->assertNotEmpty($result);
     }
-}
+} 

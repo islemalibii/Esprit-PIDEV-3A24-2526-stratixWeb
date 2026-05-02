@@ -12,8 +12,10 @@ class Offre
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
-
+    /**
+     * @var int
+     */
+    private ?int $id;
     #[ORM\Column]
     private ?float $prix = null;
 

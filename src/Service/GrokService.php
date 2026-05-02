@@ -6,8 +6,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GrokService 
 {
-    private $client;
-    private $apiKey;
+    private HttpClientInterface $client;
+    private string $apiKey;
 
     public function __construct(HttpClientInterface $client, string $apiKey) 
     {
@@ -16,7 +16,8 @@ class GrokService
     }
 
     /**
-     * Suggère des projets basés sur l'inventaire
+     * @param array<mixed> $items
+     * @return array<mixed>
      */
     public function suggererProduits(array $items): array 
     {
@@ -25,17 +26,21 @@ class GrokService
 
         $messages = [
             ['role' => 'system', 'content' => "Tu es un expert IoT. Réponds UNIQUEMENT en JSON brut."],
-            ['role' => 'user', 'content' => "Propose 3 idées de projets avec ce stock :\n$inventaire\nFormat : [{\"titre\":\"...\",\"description\":\"...\",\"composants\":\"...\"}]"]
-        ];
+            ['role' => 'user', 'content' => "Propose 3 idées de projets avec ce stock :\n$inventaire\nFormat : [{\"titre\":\"...\",\"description\":\"...\",\"composants\":\"...\"}]"]        ];
 
         $jsonRaw = $this->callApi($messages);
-        $jsonRaw = preg_replace('/^```json\s*|```$/m', '', $jsonRaw);
+        $jsonRaw = preg_replace('/^```json\s*|```$/m', '', $jsonRaw) ?? '';
 
-        return json_decode($jsonRaw, true) ?? [];
+        /** @var array<mixed>|null $decoded */
+        $decoded = json_decode($jsonRaw, true);
+        
+        // Correction 1 : PHPStan sait maintenant que $decoded peut être null
+        return $decoded ?? [];
     }
 
     /**
-     * Répond aux questions du Chatbot (Produits ou Ressources)
+     * @param string $question
+     * @param array<mixed> $items
      */
     public function repondreQuestionStock(string $question, array $items): string 
     {
@@ -50,17 +55,12 @@ class GrokService
     }
 
     /**
-     * Cœur de l'appel API
+     * @param array<array{role: string, content: string}> $messages
      */
     private function callApi(array $messages): string
     {
         $isGroq = str_starts_with($this->apiKey, 'gsk_');
-        
-        $url = $isGroq 
-            ? 'https://api.groq.com/openai/v1/chat/completions' 
-            : 'https://api.x.ai/v1/chat/completions';
-
-        // MISE À JOUR : On utilise grok-2 qui est plus stable en 2026
+        $url = $isGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.x.ai/v1/chat/completions';
         $model = $isGroq ? 'llama-3.3-70b-versatile' : 'grok-2';
 
         try {
@@ -72,7 +72,7 @@ class GrokService
                 'json' => [
                     'model' => $model,
                     'messages' => $messages,
-                    'temperature' => 0.4 // Réduit pour plus de précision sur les chiffres
+                    'temperature' => 0.4
                 ],
                 'verify_peer' => false, 
                 'verify_host' => false,
@@ -80,36 +80,38 @@ class GrokService
             ]);
 
             if ($response->getStatusCode() === 200) {
+                /** @var array{choices: array<array{message: array{content: string}}>} $result */
                 $result = $response->toArray();
                 return $result['choices'][0]['message']['content'] ?? 'Pas de réponse.';
             }
 
-            return "Erreur API : Code " . $response->getStatusCode() . " - " . $response->getContent(false);
-
+            return "Erreur API : Code " . $response->getStatusCode();
         } catch (\Exception $e) {
             return "Erreur technique : " . $e->getMessage();
         }
     }
 
     /**
-     * Formate l'inventaire en gérant dynamiquement les types d'entités
+     * @param array<mixed> $items
      */
     private function formaterInventaire(array $items): string
     {
         $texte = "";
         foreach ($items as $item) {
-            $nom = method_exists($item, 'getNom') ? $item->getNom() : 'Inconnu';
+            // Correction 2 : On ne vérifie plus is_object car PHPStan est déjà convaincu
+            // mais on utilise method_exists par sécurité
+            $nom = (is_object($item) && method_exists($item, 'getNom')) ? $item->getNom() : 'Inconnu';
             
-            // On vérifie quel getter utiliser pour la quantité
-            if (method_exists($item, 'getStockActuel')) {
-                $quantite = $item->getStockActuel(); // Pour Produit
-            } elseif (method_exists($item, 'getQuantite')) {
-                $quantite = $item->getQuantite();    // Pour Ressource
-            } else {
-                $quantite = 0;
+            $quantite = 0;
+            if (is_object($item)) {
+                if (method_exists($item, 'getStockActuel')) {
+                    $quantite = $item->getStockActuel();
+                } elseif (method_exists($item, 'getQuantite')) {
+                    $quantite = $item->getQuantite();
+                }
             }
 
-            $texte .= sprintf("- %s (Quantité: %d)\n", $nom, $quantite);
+            $texte .= sprintf("- %s (Quantité: %d)\n", (string)$nom, (int)$quantite);
         }
         return $texte;
     }

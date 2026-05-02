@@ -142,7 +142,7 @@ class EventController extends AbstractController
                 'message' => 'Aucun avis disponible pour générer un résumé.'
             ]);
         }
-        $eventTitle = (string) ($evenement->getTitre() ?? 'Événement sans titre');
+        $eventTitle = (string) ($evenement->getTitre());
         $summary = $summaryService->generateSummary($feedbacks, $eventTitle);
         if (!$summary) {
             return $this->json([

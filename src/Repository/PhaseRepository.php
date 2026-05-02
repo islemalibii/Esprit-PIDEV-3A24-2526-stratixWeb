@@ -21,7 +21,10 @@ class PhaseRepository extends ServiceEntityRepository
      * Exemple de méthode personnalisée pour STRATIX :
      * Récupérer les phases d'un projet triées par date de début
      */
-    public function findByProjetOrdered($projetId)
+   /**
+     * @return Phase[]
+     */
+    public function findByProjetOrdered(int $projetId): array
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.projet = :val')

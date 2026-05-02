@@ -1,3 +1,6 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
 parameters:
     level: 8
     paths:
@@ -5,3 +8,4 @@ parameters:
     ignoreErrors:
         - '/Call to an undefined method/'
         - '/Parameter \#1 \$array of function usort is passed by reference/'
+        

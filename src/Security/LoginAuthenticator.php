@@ -31,12 +31,12 @@ class LoginAuthenticator extends AbstractLoginFormAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $email    = $request->request->get('email', '');
-        $password = $request->request->get('password', '');
-        $token    = $request->request->get('_csrf_token', '');
+        $email    = (string) $request->request->get('email', '');
+        $password = (string) $request->request->get('password', '');
+        $token    = (string) $request->request->get('_csrf_token', '');
 
         // Vérification reCAPTCHA v3 — seuil bas (0.1) pour compatibilité localhost
-        $recaptchaToken = $request->request->get('recaptcha_token', '');
+        $recaptchaToken = (string) $request->request->get('recaptcha_token', '');
         if ($recaptchaToken && !$this->recaptcha->isHuman($recaptchaToken, 0.1)) {
             throw new CustomUserMessageAuthenticationException(
                 'Activité suspecte détectée. Veuillez réessayer.'

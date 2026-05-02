@@ -9,23 +9,14 @@ use App\Repository\PlanningRepository;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class EmployeeController extends AbstractController
 {
-    #[Route('/employee/notifications/read', name: 'employee_notifications_read')]
-    public function markNotificationsRead(Request $request): Response
-    {
-        $session = $request->getSession();
-        // Stocker timestamp pour marquer tout comme lu
-        $session->set('emp_notif_read_ids', ['all_read_' . time()]);
-        return $this->redirectToRoute('app_employee_dashboard');
-    }
-
     #[Route('/employee/dashboard', name: 'app_employee_dashboard')]
     public function dashboard(
         TacheRepository $tacheRepository,

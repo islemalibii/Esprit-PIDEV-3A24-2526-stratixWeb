@@ -28,5 +28,5 @@ class ResetPasswordRequest implements ResetPasswordRequestInterface
     }
 
     public function getId(): ?int { return $this->id; }
-    public function getUser(): object { return $this->user; }
+    public function getUser(): Utilisateur { return $this->user ?? throw new \LogicException('User not set'); }
 }

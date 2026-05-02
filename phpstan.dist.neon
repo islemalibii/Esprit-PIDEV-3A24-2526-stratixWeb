@@ -3,4 +3,9 @@ parameters:
     paths:
         - src/
     ignoreErrors: 
-        - '#Call to an undefined method#' 
+        - '#Call to an undefined method#'
+        - '#Property App\\Entity\\.*::\$id is never written#'
+        - '#Property App\\Entity\\.*::\$id .* unusedType#'
+    includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+         

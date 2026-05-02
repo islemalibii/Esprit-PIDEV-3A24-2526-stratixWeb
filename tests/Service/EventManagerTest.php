@@ -21,14 +21,14 @@ class EventManagerTest extends TestCase
         return $evenement;
     }
 
-    public function testValidEvenement()
+    public function testValidEvenement(): void
     {
         $evenement = $this->createValidEvenement();
         $manager   = new EventManage();
         $this->assertTrue($manager->validate($evenement));
     }
 
-    public function testEvenementSansTitre()
+    public function testEvenementSansTitre(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Le titre est obligatoire');
@@ -39,7 +39,7 @@ class EventManagerTest extends TestCase
         $manager->validate($evenement);
     }
 
-    public function testEvenementSansDescription()
+    public function testEvenementSansDescription(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('La description est obligatoire');
@@ -50,7 +50,7 @@ class EventManagerTest extends TestCase
         $manager->validate($evenement);
     }
 
-    public function testEvenementSansDate()
+    public function testEvenementSansDate(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('La date est obligatoire');
@@ -61,7 +61,7 @@ class EventManagerTest extends TestCase
         $manager->validate($evenement);
     }
 
-    public function testEvenementDatePassee()
+    public function testEvenementDatePassee(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("La date de l'événement ne peut pas être dans le passé");
@@ -74,7 +74,7 @@ class EventManagerTest extends TestCase
 
     
 
-    public function testEvenementAnnuleNonParticipable()
+    public function testEvenementAnnuleNonParticipable(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Un événement annulé ne peut pas accepter de participations");
@@ -85,7 +85,7 @@ class EventManagerTest extends TestCase
         $manager->validateParticipation($evenement);
     }
 
-    public function testEvenementTermineNonParticipable()
+    public function testEvenementTermineNonParticipable(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Un événement terminé ne peut pas accepter de participations");
@@ -96,7 +96,7 @@ class EventManagerTest extends TestCase
         $manager->validateParticipation($evenement);
     }
 
-    public function testEvenementPlanifieAccepteParticipation()
+    public function testEvenementPlanifieAccepteParticipation(): void
     {
         $evenement = $this->createValidEvenement();
         $evenement->setStatut('planifier');
@@ -104,7 +104,7 @@ class EventManagerTest extends TestCase
         $this->assertTrue($manager->validateParticipation($evenement));
     }
 
-    public function testRecurrenceValide()
+    public function testRecurrenceValide(): void
     {
         $manager = new EventManage();
         $validRecurrences = ['none', 'weekly', 'monthly'];
@@ -116,7 +116,7 @@ class EventManagerTest extends TestCase
         }
     }
 
-    public function testRecurrenceInvalide()
+    public function testRecurrenceInvalide(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Récurrence invalide");
@@ -127,7 +127,7 @@ class EventManagerTest extends TestCase
         $manager->validateRecurrence($evenement);
     }
 
-    public function testTousLesFormatsImageValides()
+    public function testTousLesFormatsImageValides(): void
     {
         $manager = new EventManage();
         $validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
@@ -139,7 +139,7 @@ class EventManagerTest extends TestCase
         }
     }
 
-    public function testImageUrlFormatInvalide()
+    public function testImageUrlFormatInvalide() : void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Format d'image invalide. Utilisez JPG, PNG ou WEBP");

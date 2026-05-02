@@ -201,10 +201,7 @@ final class ServiceController extends AbstractController
 
         try {
             $services = $serviceRepository->findBy(['archive' => false], null, 500);
-            $serviceArray = array_values(array_filter($services, function($item) {
-                return $item instanceof \App\Entity\Service;
-            }));
-            $groqService->setServices($serviceArray);
+            $groqService->setServices($services);
             $response = $groqService->ask($question);
             
             return $this->json(['response' => $response]);
@@ -258,7 +255,7 @@ final class ServiceController extends AbstractController
             $data[] = [
                 'id'          => $service->getId(),
                 'titre'       => $service->getTitre(),
-                'budget'      => (float)$service->getBudget(), // FIX: Cast to float for JSON
+                'budget'      => (float)$service->getBudget(),
                 'categorie'   => $service->getCategorie() ? $service->getCategorie()->getNom() : null,
                 'description' => $service->getDescription(),
                 'dateDebut'   => $service->getDateDebut() ? $service->getDateDebut()->format('d/m/Y') : 'N/A',
@@ -284,11 +281,8 @@ final class ServiceController extends AbstractController
     {
         try {
             $services = $serviceRepository->findBy(['archive' => false], null, 500);
-            $serviceArray = array_values(array_filter($services, function($item) {
-                return $item instanceof \App\Entity\Service;
-            }));
             
-            $pdfContent = $pdfExportService->exportServicesToPDF($serviceArray, 'Liste des Services');
+            $pdfContent = $pdfExportService->exportServicesToPDF($services, 'Liste des Services');
             
             return new Response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
@@ -299,103 +293,108 @@ final class ServiceController extends AbstractController
             return $this->json(['error' => $e->getMessage()], 500);
         }
     }
+
     #[Route('/api/export-excel', name: 'app_service_export_excel', methods: ['GET'])]
-public function exportExcel(ServiceRepository $serviceRepository): Response
-{
-    $services = $serviceRepository->findBy(['archive' => false], ['id' => 'DESC']);
-    
-    $spreadsheet = new Spreadsheet();
-    $sheet = $spreadsheet->getActiveSheet();
-    
-    $spreadsheet->getProperties()
-        ->setCreator('stratiX')
-        ->setTitle('Liste des Services')
-        ->setSubject('Export des services')
-        ->setDescription('Liste complète des services');
-    
-    $headerStyle = [
-        'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
-        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F97316']],
-        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-        'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-    ];
-    
-    $headers = ['ID', 'Titre du Service', 'Budget (DT)', 'Catégorie', 'Date Début', 'Date Fin', 'Statut'];
-    $column = 'A';
-    foreach ($headers as $header) {
-        $sheet->setCellValue($column . '1', $header);
-        $sheet->getColumnDimension($column)->setAutoSize(true);
-        $sheet->getStyle($column . '1')->applyFromArray($headerStyle);
-        $column++;
-    }
-    
-    $dataStyle = [
-        'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-        'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-    ];
-    
-    $row = 2;
-    foreach ($services as $service) {
-        $status = $this->getServiceStatus($service);
-        $statusColor = $status === 'Terminé' ? '#10b981' : ($status === 'En cours' ? '#f97316' : '#6b7280');
+    public function exportExcel(ServiceRepository $serviceRepository): Response
+    {
+        $services = $serviceRepository->findBy(['archive' => false], ['id' => 'DESC']);
         
-        $sheet->setCellValue('A' . $row, $service->getId());
-        $sheet->setCellValue('B' . $row, $service->getTitre());
-        $sheet->setCellValue('C' . $row, number_format((float)$service->getBudget(), 0, ',', ' '));
-        $sheet->setCellValue('D' . $row, $service->getCategorie() ? $service->getCategorie()->getNom() : 'Non catégorisé');
-        $sheet->setCellValue('E' . $row, $service->getDateDebut() ? $service->getDateDebut()->format('d/m/Y') : 'N/A');
-        $sheet->setCellValue('F' . $row, $service->getDateFin() ? $service->getDateFin()->format('d/m/Y') : 'N/A');
-        $sheet->setCellValue('G' . $row, $status);
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
         
-        $sheet->getStyle('G' . $row)->getFont()->getColor()->setRGB(str_replace('#', '', $statusColor));
+        $spreadsheet->getProperties()
+            ->setCreator('stratiX')
+            ->setTitle('Liste des Services')
+            ->setSubject('Export des services')
+            ->setDescription('Liste complète des services');
         
-        $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray($dataStyle);
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F97316']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ];
         
-        if ($row % 2 == 0) {
-            $sheet->getStyle('A' . $row . ':G' . $row)->getFill()
-                ->setFillType(Fill::FILL_SOLID)
-                ->getStartColor()->setRGB('F5F5F5');
+        $headers = ['ID', 'Titre du Service', 'Budget (DT)', 'Catégorie', 'Date Début', 'Date Fin', 'Statut'];
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . '1', $header);
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+            $sheet->getStyle($column . '1')->applyFromArray($headerStyle);
+            $column++;
         }
         
-        $row++;
+        $dataStyle = [
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+        ];
+        
+        $row = 2;
+        foreach ($services as $service) {
+            $status = $this->getServiceStatus($service);
+            
+            $sheet->setCellValue('A' . $row, $service->getId());
+            $sheet->setCellValue('B' . $row, $service->getTitre());
+            $sheet->setCellValue('C' . $row, number_format((float)$service->getBudget(), 0, ',', ' '));
+            $sheet->setCellValue('D' . $row, $service->getCategorie() ? $service->getCategorie()->getNom() : 'Non catégorisé');
+            $sheet->setCellValue('E' . $row, $service->getDateDebut() ? $service->getDateDebut()->format('d/m/Y') : 'N/A');
+            $sheet->setCellValue('F' . $row, $service->getDateFin() ? $service->getDateFin()->format('d/m/Y') : 'N/A');
+            $sheet->setCellValue('G' . $row, $status);
+            
+            $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray($dataStyle);
+            
+            if ($row % 2 == 0) {
+                $sheet->getStyle('A' . $row . ':G' . $row)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F5F5F5');
+            }
+            
+            $row++;
+        }
+        
+        $totalBudget = array_sum(array_map(fn($s) => (float)$s->getBudget(), $services));
+        $sheet->setCellValue('A' . $row, 'TOTAL');
+        $sheet->setCellValue('C' . $row, number_format($totalBudget, 0, ',', ' ') . ' DT');
+        $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFE0B2']],
+        ]);
+        
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        $writer = new Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'services_');
+        $writer->save($tempFile);
+        
+        $fileContent = file_get_contents($tempFile);
+        if ($fileContent === false) {
+            unlink($tempFile);
+            throw new \Exception('Could not read generated Excel file');
+        }
+        
+        $response = new Response(
+            $fileContent,
+            200,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="services_' . date('Y-m-d_H-i-s') . '.xlsx"',
+            ]
+        );
+        unlink($tempFile);
+        return $response;
     }
-    
-    $totalBudget = array_sum(array_map(fn($s) => (float)$s->getBudget(), $services));
-    $sheet->setCellValue('A' . $row, 'TOTAL');
-    $sheet->setCellValue('C' . $row, number_format($totalBudget, 0, ',', ' ') . ' DT');
-    $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray([
-        'font' => ['bold' => true],
-        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFE0B2']],
-    ]);
-    
-    foreach (range('A', 'G') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
-    }
-    
-    $writer = new Xlsx($spreadsheet);
-    $tempFile = tempnam(sys_get_temp_dir(), 'services_');
-    $writer->save($tempFile);
-    
-    return new Response(
-        file_get_contents($tempFile),
-        200,
-        [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="services_' . date('Y-m-d_H-i-s') . '.xlsx"',
-        ]
-    );
-    unlink($tempFile);
-}
 
-private function getServiceStatus(Service $service): string
-{
-    $now = new \DateTime();
-    if ($service->getDateFin() && $service->getDateFin() < $now) {
-        return 'Terminé';
+    private function getServiceStatus(Service $service): string
+    {
+        $now = new \DateTime();
+        if ($service->getDateFin() && $service->getDateFin() < $now) {
+            return 'Terminé';
+        }
+        if ($service->getDateFin() && $service->getDateFin() > $now) {
+            return 'En cours';
+        }
+        return 'Non commencé';
     }
-    if ($service->getDateFin() && $service->getDateFin() > $now) {
-        return 'En cours';
-    }
-    return 'Non commencé';
-}
 }

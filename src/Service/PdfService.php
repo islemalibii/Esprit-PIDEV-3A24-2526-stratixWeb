@@ -8,7 +8,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PdfService
 {
-    private function getDompdf($html): Dompdf
+    /**
+     * @param string $html
+     */
+    private function getDompdf(string $html): Dompdf
     {
         $options = new Options();
         $options->set('defaultFont', 'Arial');
@@ -24,8 +27,11 @@ class PdfService
 
     /**
      * Pour l'usage Web classique (Téléchargement direct)
+     * 
+     * @param string $html
+     * @param string $filename
      */
-    public function showPdfFile($html, $filename): Response
+    public function showPdfFile(string $html, string $filename): Response
     {
         $dompdf = $this->getDompdf($html);
         $output = $dompdf->output();
@@ -38,10 +44,15 @@ class PdfService
 
     /**
      * Pour l'usage API (Récupère le binaire brut)
+     * 
+     * @param string $html
      */
-    public function getBinaryContent($html): string
+    public function getBinaryContent(string $html): string
     {
         $dompdf = $this->getDompdf($html);
-        return $dompdf->output();
+        $output = $dompdf->output();
+
+        // On s'assure que la sortie est une chaîne de caractères
+        return (string) $output;
     }
 }

@@ -53,6 +53,10 @@ class EventManage
     public function validateImageUrl(Evenement $evenement): bool
     {
         $url = $evenement->getImageUrl();
+
+        if ($url === null) {
+            throw new \InvalidArgumentException("L'URL de l'image est obligatoire");
+        }
         $validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
         $extension = strtolower(pathinfo($url, PATHINFO_EXTENSION));
 

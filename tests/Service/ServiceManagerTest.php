@@ -106,9 +106,7 @@ class ServiceManagerTest extends TestCase
     public function testAverageBudgetWithEmptyList(): void
     {
         $services = [];
-        $average = count($services) > 0 
-            ? array_sum(array_map(fn($s) => (float)$s->getBudget(), $services)) / count($services) 
-            : 0;
+        $average = array_sum(array_map(fn($s) => (float)$s->getBudget(), $services));
         $this->assertEquals(0, $average);
     }
 
@@ -163,7 +161,7 @@ class ServiceManagerTest extends TestCase
         
         $keyword = 'Formation';
         $results = array_filter($services, fn($s) => 
-            str_contains($s->getTitre(), $keyword)
+            str_contains($s->getTitre() ?? '', $keyword)
         );
         
         $this->assertCount(2, $results);

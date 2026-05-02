@@ -7,7 +7,7 @@ parameters:
     # On garde l'ancienne pour ne pas casser d'autres services si besoin, 
     # mais on ajoute la clé Grok
     grok_api_key: '%env(GROK_API_KEY)%'
-
+      
 services:
     _defaults:
         autowire: true
@@ -59,8 +59,3 @@ services:
             $projetMailer: '@mailer.transports'
 
     
-
-parameters:
-    mail_user: '%env(STRATIX_MAIL_USER)%'
-    mail_pass: '%env(STRATIX_MAIL_PASS)%'
-    catalogues_directory: '%kernel.project_dir%/public/uploads/catalogues'

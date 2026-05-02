@@ -36,7 +36,8 @@ class NotifyDeadlinesCommand extends Command
         $projets = $this->projetRepository->findProjetsProchesEcheance(10);
 
         foreach ($projets as $projet) {
-            $output->writeln("<info>--- Projet : " . $projet->getNom() . " ---</info>");
+            $nomProjet = $projet->getNom() ?? 'Projet sans nom';
+            $output->writeln("<info>--- Projet : " . $nomProjet . " ---</info>");
 
             // Récupération de tous les acteurs du projet
             $destinataires = array_merge(
@@ -47,10 +48,10 @@ class NotifyDeadlinesCommand extends Command
             foreach ($destinataires as $user) {
                 if ($user && $user->getEmail()) {
                     // APPEL À LA VRAIE IA
-                    $aiMessage = $this->generateAiMessage($projet->getNom(), $user->getNom());
+                    $aiMessage = $this->generateAiMessage($nomProjet, $user->getNom());
                     
                     try {
-                        $this->sendEmail($user->getEmail(), $projet->getNom(), $aiMessage, $user->getNom());
+                        $this->sendEmail($user->getEmail(), $nomProjet, $aiMessage, $user->getNom());
                         $output->writeln("Email IA envoyé à : " . $user->getNom());
                     } catch (\Exception $e) {
                         $output->writeln("<error>Erreur Mail : " . $e->getMessage() . "</error>");

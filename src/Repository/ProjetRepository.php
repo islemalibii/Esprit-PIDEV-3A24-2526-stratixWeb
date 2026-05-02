@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Repository;
+use Doctrine\ORM\Query;
 
 use App\Entity\Projet;
 use App\Entity\Utilisateur; 
@@ -62,30 +63,35 @@ class ProjetRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    /**
+     * @return Query<Projet>
+     */
 
-    public function findActiveWithFilters(?string $search, ?string $statut)
-{
-    $qb = $this->createQueryBuilder('p')
-        ->andWhere('p.isArchived = :val')
-        ->setParameter('val', false);
 
-    if ($search) {
-        // Utilisation de trim() pour éviter les espaces inutiles
-        $qb->andWhere('p.nom LIKE :search')
-           ->setParameter('search', '%' . trim($search) . '%');
+    public function findActiveWithFilters(?string $search, ?string $statut): Query    {
+        $qb = $this->createQueryBuilder('p')
+            ->andWhere('p.isArchived = :val')
+            ->setParameter('val', false);
+
+        if ($search) {
+            $qb->andWhere('p.nom LIKE :search')
+               ->setParameter('search', '%' . trim($search) . '%');
+        }
+
+        // Simplification ici : suppression de !== ''
+        if ($statut) {
+            $qb->andWhere('p.statut = :statut')
+               ->setParameter('statut', $statut);
+        }
+
+        $qb->orderBy('p.id', 'DESC');
+
+        return $qb->getQuery(); 
     }
 
-    if ($statut && $statut !== '') {
-        $qb->andWhere('p.statut = :statut')
-           ->setParameter('statut', $statut);
-    }
-
-    // On trie par ID décroissant pour voir les nouveaux projets en premier
-    $qb->orderBy('p.id', 'DESC');
-
-    return $qb->getQuery(); 
-}
-
+    /**
+     * @return Projet[]
+     */
     public function findProjetsProchesEcheance(int $days = 7): array
 {
     $dateCible = new \DateTime();

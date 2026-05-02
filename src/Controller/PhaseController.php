@@ -21,11 +21,16 @@ class PhaseController extends AbstractController
     {
         $phase = new Phase();
         
-        // Récupération des données du formulaire (en supposant l'usage de requêtes POST directes)
-        $phase->setNom($request->request->get('nom'));
-        $phase->setDateDebut(new \DateTime($request->request->get('dateDebut')));
-        $phase->setDateFin(new \DateTime($request->request->get('dateFin')));
-        $phase->setObjectif($request->request->get('objectif'));
+        // On force le cast en (string) pour garantir le type attendu par les setters
+        $phase->setNom((string)$request->request->get('nom', ''));
+        
+        $dateDebut = $request->request->get('dateDebut');
+        $phase->setDateDebut(new \DateTime(is_string($dateDebut) ? $dateDebut : 'now'));
+
+        $dateFin = $request->request->get('dateFin');
+        $phase->setDateFin(new \DateTime(is_string($dateFin) ? $dateFin : 'now'));
+
+        $phase->setObjectif((string)$request->request->get('objectif', ''));
         $phase->setStatut('En attente');
         
         // Liaison avec le projet STRATIX
@@ -45,21 +50,29 @@ class PhaseController extends AbstractController
     #[Route('/edit/{id}', name: 'app_phase_edit', methods: ['POST'])]
     public function edit(Phase $phase, Request $request, EntityManagerInterface $em): Response
     {
-        $phase->setNom($request->request->get('nom'));
-        $phase->setDateDebut(new \DateTime($request->request->get('dateDebut')));
-        $phase->setDateFin(new \DateTime($request->request->get('dateFin')));
-        $phase->setObjectif($request->request->get('objectif'));
+        $phase->setNom((string)$request->request->get('nom', ''));
+
+        $dateDebut = $request->request->get('dateDebut');
+        $phase->setDateDebut(new \DateTime(is_string($dateDebut) ? $dateDebut : 'now'));
+
+        $dateFin = $request->request->get('dateFin');
+        $phase->setDateFin(new \DateTime(is_string($dateFin) ? $dateFin : 'now'));
+
+        $phase->setObjectif((string)$request->request->get('objectif', ''));
         
-        // Optionnel : mise à jour du statut si présent dans la requête
         if ($request->request->has('statut')) {
-            $phase->setStatut($request->request->get('statut'));
+            $phase->setStatut((string)$request->request->get('statut', 'En attente'));
         }
 
         $em->flush();
 
         $this->addFlash('success', '✅ Phase mise à jour.');
         
-        return $this->redirectToRoute('app_projet_show', ['id' => $phase->getProjet()->getId()]);
+        // Correction : Vérifier si le projet existe pour éviter l'erreur sur getId()
+        $projet = $phase->getProjet();
+        $projetId = $projet ? $projet->getId() : 0;
+        
+        return $this->redirectToRoute('app_projet_show', ['id' => $projetId]);
     }
 
     // ─────────────────────────────────────────────
@@ -68,10 +81,12 @@ class PhaseController extends AbstractController
     #[Route('/delete/{id}', name: 'app_phase_delete', methods: ['POST'])]
     public function delete(Phase $phase, Request $request, EntityManagerInterface $em): Response
     {
-        $projetId = $phase->getProjet()->getId();
+        $projet = $phase->getProjet();
+        $projetId = $projet ? $projet->getId() : 0;
         
-        // Vérification du jeton CSRF pour la sécurité
-        if ($this->isCsrfTokenValid('delete' . $phase->getId(), $request->request->get('_token'))) {
+        // Correction CSRF : Cast du token en string
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $phase->getId(), is_string($token) ? $token : '')) {
             $em->remove($phase);
             $em->flush();
             $this->addFlash('success', '🗑️ Phase supprimée avec succès.');

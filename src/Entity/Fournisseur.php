@@ -13,6 +13,9 @@ class Fournisseur
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    /**
+     * @var int|null
+     */
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -24,6 +27,9 @@ class Fournisseur
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $telephone = null;
 
+    /**
+     * @var Collection<int, Offre>
+     */
     #[ORM\OneToMany(mappedBy: 'fournisseur', targetEntity: Offre::class, orphanRemoval: true)]
     private Collection $offres;
 
@@ -32,16 +38,43 @@ class Fournisseur
         $this->offres = new ArrayCollection();
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int 
+    { 
+        return $this->id; 
+    }
 
-    public function getNom(): ?string { return $this->nom; }
-    public function setNom(string $nom): static { $this->nom = $nom; return $this; }
+    public function getNom(): ?string 
+    { 
+        return $this->nom; 
+    }
 
-    public function getEmail(): ?string { return $this->email; }
-    public function setEmail(?string $email): static { $this->email = $email; return $this; }
+    public function setNom(string $nom): static 
+    { 
+        $this->nom = $nom; 
+        return $this; 
+    }
 
-    public function getTelephone(): ?string { return $this->telephone; }
-    public function setTelephone(?string $telephone): static { $this->telephone = $telephone; return $this; }
+    public function getEmail(): ?string 
+    { 
+        return $this->email; 
+    }
+
+    public function setEmail(?string $email): static 
+    { 
+        $this->email = $email; 
+        return $this; 
+    }
+
+    public function getTelephone(): ?string 
+    { 
+        return $this->telephone; 
+    }
+
+    public function setTelephone(?string $telephone): static 
+    { 
+        $this->telephone = $telephone; 
+        return $this; 
+    }
 
     /**
      * @return Collection<int, Offre>
@@ -70,7 +103,6 @@ class Fournisseur
         return $this;
     }
 
-    // Utile pour les formulaires (EntityType)
     public function __toString(): string
     {
         return $this->nom ?? 'Fournisseur sans nom';

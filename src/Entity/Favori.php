@@ -11,11 +11,14 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\UniqueConstraint(name: 'unique_user_projet', columns: ['utilisateur_id', 'projet_id'])]
 class Favori
 {
+/**
+     * @var int|null
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
+    #[ORM\Column(type: 'integer')]
+    private ?int $id;
+    
     #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
     #[ORM\JoinColumn(name: 'utilisateur_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Utilisateur $utilisateur = null;
