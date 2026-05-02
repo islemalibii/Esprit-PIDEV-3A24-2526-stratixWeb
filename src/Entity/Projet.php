@@ -15,6 +15,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[UniqueEntity(fields: ['nom'], message: "Ce nom de projet est déjà utilisé.")]
 class Projet
 {
+    /**
+     * @var int|null
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -62,10 +65,10 @@ class Projet
     private ?float $budget = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $statut = "Planifié";
+    private string $statut = "Planifié";
 
     #[ORM\Column]
-    private ?bool $isArchived = false;
+    private bool $isArchived = false;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $cahierDesCharges = null;
