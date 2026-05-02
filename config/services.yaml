@@ -1,9 +1,12 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
+# config/services.yaml
 
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    mail_user: '%env(STRATIX_MAIL_USER)%'
+    mail_pass: '%env(STRATIX_MAIL_PASS)%'
+    catalogues_directory: '%kernel.project_dir%/public/uploads/catalogues'
+    # On garde l'ancienne pour ne pas casser d'autres services si besoin, 
+    # mais on ajoute la clé Grok
+    grok_api_key: '%env(GROK_API_KEY)%'
 
 services:
     _defaults:
@@ -32,7 +35,7 @@ services:
 
     App\Service\GroqService:
         arguments:
-            $apiKey: '%env(GROQ_API_KEY)%'
+            $apiKey: '%grok_api_key%'
             
     App\Service\AiResumeService:
         arguments:
@@ -50,6 +53,9 @@ services:
     App\Command\NotifyDeadlinesCommand:
         arguments:
             $projetMailer: '@mailer.transports'
+
+    
+
 parameters:
     mail_user: '%env(STRATIX_MAIL_USER)%'
     mail_pass: '%env(STRATIX_MAIL_PASS)%'

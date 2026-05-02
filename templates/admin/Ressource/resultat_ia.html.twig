@@ -19,6 +19,17 @@
             </a>
         </div>
 
+        {# BANDEAU INFO : TAUX DE CHANGE #}
+        {% if taux_applique is defined %}
+            <div class="alert alert-light border-start border-info border-3 shadow-sm d-flex align-items-center mb-4">
+                <i class="ti ti-refresh text-info fs-4 me-3"></i>
+                <div>
+                    <span class="text-dark fw-bold">Source de données :</span> 
+                    Les prix ont été convertis en temps réel depuis l'API de change. Taux appliqué : <strong>1 USD = {{ taux_applique|number_format(3, ',', ' ') }} TND</strong>.
+                </div>
+            </div>
+        {% endif %}
+
         <div class="row">
             {# Meilleur Choix #}
             {% if resultats|length > 0 %}
@@ -34,7 +45,7 @@
                                     <span class="badge bg-success mb-2">RECOMMANDATION IA STRATIX</span>
                                     <h3 class="mb-1">Meilleure offre : {{ meilleur.fournisseur }}</h3>
                                     <p class="mb-0 text-muted">
-                                        Prix : <span class="fw-bold text-dark">{{ meilleur.prix }} DT</span> | 
+                                        Prix : <span class="fw-bold text-dark">{{ meilleur.prix|number_format(3, ',', ' ') }} DT</span> | 
                                         Délai : <span class="fw-bold text-dark">{{ meilleur.delai }} jours</span>
                                         {% if meilleur.score_ia is defined %}
                                             | Score IA : <span class="fw-bold text-primary">{{ meilleur.score_ia }}/100</span>
@@ -48,13 +59,13 @@
             {% endif %}
 
             {# SECTION VISUALISATION : RADAR CHART #}
-            <div class="col-12 mb-4">
-                <div class="card border-0 shadow-sm">
+            <div class="col-lg-5 mb-4">
+                <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 fw-bold"><i class="ti ti-chart-radar me-2 text-primary"></i>Comparaison Performance Fournisseurs</h5>
+                        <h5 class="mb-0 fw-bold"><i class="ti ti-chart-radar me-2 text-primary"></i>Performance Relative</h5>
                     </div>
                     <div class="card-body">
-                        <div style="max-height: 400px; position: relative;">
+                        <div style="height: 350px; position: relative;">
                             <canvas id="radarChart"></canvas>
                         </div>
                     </div>
@@ -62,8 +73,8 @@
             </div>
 
             {# Tableau comparatif #}
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
+            <div class="col-lg-7 mb-4">
+                <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3">
                         <h5 class="mb-0 fw-bold">Toutes les offres analysées</h5>
                     </div>
@@ -72,10 +83,10 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th class="ps-4">Classement</th>
+                                        <th class="ps-4">Rang</th>
                                         <th>Fournisseur</th>
                                         <th>Prix (DT)</th>
-                                        <th>Délai (Jours)</th>
+                                        <th>Délai</th>
                                         {% if resultats[0].score_ia is defined %}
                                             <th>Score IA</th>
                                         {% endif %}
@@ -93,7 +104,7 @@
                                                 {% endif %}
                                             </td>
                                             <td class="fw-bold">{{ offre.fournisseur }}</td>
-                                            <td>{{ offre.prix }} DT</td>
+                                            <td>{{ offre.prix|number_format(3, ',', ' ') }} DT</td>
                                             <td>
                                                 <span class="badge {{ offre.delai > 5 ? 'bg-soft-warning text-warning' : 'bg-soft-success text-success' }}">
                                                     {{ offre.delai }} jours
@@ -103,12 +114,12 @@
                                                 <td class="fw-bold text-primary">{{ offre.score_ia }}%</td>
                                             {% endif %}
                                             <td class="text-center">
-                                                <button class="btn btn-sm btn-outline-primary">Sélectionner</button>
+                                                <button class="btn btn-sm btn-outline-primary">Détails</button>
                                             </td>
                                         </tr>
                                     {% else %}
                                         <tr>
-                                            <td colspan="6" class="text-center py-4 text-muted">Aucune donnée traitée.</td>
+                                            <td colspan="6" class="text-center py-4 text-muted">Aucune donnée trouvée.</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -124,6 +135,8 @@
 <style>
     .bg-soft-success { background-color: #d1fae5; color: #065f46; }
     .bg-soft-warning { background-color: #fef3c7; color: #92400e; }
+    .card { border-radius: 12px; }
+    .table thead th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
 </style>
 
 {# SCRIPTS POUR LE GRAPHIQUE #}
@@ -132,27 +145,28 @@
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('radarChart').getContext('2d');
         
-        // Configuration des labels (critères)
         const labels = ["Prix (Optimisé)", "Rapidité (Délai)", "Fiabilité Score IA"];
         
-        // Génération dynamique des datasets depuis Twig
         const datasets = [
             {% for offre in resultats %}
             {
                 label: "{{ offre.fournisseur }}",
                 data: [
-                    {# Normalisation simple pour le rendu visuel (0-100) #}
-                    {{ (1000 / (offre.prix + 1)) * 5 }}, 
-                    {{ 100 - (offre.delai * 5) }},
+                    {# Ajustement de la formule pour les montants en TND (plus élevés) #}
+                    {{ (5000 / (offre.prix + 10))|round(0) }}, 
+                    {{ (100 - (offre.delai * 5))|round(0) }},
                     {{ offre.score_ia is defined ? offre.score_ia : 50 }}
                 ],
                 fill: true,
-                backgroundColor: 'rgba({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }}, 0.2)',
-                borderColor: 'rgb({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }})',
-                pointBackgroundColor: 'rgb({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }})',
+                {% set r = random(0, 150) %}
+                {% set g = random(100, 200) %}
+                {% set b = random(150, 255) %}
+                backgroundColor: 'rgba({{ r }}, {{ g }}, {{ b }}, 0.2)',
+                borderColor: 'rgb({{ r }}, {{ g }}, {{ b }})',
+                pointBackgroundColor: 'rgb({{ r }}, {{ g }}, {{ b }})',
                 pointBorderColor: '#fff',
                 pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgb({{ random(0, 100) }}, {{ random(100, 200) }}, {{ random(150, 255) }})'
+                pointHoverBorderColor: 'rgb({{ r }}, {{ g }}, {{ b }})'
             },
             {% endfor %}
         ];
@@ -176,8 +190,8 @@
                 },
                 plugins: {
                     legend: {
-                        position: 'right',
-                        labels: { boxWidth: 12, font: { size: 11 } }
+                        position: 'bottom',
+                        labels: { boxWidth: 10, font: { size: 10 } }
                     }
                 }
             }

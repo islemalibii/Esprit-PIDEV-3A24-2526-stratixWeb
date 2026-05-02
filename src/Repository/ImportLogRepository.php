@@ -18,6 +18,8 @@ class ImportLogRepository extends ServiceEntityRepository
 
     /**
      * Récupère les derniers imports pour l'affichage
+     * * @param int $limit
+     * @return ImportLog[] Returns an array of ImportLog objects
      */
     public function findRecentImports(int $limit = 10): array
     {
