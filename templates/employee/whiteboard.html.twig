@@ -1,112 +1,321 @@
 {# templates/employee/whiteboard.html.twig #}
 {% extends 'employee/base_employee.html.twig' %}
 
-{% block title %}Tableau Kanban{% endblock %}
+{% block title %}Kanban - STRATIX{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .kanban-col {
+        background: #f8f9fa;
+        border-radius: 0 0 12px 12px;
+        min-height: 500px;
+        padding: 15px;
+        transition: background 0.2s;
+    }
+    .kanban-col.drag-over {
+        background: #dbeafe;
+        outline: 2px dashed #3b82f6;
+    }
+    .kanban-card {
+        background: white;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+        cursor: grab;
+        transition: all 0.2s;
+        border-left: 4px solid;
+        user-select: none;
+    }
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .kanban-card.dragging {
+        opacity: 0.35;
+        cursor: grabbing;
+    }
+    .priority-high   { border-left-color: #dc2626; }
+    .priority-medium { border-left-color: #f59e0b; }
+    .priority-low    { border-left-color: #10b981; }
+
+    .stats-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .col-header {
+        border-radius: 12px 12px 0 0;
+        padding: 14px 18px;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
+    }
+    #toastContainer {
+        position: fixed; bottom: 24px; right: 24px;
+        z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast-notif {
+        background: white; border-radius: 10px; padding: 12px 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        display: flex; align-items: center; gap: 10px;
+        min-width: 260px; animation: slideIn .3s ease; font-size: .88rem;
+    }
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to   { transform: translateX(0);    opacity: 1; }
+    }
+</style>
+{% endblock %}
 
 {% block employee_content %}
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-header bg-warning text-white">
-                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>📌 À faire</h5>
-                <small>{{ aFaire|length }} tâche(s)</small>
-            </div>
-            <div class="card-body" style="min-height: 400px;">
-                {% if aFaire|length > 0 %}
-                    {% for tache in aFaire %}
-                    <div class="alert alert-light border mb-2 shadow-sm">
-                        <strong>{{ tache.titre }}</strong>
-                        <br>
-                        <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            {{ tache.deadline ? tache.deadline|date('d/m/Y') : 'Pas de deadline' }}
-                        </small>
-                        <span class="badge float-end {% if tache.priorite == 'HAUTE' %}bg-danger{% elseif tache.priorite == 'MOYENNE' %}bg-warning{% else %}bg-success{% endif %}">
-                            {{ tache.priorite }}
-                        </span>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-check-circle fa-3x mb-2"></i>
-                        <p>Aucune tâche à faire</p>
-                    </div>
-                {% endif %}
+
+{# Stats Bar #}
+<div class="stats-bar">
+    <div class="row text-center">
+        {% set total = aFaire|length + enCours|length + terminees|length %}
+        {% set pct   = total > 0 ? ((terminees|length / total) * 100)|round : 0 %}
+        <div class="col-6 col-md-3 mb-2">
+            <div class="text-muted small mb-1">📊 Progression</div>
+            <div class="fw-bold fs-4">{{ pct }}%</div>
+            <div class="progress mt-1" style="height:5px">
+                <div class="progress-bar bg-success" style="width:{{ pct }}%"></div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="fas fa-spinner me-2"></i>⚡ En cours</h5>
-                <small>{{ enCours|length }} tâche(s)</small>
-            </div>
-            <div class="card-body" style="min-height: 400px;">
-                {% if enCours|length > 0 %}
-                    {% for tache in enCours %}
-                    <div class="alert alert-light border mb-2 shadow-sm">
-                        <strong>{{ tache.titre }}</strong>
-                        <br>
-                        <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            {{ tache.deadline ? tache.deadline|date('d/m/Y') : 'Pas de deadline' }}
-                        </small>
-                        <span class="badge float-end {% if tache.priorite == 'HAUTE' %}bg-danger{% elseif tache.priorite == 'MOYENNE' %}bg-warning{% else %}bg-success{% endif %}">
-                            {{ tache.priorite }}
-                        </span>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-play-circle fa-3x mb-2"></i>
-                        <p>Aucune tâche en cours</p>
-                    </div>
-                {% endif %}
-            </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="text-muted small mb-1">✅ Terminées</div>
+            <div class="fw-bold fs-4 text-success">{{ terminees|length }}</div>
         </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>✅ Terminées</h5>
-                <small>{{ terminees|length }} tâche(s)</small>
-            </div>
-            <div class="card-body" style="min-height: 400px;">
-                {% if terminees|length > 0 %}
-                    {% for tache in terminees %}
-                    <div class="alert alert-light border mb-2 shadow-sm">
-                        <strong>{{ tache.titre }}</strong>
-                        <br>
-                        <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            {{ tache.deadline ? tache.deadline|date('d/m/Y') : 'Pas de deadline' }}
-                        </small>
-                        <span class="badge float-end {% if tache.priorite == 'HAUTE' %}bg-danger{% elseif tache.priorite == 'MOYENNE' %}bg-warning{% else %}bg-success{% endif %}">
-                            {{ tache.priorite }}
-                        </span>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-check-double fa-3x mb-2"></i>
-                        <p>Aucune tâche terminée</p>
-                    </div>
-                {% endif %}
-            </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="text-muted small mb-1">⚡ En cours</div>
+            <div class="fw-bold fs-4 text-info">{{ enCours|length }}</div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="text-muted small mb-1">📋 Total</div>
+            <div class="fw-bold fs-4">{{ total }}</div>
         </div>
     </div>
 </div>
 
-{% if not hasTaches %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="alert alert-info text-center">
-            <i class="fas fa-info-circle me-2"></i>
-            Vous n'avez pas encore de tâches assignées. Les tâches apparaîtront ici une fois qu'un administrateur vous les aura assignées.
+{# Kanban Board #}
+<div class="row g-4">
+
+    {# À FAIRE #}
+    <div class="col-md-4">
+        <div class="col-header" style="background:#f59e0b">
+            📌 À faire
+            <span class="badge bg-white text-dark ms-2">{{ aFaire|length }}</span>
+        </div>
+        <div class="kanban-col" data-status="A_FAIRE" id="col_a_faire">
+            {% if aFaire is empty %}
+                <div class="empty-state">
+                    <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
+                    Aucune tâche à faire
+                </div>
+            {% else %}
+                {% for tache in aFaire %}
+                    <div class="kanban-card {{ tache.priorite == 'HAUTE' ? 'priority-high' : (tache.priorite == 'MOYENNE' ? 'priority-medium' : 'priority-low') }}"
+                         draggable="true"
+                         data-id="{{ tache.id }}">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong>
+                                {{ tache.priorite == 'HAUTE' ? '🔴' : (tache.priorite == 'MOYENNE' ? '🟡' : '🟢') }}
+                                {{ tache.titre }}
+                            </strong>
+                            {% if tache.deadline and tache.deadline < date() %}
+                                <span class="badge bg-danger ms-1">Retard</span>
+                            {% endif %}
+                        </div>
+                        {% if tache.deadline %}
+                            <small class="text-muted d-block">
+                                <i class="fas fa-calendar me-1"></i>{{ tache.deadline|date('d/m/Y') }}
+                            </small>
+                        {% endif %}
+                        <small class="text-muted">
+                            <i class="fas fa-flag me-1"></i>{{ tache.priorite }}
+                        </small>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
+
+    {# EN COURS #}
+    <div class="col-md-4">
+        <div class="col-header" style="background:#06b6d4">
+            ⚡ En cours
+            <span class="badge bg-white text-dark ms-2">{{ enCours|length }}</span>
+        </div>
+        <div class="kanban-col" data-status="EN_COURS" id="col_en_cours">
+            {% if enCours is empty %}
+                <div class="empty-state">
+                    <i class="fas fa-play-circle fa-2x mb-2 d-block text-info"></i>
+                    Aucune tâche en cours
+                </div>
+            {% else %}
+                {% for tache in enCours %}
+                    <div class="kanban-card {{ tache.priorite == 'HAUTE' ? 'priority-high' : (tache.priorite == 'MOYENNE' ? 'priority-medium' : 'priority-low') }}"
+                         draggable="true"
+                         data-id="{{ tache.id }}">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong>
+                                {{ tache.priorite == 'HAUTE' ? '🔴' : (tache.priorite == 'MOYENNE' ? '🟡' : '🟢') }}
+                                {{ tache.titre }}
+                            </strong>
+                            {% if tache.deadline and tache.deadline < date() %}
+                                <span class="badge bg-danger ms-1">Retard</span>
+                            {% endif %}
+                        </div>
+                        {% if tache.deadline %}
+                            <small class="text-muted d-block">
+                                <i class="fas fa-calendar me-1"></i>{{ tache.deadline|date('d/m/Y') }}
+                            </small>
+                        {% endif %}
+                        <small class="text-muted">
+                            <i class="fas fa-flag me-1"></i>{{ tache.priorite }}
+                        </small>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    {# TERMINÉES #}
+    <div class="col-md-4">
+        <div class="col-header" style="background:#10b981">
+            ✅ Terminées
+            <span class="badge bg-white text-dark ms-2">{{ terminees|length }}</span>
+        </div>
+        <div class="kanban-col" data-status="TERMINEE" id="col_terminees">
+            {% if terminees is empty %}
+                <div class="empty-state">
+                    <i class="fas fa-check-double fa-2x mb-2 d-block text-success"></i>
+                    Aucune tâche terminée
+                </div>
+            {% else %}
+                {% for tache in terminees %}
+                    <div class="kanban-card priority-low"
+                         draggable="true"
+                         data-id="{{ tache.id }}">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong>✅ {{ tache.titre }}</strong>
+                        </div>
+                        {% if tache.deadline %}
+                            <small class="text-muted d-block">
+                                <i class="fas fa-calendar me-1"></i>{{ tache.deadline|date('d/m/Y') }}
+                            </small>
+                        {% endif %}
+                        <small class="text-muted">
+                            <i class="fas fa-flag me-1"></i>{{ tache.priorite }}
+                        </small>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
 </div>
-{% endif %}
+
+<div id="toastContainer"></div>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+let draggedId = null;
+
+document.addEventListener('DOMContentLoaded', function () {
+    attachDrag();
+});
+
+function attachDrag() {
+    document.querySelectorAll('.kanban-card').forEach(card => {
+        card.addEventListener('dragstart', function (e) {
+            draggedId = this.dataset.id;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', draggedId);
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', function () {
+            this.classList.remove('dragging');
+            draggedId = null;
+        });
+    });
+
+    document.querySelectorAll('.kanban-col').forEach(col => {
+        col.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('drag-over');
+        });
+        col.addEventListener('dragleave', function (e) {
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('drag-over');
+            }
+        });
+        col.addEventListener('drop', async function (e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const id        = e.dataTransfer.getData('text/plain');
+            const newStatus = this.dataset.status;
+            if (id && newStatus) {
+                await moveTask(id, newStatus);
+            }
+        });
+    });
+}
+
+async function moveTask(id, newStatus) {
+    const statusMap = {
+        'A_FAIRE'  : 'a_faire',
+        'EN_COURS' : 'en_cours',
+        'TERMINEE' : 'terminees'
+    };
+    const apiStatus = statusMap[newStatus] || newStatus;
+
+    try {
+        const res = await fetch(`/employee/tache/${id}/move`, {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body   : JSON.stringify({ status: apiStatus })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            showToast('❌ ' + (err.error || 'Erreur ' + res.status), 'error');
+            return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+            showToast('✅ Tâche déplacée !', 'success');
+            setTimeout(() => location.reload(), 700);
+        } else {
+            showToast('❌ ' + (data.error || 'Erreur'), 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('❌ Erreur de connexion', 'error');
+    }
+}
+
+function showToast(msg, type) {
+    const colors = { success: '#10b981', error: '#ef4444', info: '#3b82f6' };
+    const t = document.createElement('div');
+    t.className = 'toast-notif';
+    t.style.borderLeft = '4px solid ' + (colors[type] || '#3b82f6');
+    t.innerHTML = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+</script>
 {% endblock %}

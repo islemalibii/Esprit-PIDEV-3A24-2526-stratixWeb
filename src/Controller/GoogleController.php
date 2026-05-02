@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Utilisateur;
 use Doctrine\ORM\EntityManagerInterface;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
+use League\OAuth2\Client\Provider\GoogleUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,8 @@ class GoogleController extends AbstractController
     #[Route('/connect/google', name: 'connect_google')]
     public function connect(ClientRegistry $registry): Response
     {
-        return $registry->getClient('google')->redirect(['email', 'profile']);
+        // ✅ FIX: redirect() requires 2 parameters
+        return $registry->getClient('google')->redirect(['email', 'profile'], []);
     }
 
     #[Route('/connect/google/check', name: 'connect_google_check')]
@@ -33,17 +35,18 @@ class GoogleController extends AbstractController
         $client = $registry->getClient('google');
 
         try {
+            /** @var GoogleUser $googleUser */
             $googleUser = $client->fetchUser();
         } catch (\Exception $e) {
             $this->addFlash('danger', 'Erreur Google : ' . $e->getMessage());
             return $this->redirectToRoute('app_login');
         }
 
+        // ✅ FIX: cast GoogleUser to GoogleUser for proper method access
         $email = $googleUser->getEmail();
         $user  = $em->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
 
         if (!$user) {
-            // Créer le compte automatiquement
             $user = new Utilisateur();
             $user->setEmail($email)
                  ->setNom($googleUser->getLastName() ?? 'Google')
@@ -54,10 +57,11 @@ class GoogleController extends AbstractController
                  ->setDateAjout(new \DateTime())
                  ->setPassword($hasher->hashPassword($user, bin2hex(random_bytes(16))));
 
-            // Photo Google comme avatar
-            $avatar = $googleUser->getAvatar();
+            // ✅ FIX: toArray() gives access to avatar
+            $data   = $googleUser->toArray();
+            $avatar = $data['picture'] ?? null;
             if ($avatar) {
-                $user->setAvatar($avatar); // URL externe
+                $user->setAvatar($avatar);
             }
 
             $em->persist($user);

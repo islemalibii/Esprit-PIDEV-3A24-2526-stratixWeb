@@ -3,7 +3,6 @@
 {% block title %}Gestion des Tâches{% endblock %}
 
 {% block body %}
-<main id="content" class="content py-4">
 <div class="container-fluid px-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -21,13 +20,16 @@
         </div>
     </div>
 
-    <!-- SECTION STATISTIQUES -->
+    <!-- ===== SECTION ALERTES SURCHARGE ===== -->
+    <div id="alertesSurcharge" style="display:none;" class="mb-4"></div>
+
+    <!-- SECTION STATISTIQUES (cachée par défaut) -->
     <div id="statsSection" style="display: none;">
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card text-white bg-primary">
                     <div class="card-body text-center">
-                        <h2 class="display-4">{{ total }}</h2>
+                        <h2 class="display-4">{{ total|default(taches|length) }}</h2>
                         <h5>📊 Total tâches</h5>
                     </div>
                 </div>
@@ -35,7 +37,7 @@
             <div class="col-md-3">
                 <div class="card text-white bg-info">
                     <div class="card-body text-center">
-                        <h2 class="display-4">{{ en_cours }}</h2>
+                        <h2 class="display-4">{{ en_cours|default(0) }}</h2>
                         <h5>⚡ En cours</h5>
                     </div>
                 </div>
@@ -43,7 +45,7 @@
             <div class="col-md-3">
                 <div class="card text-white bg-success">
                     <div class="card-body text-center">
-                        <h2 class="display-4">{{ terminees }}</h2>
+                        <h2 class="display-4">{{ terminees|default(0) }}</h2>
                         <h5>✅ Terminées</h5>
                     </div>
                 </div>
@@ -51,7 +53,7 @@
             <div class="col-md-3">
                 <div class="card text-white bg-warning">
                     <div class="card-body text-center">
-                        <h2 class="display-4">{{ a_faire }}</h2>
+                        <h2 class="display-4">{{ a_faire|default(0) }}</h2>
                         <h5>📌 À faire</h5>
                     </div>
                 </div>
@@ -88,14 +90,14 @@
                         <i class="fas fa-trophy"></i> Taux de Complétion
                     </div>
                     <div class="card-body text-center">
-                        <h1 class="display-1 text-success">{{ taux_completion }}%</h1>
+                        <h1 class="display-1 text-success">{{ taux_completion|default(0) }}%</h1>
                         <div class="progress mt-3" style="height: 30px;">
-                            <div class="progress-bar bg-success progress-bar-striped" style="width: {{ taux_completion }}%">
-                                {{ taux_completion }}%
+                            <div class="progress-bar bg-success progress-bar-striped" style="width: {{ taux_completion|default(0) }}%">
+                                {{ taux_completion|default(0) }}%
                             </div>
                         </div>
                         <p class="mt-3">
-                            <i class="fas fa-check-circle text-success"></i> {{ terminees }} / {{ total }} tâches terminées
+                            <i class="fas fa-check-circle text-success"></i> {{ terminees|default(0) }} / {{ total|default(0) }} tâches terminées
                         </p>
                     </div>
                 </div>
@@ -103,7 +105,7 @@
         </div>
     </div>
 
-    {# ===== FILTRES : pure GET form, no JS, URL changes ===== #}
+    <!-- ===== FILTRES RÉELS (server-side GET) ===== -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ path('app_tache_index') }}">
@@ -115,44 +117,45 @@
                                    name="search"
                                    class="form-control"
                                    placeholder="Rechercher une tâche..."
-                                   value="{{ search }}">
+                                   value="{{ search|default('') }}">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <select name="statut" class="form-select" onchange="this.form.submit()">
                             <option value="">Tous les statuts</option>
-                            <option value="A_FAIRE"  {{ statut == 'A_FAIRE'  ? 'selected' : '' }}>📌 À faire</option>
-                            <option value="EN_COURS" {{ statut == 'EN_COURS' ? 'selected' : '' }}>⚡ En cours</option>
-                            <option value="TERMINEE" {{ statut == 'TERMINEE' ? 'selected' : '' }}>✅ Terminée</option>
+                            <option value="A_FAIRE"  {% if statut|default('') == 'A_FAIRE'  %}selected{% endif %}>📌 À faire</option>
+                            <option value="EN_COURS" {% if statut|default('') == 'EN_COURS' %}selected{% endif %}>⚡ En cours</option>
+                            <option value="TERMINEE" {% if statut|default('') == 'TERMINEE' %}selected{% endif %}>✅ Terminée</option>
                         </select>
                     </div>
                     <div class="col-md-2">
                         <select name="priorite" class="form-select" onchange="this.form.submit()">
                             <option value="">Priorité</option>
-                            <option value="HAUTE"   {{ priorite == 'HAUTE'   ? 'selected' : '' }}>🔴 Haute</option>
-                            <option value="MOYENNE" {{ priorite == 'MOYENNE' ? 'selected' : '' }}>🟡 Moyenne</option>
-                            <option value="BASSE"   {{ priorite == 'BASSE'   ? 'selected' : '' }}>🟢 Basse</option>
+                            <option value="HAUTE"   {% if priorite|default('') == 'HAUTE'   %}selected{% endif %}>🔴 Haute</option>
+                            <option value="MOYENNE" {% if priorite|default('') == 'MOYENNE' %}selected{% endif %}>🟡 Moyenne</option>
+                            <option value="BASSE"   {% if priorite|default('') == 'BASSE'   %}selected{% endif %}>🟢 Basse</option>
                         </select>
                     </div>
-                    <div class="col-md-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-search"></i> Rechercher
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i>
                         </button>
-                        <a href="{{ path('app_tache_index') }}" class="btn btn-outline-secondary" title="Réinitialiser">
+                    </div>
+                    <div class="col-md-1">
+                        <a href="{{ path('app_tache_index') }}" class="btn btn-outline-secondary w-100" title="Réinitialiser">
                             <i class="fas fa-undo-alt"></i>
                         </a>
                     </div>
                 </div>
 
-                {% if search or statut or priorite %}
+                {% if search|default('') or statut|default('') or priorite|default('') %}
                 <div class="mt-2">
                     <small class="text-muted">
                         <i class="fas fa-filter"></i>
                         <strong>{{ taches|length }}</strong> résultat(s)
-                        {% if search %} pour "<strong>{{ search }}</strong>"{% endif %}
-                        {% if statut %} — statut : <strong>{{ statut }}</strong>{% endif %}
-                        {% if priorite %} — priorité : <strong>{{ priorite }}</strong>{% endif %}
-                        &nbsp;·&nbsp; <a href="{{ path('app_tache_index') }}">Effacer les filtres</a>
+                        {% if search|default('') %} pour "<strong>{{ search }}</strong>"{% endif %}
+                        {% if statut|default('') %} — statut: <strong>{{ statut }}</strong>{% endif %}
+                        {% if priorite|default('') %} — priorité: <strong>{{ priorite }}</strong>{% endif %}
                     </small>
                 </div>
                 {% endif %}
@@ -231,8 +234,8 @@
                                 <td colspan="6" class="text-center text-muted py-4">
                                     <i class="fas fa-search fa-2x mb-2 d-block"></i>
                                     Aucune tâche trouvée
-                                    {% if search or statut or priorite %}
-                                        — <a href="{{ path('app_tache_index') }}">Effacer les filtres</a>
+                                    {% if search|default('') or statut|default('') or priorite|default('') %}
+                                        — <a href="{{ path('app_tache_index') }}">Réinitialiser les filtres</a>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -243,11 +246,27 @@
         </div>
     </div>
 </div>
-</main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Only stats toggle — zero filtering JS
+async function loadAlertesSurcharge() {
+    try {
+        const response = await fetch('/api/alertes/surcharge');
+        const data = await response.json();
+        const container = document.getElementById('alertesSurcharge');
+        if (data.success && data.total_alertes > 0) {
+            let html = `<div class="card border-warning"><div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center"><span><i class="fas fa-exclamation-triangle me-2"></i><strong>⚠️ Alertes surcharge (${data.total_alertes} employé(s))</strong></span><button onclick="document.getElementById('alertesSurcharge').style.display='none'" class="btn btn-sm btn-outline-dark">✕</button></div><div class="card-body py-2"><div class="row g-2">`;
+            data.alertes.forEach(a => {
+                const color = a.niveau === 'critique' ? 'danger' : 'warning';
+                html += `<div class="col-md-4"><div class="alert alert-${color} py-2 mb-0 d-flex justify-content-between align-items-center"><div><i class="fas fa-user me-1"></i><strong>${a.employe}</strong><br><small>${a.taches_en_cours} tâches en cours</small></div><span class="badge bg-${color}">${a.niveau.toUpperCase()}</span></div></div>`;
+            });
+            html += `</div></div></div>`;
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+    } catch (e) { console.error('Erreur alertes:', e); }
+}
+
 let statutChart, prioriteChart, statsVisible = false;
 
 function toggleStats() {
@@ -264,27 +283,15 @@ function toggleStats() {
 function createCharts() {
     const sc = document.getElementById('statutChart')?.getContext('2d');
     if (sc && !statutChart) {
-        statutChart = new Chart(sc, {
-            type: 'doughnut',
-            data: {
-                labels: ['À faire', 'En cours', 'Terminées'],
-                datasets: [{ data: [{{ a_faire }}, {{ en_cours }}, {{ terminees }}], backgroundColor: ['#ffc107', '#0dcaf0', '#198754'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
-        });
+        statutChart = new Chart(sc, { type: 'doughnut', data: { labels: ['À faire','En cours','Terminées'], datasets: [{ data: [{{ a_faire|default(0) }},{{ en_cours|default(0) }},{{ terminees|default(0) }}], backgroundColor: ['#ffc107','#0dcaf0','#198754'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
     }
     const pc = document.getElementById('prioriteChart')?.getContext('2d');
     if (pc && !prioriteChart) {
-        prioriteChart = new Chart(pc, {
-            type: 'doughnut',
-            data: {
-                labels: ['Haute', 'Moyenne', 'Basse'],
-                datasets: [{ data: [{{ haute }}, {{ moyenne }}, {{ basse }}], backgroundColor: ['#dc3545', '#ffc107', '#198754'], borderWidth: 0 }]
-            },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
-        });
+        prioriteChart = new Chart(pc, { type: 'doughnut', data: { labels: ['Haute','Moyenne','Basse'], datasets: [{ data: [{{ haute|default(0) }},{{ moyenne|default(0) }},{{ basse|default(0) }}], backgroundColor: ['#dc3545','#ffc107','#198754'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
     }
 }
+
+loadAlertesSurcharge();
 </script>
 
 <style>
@@ -293,7 +300,6 @@ function createCharts() {
     .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     .card-header { border-radius: 15px 15px 0 0; }
     .progress-bar { transition: width 0.5s ease; }
-    .btn-group .btn { margin: 0 1px; }
     #statsSection { transition: all 0.3s ease; }
 </style>
 {% endblock %}
