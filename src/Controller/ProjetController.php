@@ -41,7 +41,6 @@ class ProjetController extends AbstractController
         $pagination = $paginator->paginate(
             $query,
             $request->query->getInt('page', 1),
-            6 
         );
 
         $userFavorisIds = [];
@@ -370,11 +369,12 @@ class ProjetController extends AbstractController
             $debut = $projet->getDateDebut();
             $fin = $projet->getDateFin();
             if ($debut && $fin) {
+                $endDate = \DateTime::createFromInterface($fin);
                 $events[] = [
                     'id' => $projet->getId(),
                     'title' => $projet->getNom(),
                     'start' => $debut->format('Y-m-d'),
-                    'end' => $fin->modify('+1 day')->format('Y-m-d'),
+                    'end' => $endDate->modify('+1 day')->format('Y-m-d'),
                     'backgroundColor' => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
                     'borderColor' => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
                     'url' => $this->generateUrl('app_projet_show', ['id' => $projet->getId()]),

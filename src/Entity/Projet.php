@@ -17,10 +17,8 @@ class Projet
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
-
-    // --- CORRECTION : Nom de variable corrigé et relation cible Phase ---
     #[ORM\OneToMany(mappedBy: 'projet', targetEntity: Phase::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $phases;
 
