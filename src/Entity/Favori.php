@@ -14,6 +14,9 @@ class Favori
 /**
      * @var int|null
      */
+/**
+     * @var int|null
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]

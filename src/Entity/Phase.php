@@ -73,6 +73,7 @@ class Phase
     {
     $this->dateDebut = $dateDebut;
     return $this;
+
     }
 
     public function getDateFin(): ?\DateTimeInterface

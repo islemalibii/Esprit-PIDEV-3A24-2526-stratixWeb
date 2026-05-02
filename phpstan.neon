@@ -5,6 +5,7 @@ parameters:
     level: 8
     paths:
         - src
+        - tests
     ignoreErrors:
         - '/Call to an undefined method/'
         - '/Parameter \#1 \$array of function usort is passed by reference/'

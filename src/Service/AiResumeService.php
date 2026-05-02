@@ -17,10 +17,12 @@ class AiResumeService
 
     public function generateSummary(string $text): string
     {
-        // 1. Nettoyage de sécurité : On garde uniquement les caractères alphanumériques et la ponctuation de base
-        // Cela évite les erreurs 400 dues à des caractères invisibles ou binaires issus du PDF
-        $cleanText = preg_replace('/[^\p{L}\p{N}\s\.\,\?\!\'\-]/u', '', $text);
-        $cleanText = mb_substr($cleanText, 0, 3000); // On limite la taille
+        // 1. Nettoyage de sécurité
+        $replacedText = preg_replace('/[^\p{L}\p{N}\s\.\,\?\!\'\-]/u', '', $text);
+        
+        // Correction ligne 23 : On s'assure que le résultat est une string avant mb_substr
+        $cleanText = is_string($replacedText) ? $replacedText : '';
+        $cleanText = mb_substr($cleanText, 0, 3000);
 
         try {
             $response = $this->client->request('POST', 'https://api.groq.com/openai/v1/chat/completions', [
@@ -29,7 +31,6 @@ class AiResumeService
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
-                    // On utilise le modèle Llama 3.3 qui est le plus stable actuellement
                     'model' => 'llama-3.3-70b-versatile', 
                     'messages' => [
                         [
@@ -45,29 +46,33 @@ class AiResumeService
                 ],
             ]);
 
-            // Récupération de la réponse
             $content = $response->getContent(false);
             $data = json_decode($content, true);
 
-            if (isset($data['choices'][0]['message']['content'])) {
-                return $data['choices'][0]['message']['content'];
+            // On vérifie que $data est bien un tableau après le décodage
+            if (is_array($data) && isset($data['choices'][0]['message']['content'])) {
+                return (string)$data['choices'][0]['message']['content'];
             }
 
             // Si Groq renvoie une erreur spécifique dans le JSON
-            if (isset($data['error']['message'])) {
-                return json_encode([
+            if (is_array($data) && isset($data['error']['message'])) {
+                $errorResult = json_encode([
                     'resume_court' => 'Erreur API Groq',
-                    'resume_detaille' => $data['error']['message']
+                    'resume_detaille' => (string)$data['error']['message']
                 ]);
+                return is_string($errorResult) ? $errorResult : '{"error": "JSON encoding failed"}';
             }
 
             throw new \Exception('Format de réponse inconnu');
 
         } catch (\Exception $e) {
-            return json_encode([
+            // Correction lignes 58 et 67 : On sécurise le retour de json_encode
+            $fallback = json_encode([
                 'resume_court' => 'Erreur de connexion',
                 'resume_detaille' => 'Détails : ' . $e->getMessage()
             ]);
+            
+            return is_string($fallback) ? $fallback : '{"error": "Critical service failure"}';
         }
     }
 }
