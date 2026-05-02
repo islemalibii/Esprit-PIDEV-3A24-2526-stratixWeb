@@ -25,7 +25,6 @@ class EventManagerTest extends TestCase
     {
         $evenement = $this->createValidEvenement();
         $manager   = new EventManage();
-
         $this->assertTrue($manager->validate($evenement));
     }
 
@@ -101,14 +100,13 @@ class EventManagerTest extends TestCase
     {
         $evenement = $this->createValidEvenement();
         $evenement->setStatut('planifier');
-
         $manager = new EventManage();
         $this->assertTrue($manager->validateParticipation($evenement));
     }
 
     public function testRecurrenceValide()
     {
-        $manager          = new EventManage();
+        $manager = new EventManage();
         $validRecurrences = ['none', 'weekly', 'monthly'];
 
         foreach ($validRecurrences as $recurrence) {
@@ -125,14 +123,13 @@ class EventManagerTest extends TestCase
 
         $evenement = $this->createValidEvenement();
         $evenement->setRecurrence('daily');
-
         $manager = new EventManage();
         $manager->validateRecurrence($evenement);
     }
 
     public function testTousLesFormatsImageValides()
     {
-        $manager         = new EventManage();
+        $manager = new EventManage();
         $validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     
         foreach ($validExtensions as $ext) {
@@ -149,7 +146,6 @@ class EventManagerTest extends TestCase
 
         $evenement = $this->createValidEvenement();
         $evenement->setImageUrl('/uploads/events/document.pdf');
-
         $manager = new EventManage();
         $manager->validateImageUrl($evenement);
     }
