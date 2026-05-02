@@ -34,7 +34,7 @@ class ResetPasswordController extends AbstractController
     public function request(Request $request, UtilisateurRepository $repo): Response
     {
         if ($request->isMethod('POST')) {
-            $email = trim($request->request->get('email', ''));
+            $email = trim((string)$request->request->get('email', ''));
             $user  = $repo->findOneBy(['email' => $email]);
 
             if ($user) {
@@ -46,7 +46,7 @@ class ResetPasswordController extends AbstractController
                         $mailer = new Mailer($this->defaultTransport);
                         $mail = (new TemplatedEmail())
                             ->from(new Address('noreply@stratix.com', 'Stratix'))
-                            ->to($user->getEmail())
+                            ->to((string)$user->getEmail())
                             ->subject('Réinitialisation de votre mot de passe — Stratix')
                             ->htmlTemplate('auth/reset_password_email.html.twig')
                             ->context(['resetToken' => $resetToken, 'user' => $user, 'resetUrl' => $resetUrl]);
@@ -106,8 +106,8 @@ class ResetPasswordController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            $password = $request->request->get('password', '');
-            $confirm  = $request->request->get('confirm', '');
+            $password = (string)$request->request->get('password', '');
+            $confirm  = (string)$request->request->get('confirm', '');
 
             if (strlen($password) < 8) $errors['password'] = 'Minimum 8 caractères.';
             elseif (!preg_match('/[A-Z]/', $password)) $errors['password'] = 'Au moins une majuscule.';

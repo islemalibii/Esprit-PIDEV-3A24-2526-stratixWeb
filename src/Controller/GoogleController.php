@@ -18,7 +18,7 @@ class GoogleController extends AbstractController
     #[Route('/connect/google', name: 'connect_google')]
     public function connect(ClientRegistry $registry): Response
     {
-        return $registry->getClient('google')->redirect(['email', 'profile']);
+        return $registry->getClient('google')->redirect(['email', 'profile'], []);
     }
 
     #[Route('/connect/google/check', name: 'connect_google_check')]
@@ -39,13 +39,13 @@ class GoogleController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
+        /** @var \League\OAuth2\Client\Provider\GoogleUser $googleUser */
         $email = $googleUser->getEmail();
         $user  = $em->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
 
         if (!$user) {
-            // Créer le compte automatiquement
             $user = new Utilisateur();
-            $user->setEmail($email)
+            $user->setEmail((string)$email)
                  ->setNom($googleUser->getLastName() ?? 'Google')
                  ->setPrenom($googleUser->getFirstName() ?? 'User')
                  ->setCin(0)
@@ -54,10 +54,9 @@ class GoogleController extends AbstractController
                  ->setDateAjout(new \DateTime())
                  ->setPassword($hasher->hashPassword($user, bin2hex(random_bytes(16))));
 
-            // Photo Google comme avatar
             $avatar = $googleUser->getAvatar();
             if ($avatar) {
-                $user->setAvatar($avatar); // URL externe
+                $user->setAvatar($avatar);
             }
 
             $em->persist($user);

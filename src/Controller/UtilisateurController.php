@@ -96,7 +96,7 @@ class UtilisateurController extends AbstractController
     #[Route('/{id}/delete', name: 'utilisateur_delete', methods: ['POST'])]
     public function delete(Utilisateur $utilisateur, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$utilisateur->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$utilisateur->getId(), (string)$request->request->get('_token'))) {
             $em->remove($utilisateur);
             $em->flush();
             $this->addFlash('success', 'Utilisateur supprimé.');
@@ -107,7 +107,7 @@ class UtilisateurController extends AbstractController
     #[Route('/{id}/toggle-lock', name: 'utilisateur_toggle_lock', methods: ['POST'])]
     public function toggleLock(Utilisateur $utilisateur, Request $request, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('toggle'.$utilisateur->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('toggle'.$utilisateur->getId(), (string)$request->request->get('_token'))) {
             $utilisateur->setAccountLocked(!$utilisateur->isAccountLocked());
             if (!$utilisateur->isAccountLocked()) {
                 $utilisateur->setFailedLoginAttempts(0);

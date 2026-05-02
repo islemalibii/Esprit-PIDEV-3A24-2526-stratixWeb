@@ -30,14 +30,14 @@ class ProfileController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            $nom        = trim($request->request->get('nom', ''));
-            $prenom     = trim($request->request->get('prenom', ''));
-            $tel        = trim($request->request->get('tel', ''));
-            $department = trim($request->request->get('department', ''));
-            $poste      = trim($request->request->get('poste', ''));
-            $currentPw  = $request->request->get('current_password', '');
-            $newPw      = $request->request->get('new_password', '');
-            $confirmPw  = $request->request->get('confirm_password', '');
+            $nom        = trim((string)$request->request->get('nom', ''));
+            $prenom     = trim((string)$request->request->get('prenom', ''));
+            $tel        = trim((string)$request->request->get('tel', ''));
+            $department = trim((string)$request->request->get('department', ''));
+            $poste      = trim((string)$request->request->get('poste', ''));
+            $currentPw  = (string)$request->request->get('current_password', '');
+            $newPw      = (string)$request->request->get('new_password', '');
+            $confirmPw  = (string)$request->request->get('confirm_password', '');
 
             // Validation
             if (!$nom)    { $errors['nom']    = 'Le nom est obligatoire.'; }

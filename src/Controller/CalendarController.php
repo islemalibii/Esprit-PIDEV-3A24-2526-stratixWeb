@@ -33,8 +33,8 @@ class CalendarController extends AbstractController
             $employeName = $this->getEmployeName($planning->getEmployeId());
             $events[] = [
                 'title' => '📅 ' . $employeName . ' - ' . $planning->getTypeShift(),
-                'start' => $planning->getDate()->format('Y-m-d'),
-                'end' => $planning->getDate()->format('Y-m-d'),
+                'start' => $planning->getDate()?->format('Y-m-d') ?? '',
+                'end' => $planning->getDate()?->format('Y-m-d') ?? '',
                 'color' => $this->getShiftColor($planning->getTypeShift()),
                 'type' => 'planning',
                 'description' => 'Shift: ' . $planning->getTypeShift() . ' - Employé: ' . $employeName
@@ -71,7 +71,7 @@ class CalendarController extends AbstractController
             $events[] = [
                 'id' => $planning->getId(),
                 'title' => $employeName . ' (' . $planning->getTypeShift() . ')',
-                'start' => $planning->getDate()->format('Y-m-d'),
+                'start' => $planning->getDate()?->format('Y-m-d') ?? '',
                 'color' => $this->getShiftColor($planning->getTypeShift()),
                 'textColor' => 'white',
                 'description' => 'Shift: ' . $planning->getTypeShift(),
