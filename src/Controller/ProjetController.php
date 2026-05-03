@@ -346,7 +346,7 @@ class ProjetController extends AbstractController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $nomProjet = $projet->getNom() ?? 'projet';
+        $nomProjet = $projet->getNom();
         $safeFilename = str_replace([' ', '/', '\\'], '_', (string)$nomProjet);
         $fileName = 'Stratix_Rapport_' . $safeFilename . '_' . date('Y-m-d') . '.pdf';
 
@@ -360,31 +360,30 @@ class ProjetController extends AbstractController
     //  CALENDRIER
     // ─────────────────────────────────────────────
     #[Route('/api/projets/calendar', name: 'api_projets_calendar', methods: ['GET'])]
-    public function getCalendarEvents(ProjetRepository $projetRepository): JsonResponse
-    {
-        $projets = $projetRepository->findBy(['isArchived' => false]); 
+public function getCalendarEvents(ProjetRepository $projetRepository): JsonResponse
+{
+    $projets = $projetRepository->findBy(['isArchived' => false]);
 
-        $events = [];
-        foreach ($projets as $projet) {
-            $debut = $projet->getDateDebut();
-            $fin = $projet->getDateFin();
-            if ($debut && $fin) {
-                $endDate = \DateTime::createFromInterface($fin);
-                $events[] = [
-                    'id' => $projet->getId(),
-                    'title' => $projet->getNom(),
-                    'start' => $debut->format('Y-m-d'),
-                    'end' => $endDate->modify('+1 day')->format('Y-m-d'),
-                    'backgroundColor' => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
-                    'borderColor' => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
-                    'url' => $this->generateUrl('app_projet_show', ['id' => $projet->getId()]),
-                    'allDay' => true
-                ];
-            }
-        }
-        return new JsonResponse($events);
+    $events = [];
+    foreach ($projets as $projet) {
+        $debut = $projet->getDateDebut();
+        $fin   = $projet->getDateFin();
+
+        $endDate  = \DateTime::createFromInterface($fin);
+        $events[] = [
+            'id'              => $projet->getId(),
+            'title'           => $projet->getNom(),
+            'start'           => $debut->format('Y-m-d'),
+            'end'             => $endDate->modify('+1 day')->format('Y-m-d'),
+            'backgroundColor' => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
+            'borderColor'     => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
+            'url'             => $this->generateUrl('app_projet_show', ['id' => $projet->getId()]),
+            'allDay'          => true,
+        ];
     }
 
+    return new JsonResponse($events);
+}
     private function getColorByStatut(string $statut): string
     {
         return match ($statut) {

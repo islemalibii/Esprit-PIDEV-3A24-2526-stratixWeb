@@ -36,7 +36,7 @@ class NotifyDeadlinesCommand extends Command
         $projets = $this->projetRepository->findProjetsProchesEcheance(7);
 
         foreach ($projets as $projet) {
-            $nomProjet = $projet->getNom() ?? 'Projet sans nom';
+            $nomProjet = $projet->getNom();
             $output->writeln("<info>--- Projet : " . $nomProjet . " ---</info>");
 
             // Récupération de tous les acteurs du projet

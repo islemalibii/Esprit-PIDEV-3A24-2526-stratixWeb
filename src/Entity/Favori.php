@@ -14,9 +14,6 @@ class Favori
 /**
      * @var int|null
      */
-/**
-     * @var int|null
-     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -31,7 +28,7 @@ class Favori
     private ?Projet $projet = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateAjout = null;
+    private \DateTimeInterface $dateAjout;
 
     public function __construct()
     {
@@ -65,7 +62,7 @@ class Favori
         return $this;
     }
 
-    public function getDateAjout(): ?\DateTimeInterface
+    public function getDateAjout(): \DateTimeInterface
     {
         return $this->dateAjout;
     }

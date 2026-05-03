@@ -151,7 +151,7 @@ class Evenement
         return $this;
     }
 
-    #[ORM\Column(name: 'isArchived', type: 'boolean', nullable: true)]
+    #[ORM\Column(name: 'is_archived', type: 'boolean', nullable: true)]
     private ?bool $isArchived = null;
 
     public function isIsArchived(): ?bool
