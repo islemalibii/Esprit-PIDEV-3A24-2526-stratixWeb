@@ -6,6 +6,9 @@ use App\Entity\UserBadge;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<UserBadge>
+ */
 class UserBadgeRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -13,13 +16,20 @@ class UserBadgeRepository extends ServiceEntityRepository
         parent::__construct($registry, UserBadge::class);
     }
 
+    /**
+     * @return UserBadge[]
+     */
     public function findUserBadges(int $userId): array
     {
-        return $this->createQueryBuilder('ub')
+        $qb = $this->createQueryBuilder('ub')
             ->where('ub.userId = :userId')
             ->orderBy('ub.obtenuLe', 'DESC')
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('userId', $userId);
+        
+        $query = $qb->getQuery();
+        $result = $query->getResult();
+        
+        /** @var UserBadge[] $result */
+        return $result;
     }
 }

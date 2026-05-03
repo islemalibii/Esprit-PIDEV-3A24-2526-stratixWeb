@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/planning')]
 final class PlanningController extends AbstractController
 {
-    #[Route(name: 'app_planning_index', methods: ['GET'])]
+    #[Route('/', name: 'app_planning_index', methods: ['GET'])]
     public function index(Request $request, PlanningRepository $planningRepository, UtilisateurRepository $utilisateurRepository): Response
     {
         // ========== RECHERCHE PHP (côté serveur) ==========
@@ -25,14 +25,14 @@ final class PlanningController extends AbstractController
         $searchEmploye = $request->query->get('search_employe', '');
         
         // FORCER LES TYPES EN STRING
-        $searchDate = is_string($searchDate) ? $searchDate : '';
-        $searchType = is_string($searchType) ? $searchType : '';
-        $searchEmploye = is_string($searchEmploye) ? $searchEmploye : '';
+        if (!is_string($searchDate)) $searchDate = '';
+        if (!is_string($searchType)) $searchType = '';
+        if (!is_string($searchEmploye)) $searchEmploye = '';
         
         // Construire la requête avec filtres
         $qb = $planningRepository->createQueryBuilder('p');
         
-        // Filtre par date (CORRIGÉ)
+        // Filtre par date (CORRIGÉ - sans is_string redondant)
         if (!empty($searchDate)) {
             $date = new \DateTime($searchDate);
             $qb->andWhere('p.date = :date')

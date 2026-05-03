@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Planning;
 use App\Repository\PlanningRepository;
 use App\Repository\UtilisateurRepository;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -25,7 +26,7 @@ class ExportExcelController extends AbstractController
     {
         $typeShift  = $request->query->get('type_shift');
         $employeId  = $request->query->get('employe_id');
-        $download   = $request->query->get('download'); // ?download=1 pour forcer le téléchargement
+        $download   = $request->query->get('download');
 
         $plannings = $this->planningRepository->findAll();
 
@@ -41,7 +42,6 @@ class ExportExcelController extends AbstractController
             $employes[$u->getId()] = $u->getPrenom() . ' ' . $u->getNom();
         }
 
-        // ── MODE TÉLÉCHARGEMENT (?download=1) ──────────────────────────────
         if ($download) {
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
@@ -56,9 +56,12 @@ class ExportExcelController extends AbstractController
             $row = 2;
             foreach ($plannings as $p) {
                 $sheet->setCellValue('A' . $row, $employes[$p->getEmployeId()] ?? 'Non assigné');
-                $sheet->setCellValue('B' . $row, $p->getDate()->format('d/m/Y'));
-                $sheet->setCellValue('C' . $row, $p->getHeureDebut()?->format('H:i') ?? '');
-                $sheet->setCellValue('D' . $row, $p->getHeureFin()?->format('H:i') ?? '');
+                $date = $p->getDate();
+                $sheet->setCellValue('B' . $row, $date ? $date->format('d/m/Y') : '');
+                $heureDebut = $p->getHeureDebut();
+                $sheet->setCellValue('C' . $row, $heureDebut ? $heureDebut->format('H:i') : '');
+                $heureFin = $p->getHeureFin();
+                $sheet->setCellValue('D' . $row, $heureFin ? $heureFin->format('H:i') : '');
                 $sheet->setCellValue('E' . $row, $p->getTypeShift());
                 $row++;
             }
@@ -75,14 +78,12 @@ class ExportExcelController extends AbstractController
             return $this->file($tempFile, $fileName, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
         }
 
-        // ── MODE AFFICHAGE DANS L'INTERFACE (par défaut) ───────────────────
         $shiftBadges = [
-            'JOUR'      => ['label' => '☀️ JOUR',       'class' => 'bg-info'],
-            'SOIR'      => ['label' => '🌆 SOIR',       'class' => 'bg-warning'],
-            'NUIT'      => ['label' => '🌙 NUIT',       'class' => 'bg-dark'],
-            'CONGE'     => ['label' => '🏖️ CONGÉ',     'class' => 'bg-warning text-dark'],
-            'MALADIE'   => ['label' => '🤒 MALADIE',    'class' => 'bg-danger'],
-            'FORMATION' => ['label' => '📚 FORMATION',  'class' => 'bg-primary'],
+            'MATIN'     => ['label' => '☀️ MATIN',     'class' => 'bg-info'],
+            'SOIR'      => ['label' => '🌆 SOIR',      'class' => 'bg-warning'],
+            'NUIT'      => ['label' => '🌙 NUIT',      'class' => 'bg-dark'],
+            'CONGE'     => ['label' => '🏖️ CONGÉ',    'class' => 'bg-warning text-dark'],
+            'RTT'       => ['label' => '📅 RTT',       'class' => 'bg-secondary'],
         ];
 
         $titre = $typeShift
@@ -170,7 +171,7 @@ class ExportExcelController extends AbstractController
         }
 
         if (!$rows) {
-            $rows = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucun planning trouvé</td></tr>';
+            $rows = '<td><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucun planning trouvé</td></tr>';
         }
 
         $html .= $rows;
@@ -186,8 +187,17 @@ class ExportExcelController extends AbstractController
         return new Response($html, 200, ['Content-Type' => 'text/html']);
     }
 
+    /**
+     * @param array<Planning>|iterable<Planning> $plannings
+     */
     private function countPlannings(mixed $plannings): int
     {
-        return is_array($plannings) ? count($plannings) : iterator_count($plannings);
+        if (is_array($plannings)) {
+            return count($plannings);
+        }
+        if (is_iterable($plannings)) {
+            return iterator_count($plannings);
+        }
+        return 0;
     }
 }

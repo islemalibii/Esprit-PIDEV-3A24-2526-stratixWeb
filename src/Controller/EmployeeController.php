@@ -1,5 +1,4 @@
 <?php
-// src/Controller/EmployeeController.php
 
 namespace App\Controller;
 
@@ -20,29 +19,8 @@ class EmployeeController extends AbstractController
     #[Route('/employee/dashboard', name: 'app_employee_dashboard')]
     public function dashboard(
         TacheRepository $tacheRepository,
-        PlanningRepository $planningRepository,
-        UtilisateurRepository $utilisateurRepository
+        PlanningRepository $planningRepository
     ): Response {
-
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
-        }
-        
-        $plannings = $planningRepository->findAll();
-        
-        $aFaire = 0;
-        $enCours = 0;
-        $terminees = 0;
-        $haute = 0;
-        $moyenne = 0;
-        $basse = 0;
-        
-
         /** @var Utilisateur $employe */
         $employe   = $this->getUser();
         $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
@@ -116,22 +94,15 @@ class EmployeeController extends AbstractController
     #[Route('/employee/calendar', name: 'app_employee_calendar')]
     public function calendar(
         TacheRepository $tacheRepository,
-        PlanningRepository $planningRepository,
-        UtilisateurRepository $utilisateurRepository
+        PlanningRepository $planningRepository
     ): Response {
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
-        }
-        
-        $plannings = $planningRepository->findAll();
-        
+        /** @var Utilisateur $employe */
+        $employe   = $this->getUser();
+        $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+
         $events = [];
-        
+
         foreach ($taches as $tache) {
             if ($tache->getDeadline()) {
                 $color = '#ef4444';
@@ -175,21 +146,14 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/employee/whiteboard', name: 'app_employee_whiteboard')]
-    public function whiteboard(
-        TacheRepository $tacheRepository,
-        UtilisateurRepository $utilisateurRepository
-    ): Response {
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
-        }
-        
-        $aFaire = [];
-        $enCours = [];
+    public function whiteboard(TacheRepository $tacheRepository): Response
+    {
+        /** @var Utilisateur $employe */
+        $employe = $this->getUser();
+        $taches  = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+
+        $aFaire    = [];
+        $enCours   = [];
         $terminees = [];
 
         foreach ($taches as $tache) {
@@ -221,8 +185,19 @@ class EmployeeController extends AbstractController
             return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
         }
 
-        $body      = json_decode($request->getContent(), true);
-        $newStatus = $body['status'] ?? $request->request->get('status');
+        // FIX: json_decode returns mixed — guard with is_array + is_string before accessing offset
+        $decoded   = json_decode($request->getContent(), true);
+        $newStatus = null;
+
+        if (is_array($decoded) && isset($decoded['status']) && is_string($decoded['status'])) {
+            $newStatus = $decoded['status'];
+        }
+
+        if ($newStatus === null) {
+            // FIX: Request::get() returns mixed — narrow to string with is_string guard
+            $raw       = $request->request->get('status');
+            $newStatus = is_string($raw) ? $raw : null;
+        }
 
         $statusMap = [
             'a_faire'   => 'A_FAIRE',
@@ -233,7 +208,11 @@ class EmployeeController extends AbstractController
             'TERMINEE'  => 'TERMINEE',
         ];
 
-        $mapped = $statusMap[$newStatus] ?? null;
+        // FIX: $newStatus is now string|null — safe to use as array key after null check
+        $mapped = null;
+        if ($newStatus !== null && isset($statusMap[$newStatus])) {
+            $mapped = $statusMap[$newStatus];
+        }
 
         if (!$mapped) {
             return $this->json(['success' => false, 'error' => 'Statut invalide'], 400);
@@ -264,20 +243,23 @@ class EmployeeController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            $nom       = trim($request->request->get('nom', ''));
-            $prenom    = trim($request->request->get('prenom', ''));
-            $tel       = trim($request->request->get('tel', ''));
-            $currentPw = $request->request->get('current_password', '');
-            $newPw     = $request->request->get('new_password', '');
-            $confirmPw = $request->request->get('confirm_password', '');
+            // FIX: Request::get() returns mixed — cast explicitly to string via (string)(?? '')
+            // so that trim(), strlen(), preg_match() and the password hasher all receive string
+            $nom       = trim((string) ($request->request->get('nom')              ?? ''));
+            $prenom    = trim((string) ($request->request->get('prenom')           ?? ''));
+            $tel       = trim((string) ($request->request->get('tel')              ?? ''));
+            $currentPw = (string) ($request->request->get('current_password')      ?? '');
+            $newPw     = (string) ($request->request->get('new_password')          ?? '');
+            $confirmPw = (string) ($request->request->get('confirm_password')      ?? '');
 
-            if (!$nom)    $errors['nom']    = 'Le nom est obligatoire.';
-            if (!$prenom) $errors['prenom'] = 'Le prénom est obligatoire.';
-            if ($tel && !preg_match('/^\d{8}$/', $tel)) {
+            if ($nom === '')    $errors['nom']    = 'Le nom est obligatoire.';
+            if ($prenom === '') $errors['prenom'] = 'Le prénom est obligatoire.';
+            if ($tel !== '' && !preg_match('/^\d{8}$/', $tel)) {
                 $errors['tel'] = 'Le téléphone doit contenir 8 chiffres.';
             }
 
-            if ($newPw) {
+            if ($newPw !== '') {
+                // FIX: $currentPw and $newPw are now string — safe for isPasswordValid / hashPassword
                 if (!$hasher->isPasswordValid($user, $currentPw)) {
                     $errors['current_password'] = 'Mot de passe actuel incorrect.';
                 } elseif (strlen($newPw) < 8) {
@@ -292,8 +274,8 @@ class EmployeeController extends AbstractController
             }
 
             if (empty($errors)) {
-                $user->setNom($nom)->setPrenom($prenom)->setTel($tel ?: null);
-                if ($newPw) {
+                $user->setNom($nom)->setPrenom($prenom)->setTel($tel !== '' ? $tel : null);
+                if ($newPw !== '') {
                     $user->setPassword($hasher->hashPassword($user, $newPw));
                 }
                 $em->flush();

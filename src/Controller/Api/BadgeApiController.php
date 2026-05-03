@@ -30,15 +30,19 @@ class BadgeApiController extends AbstractController
             return $this->json(['error' => 'Non authentifié'], 401);
         }
 
+        // FIX: getId() returns mixed — guard with is_int to narrow type to int
         $userId = $user->getId();
-        
+        if (!is_int($userId)) {
+            return $this->json(['error' => 'Utilisateur invalide'], 400);
+        }
+
         $badges = $this->badgeService->getUserBadges($userId);
-        $stats = $this->badgeService->getUserStats($userId);
+        $stats  = $this->badgeService->getUserStats($userId);
 
         return $this->json([
             'success' => true,
-            'badges' => $badges,
-            'stats' => $stats
+            'badges'  => $badges,
+            'stats'   => $stats,
         ]);
     }
 
@@ -50,111 +54,109 @@ class BadgeApiController extends AbstractController
             return $this->json(['error' => 'Non authentifié'], 401);
         }
 
+        // FIX: getId() returns mixed — guard with is_int to narrow type to int
         $userId = $user->getId();
-        
+        if (!is_int($userId)) {
+            return $this->json(['error' => 'Utilisateur invalide'], 400);
+        }
+
         $newBadges = $this->badgeService->checkAndAwardBadges($userId);
-        
+
         $formattedBadges = [];
         foreach ($newBadges as $badge) {
             $formattedBadges[] = [
-                'nom' => $badge->getNom(),
-                'icone' => $badge->getIcone(),
-                'description' => $badge->getDescription()
+                'nom'         => $badge->getNom(),
+                'icone'       => $badge->getIcone(),
+                'description' => $badge->getDescription(),
             ];
         }
 
         return $this->json([
-            'success' => true,
-            'new_badges' => $formattedBadges
+            'success'    => true,
+            'new_badges' => $formattedBadges,
         ]);
     }
 
     #[Route('/all-employees', name: 'api_badges_all_employees', methods: ['GET'])]
     public function getAllEmployeesBadges(): JsonResponse
     {
-        // Récupérer tous les utilisateurs
         $userRepository = $this->entityManager->getRepository('App\Entity\Utilisateur');
-        $users = $userRepository->findAll();
-        
-        $allTaches = $this->tacheRepository->findAll();
+        $users          = $userRepository->findAll();
+
+        $allTaches     = $this->tacheRepository->findAll();
         $employeesData = [];
-        
+
         foreach ($users as $user) {
-            $userId = $user->getId();
-            $userNom = $user->getNom();
+            $userId    = $user->getId();
+            $userNom   = $user->getNom();
             $userPrenom = $user->getPrenom();
             $userEmail = $user->getEmail();
-            $userRole = $user->getRole();
-            
-            // Compter les tâches terminées
+            $userRole  = $user->getRole();
+
             $userTaches = array_filter($allTaches, fn($t) => $t->getEmployeId() === $userId);
-            $terminees = count(array_filter($userTaches, fn($t) => $t->getStatut() === 'TERMINEE'));
-            
-            // Calculer les badges selon le nombre de tâches terminées
-            $badges = [];
+            $terminees  = count(array_filter($userTaches, fn($t) => $t->getStatut() === 'TERMINEE'));
+
+            $badges    = [];
             $badgesList = [
-                5 => ['nom' => '🥉 Débutant', 'icone' => '🥉', 'description' => '5 tâches terminées'],
-                25 => ['nom' => '🥈 Intermédiaire', 'icone' => '🥈', 'description' => '25 tâches terminées'],
-                50 => ['nom' => '🥇 Expert', 'icone' => '🥇', 'description' => '50 tâches terminées'],
-                100 => ['nom' => '🏆 Champion', 'icone' => '🏆', 'description' => '100 tâches terminées'],
+                5   => ['nom' => '🥉 Débutant',      'icone' => '🥉', 'description' => '5 tâches terminées'],
+                25  => ['nom' => '🥈 Intermédiaire', 'icone' => '🥈', 'description' => '25 tâches terminées'],
+                50  => ['nom' => '🥇 Expert',         'icone' => '🥇', 'description' => '50 tâches terminées'],
+                100 => ['nom' => '🏆 Champion',       'icone' => '🏆', 'description' => '100 tâches terminées'],
             ];
-            
+
             foreach ($badgesList as $seuil => $badge) {
                 if ($terminees >= $seuil) {
                     $badges[] = [
-                        'nom' => $badge['nom'],
-                        'icone' => $badge['icone'],
+                        'nom'         => $badge['nom'],
+                        'icone'       => $badge['icone'],
                         'description' => $badge['description'],
-                        'obtenu_le' => date('d/m/Y')
+                        'obtenu_le'   => date('d/m/Y'),
                     ];
                 }
             }
-            
-            // N'inclure que les employés qui ont au moins un badge
+
             if (count($badges) > 0) {
                 $employeesData[] = [
                     'user' => [
                         'prenom' => $userPrenom,
-                        'nom' => $userNom,
-                        'email' => $userEmail,
-                        'role' => $userRole
+                        'nom'    => $userNom,
+                        'email'  => $userEmail,
+                        'role'   => $userRole,
                     ],
-                    'terminees' => $terminees,
-                    'badges' => $badges,
-                    'total_badges' => count($badges)
+                    'terminees'    => $terminees,
+                    'badges'       => $badges,
+                    'total_badges' => count($badges),
                 ];
             }
         }
-        
-        // Trier par nombre de badges (du plus haut au plus bas)
+
         usort($employeesData, fn($a, $b) => $b['total_badges'] <=> $a['total_badges']);
-        
-        // Calculer les statistiques
+
         $totalBadges = array_sum(array_column($employeesData, 'total_badges'));
-        $maxBadges = !empty($employeesData) ? max(array_column($employeesData, 'total_badges')) : 0;
-        $avgBadges = !empty($employeesData) ? round($totalBadges / count($employeesData), 1) : 0;
-        
+        $maxBadges   = !empty($employeesData) ? max(array_column($employeesData, 'total_badges')) : 0;
+        $avgBadges   = !empty($employeesData) ? round($totalBadges / count($employeesData), 1) : 0;
+
         return $this->json([
-            'success' => true,
+            'success'   => true,
             'employees' => $employeesData,
-            'stats' => [
-                'total_employees' => count($employeesData),
-                'total_badges' => $totalBadges,
-                'max_badges_per_employee' => $maxBadges,
-                'avg_badges_per_employee' => $avgBadges
-            ]
+            'stats'     => [
+                'total_employees'          => count($employeesData),
+                'total_badges'             => $totalBadges,
+                'max_badges_per_employee'  => $maxBadges,
+                'avg_badges_per_employee'  => $avgBadges,
+            ],
         ]);
     }
-    
+
     #[Route('/init', name: 'api_badges_init', methods: ['POST'])]
     public function initBadges(): JsonResponse
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $this->badgeService->initBadges();
-        
+
         return $this->json([
             'success' => true,
-            'message' => 'Badges initialisés avec succès!'
+            'message' => 'Badges initialisés avec succès!',
         ]);
     }
 }
