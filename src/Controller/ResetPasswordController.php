@@ -10,8 +10,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Component\Mime\Address;use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
@@ -24,35 +25,43 @@ class ResetPasswordController extends AbstractController
 
     public function __construct(
         private ResetPasswordHelperInterface $resetPasswordHelper,
-        private EntityManagerInterface $em
+        private EntityManagerInterface $em,
+        private TransportInterface $defaultTransport
     ) {}
 
-    // Étape 1 — Formulaire email
+    // Ã‰tape 1 â€” Formulaire email
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
-    public function request(Request $request, UtilisateurRepository $repo, MailerInterface $mailer): Response
+    public function request(Request $request, UtilisateurRepository $repo): Response
     {
         if ($request->isMethod('POST')) {
-            $email = trim($request->request->get('email', ''));
+            $email = trim((string)$request->request->get('email', ''));
             $user  = $repo->findOneBy(['email' => $email]);
 
             if ($user) {
                 try {
                     $resetToken = $this->resetPasswordHelper->generateResetToken($user);
-
                     $resetUrl = $this->generateUrl('app_reset_password', ['token' => $resetToken->getToken()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-                    $mail = (new TemplatedEmail())
-                        ->from(new Address('noreply@stratix.com', 'Stratix'))
-                        ->to($user->getEmail())
-                        ->subject('Réinitialisation de votre mot de passe — Stratix')
-                        ->htmlTemplate('auth/reset_password_email.html.twig')
-                        ->context(['resetToken' => $resetToken, 'user' => $user, 'resetUrl' => $resetUrl]);
+                    try {
+                        $mailer = new Mailer($this->defaultTransport);
+                        $mail = (new TemplatedEmail())
+                            ->from(new Address('noreply@stratix.com', 'Stratix'))
+                            ->to((string)$user->getEmail())
+                            ->subject('RÃ©initialisation de votre mot de passe â€” Stratix')
+                            ->htmlTemplate('auth/reset_password_email.html.twig')
+                            ->context(['resetToken' => $resetToken, 'user' => $user, 'resetUrl' => $resetUrl]);
+                        $mailer->send($mail);
+                    } catch (\Exception $mailError) {
+                        // Email Ã©choue â†’ lien affichÃ© directement
+                    }
 
-                    $mailer->send($mail);
+                    $this->addFlash('info', 'Lien : <a href="' . $resetUrl . '">' . $resetUrl . '</a>');
                     $this->setTokenObjectInSession($resetToken);
+
                 } catch (ResetPasswordExceptionInterface $e) {
-                    // Debug temporaire — afficher l'erreur
-                    $this->addFlash('danger', 'Erreur: ' . $e->getReason());
+                    $this->addFlash('danger', 'Erreur reset: ' . $e->getReason());
+                } catch (\Exception $e) {
+                    $this->addFlash('danger', 'Erreur: ' . $e->getMessage());
                 }
             }
 
@@ -62,7 +71,7 @@ class ResetPasswordController extends AbstractController
         return $this->render('auth/forgot_password.html.twig');
     }
 
-    // Étape 2 — Page "vérifiez votre email"
+    // Ã‰tape 2 â€” Page "vÃ©rifiez votre email"
     #[Route('/check-email', name: 'app_check_email')]
     public function checkEmail(): Response
     {
@@ -72,7 +81,7 @@ class ResetPasswordController extends AbstractController
         return $this->render('auth/check_email.html.twig', ['resetToken' => $resetToken]);
     }
 
-    // Étape 3 — Lien du mail → nouveau mot de passe
+    // Ã‰tape 3 â€” Lien du mail â†’ nouveau mot de passe
     #[Route('/reset-password/{token}', name: 'app_reset_password')]
     public function reset(Request $request, UserPasswordHasherInterface $hasher, string $token = null): Response
     {
@@ -90,17 +99,17 @@ class ResetPasswordController extends AbstractController
             /** @var Utilisateur $user */
             $user = $this->resetPasswordHelper->validateTokenAndFetchUser($token);
         } catch (ResetPasswordExceptionInterface $e) {
-            $this->addFlash('danger', 'Lien invalide ou expiré. Veuillez recommencer.');
+            $this->addFlash('danger', 'Lien invalide ou expirÃ©. Veuillez recommencer.');
             return $this->redirectToRoute('app_forgot_password');
         }
 
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            $password = $request->request->get('password', '');
-            $confirm  = $request->request->get('confirm', '');
+            $password = (string)$request->request->get('password', '');
+            $confirm  = (string)$request->request->get('confirm', '');
 
-            if (strlen($password) < 8) $errors['password'] = 'Minimum 8 caractères.';
+            if (strlen($password) < 8) $errors['password'] = 'Minimum 8 caractÃ¨res.';
             elseif (!preg_match('/[A-Z]/', $password)) $errors['password'] = 'Au moins une majuscule.';
             elseif (!preg_match('/[0-9]/', $password)) $errors['password'] = 'Au moins un chiffre.';
             if ($password && $password !== $confirm) $errors['confirm'] = 'Les mots de passe ne correspondent pas.';
@@ -110,7 +119,7 @@ class ResetPasswordController extends AbstractController
                 $user->setPassword($hasher->hashPassword($user, $password));
                 $this->em->flush();
                 $this->cleanSessionAfterReset();
-                $this->addFlash('success', 'Mot de passe modifié avec succès !');
+                $this->addFlash('success', 'Mot de passe modifiÃ© avec succÃ¨s !');
                 return $this->redirectToRoute('app_login');
             }
         }

@@ -4,3 +4,5 @@ framework:
             default: '%env(MAILER_DSN)%'
             event: '%env(MAILER_DSN_EVENT)%'
             projet: '%env(MAILER_DSN_PROJET)%'
+        envelope:
+            sender: 'noreply@stratix.com'

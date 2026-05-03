@@ -36,7 +36,8 @@ class MeteoApiController extends AbstractController
         $city = $request->query->get('city', 'Tunis,tn');
         
         // Récupérer la météo pour cette date
-        $meteo = $this->getWeatherForDate($date, $city);
+        $meteo = $this->getWeatherForDate($date instanceof \DateTime ? $date : \DateTime::createFromInterface($date ?? new \DateTime()), $city);
+
         
         // Adapter les conseils selon le shift
         $advice = $this->getAdviceForShift($meteo, $typeShift);

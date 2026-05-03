@@ -63,8 +63,7 @@ class NotificationService
         $today->setTime(0, 0, 0);
         
         foreach ($taches as $tache) {
-            if (!$tache->getDeadline() || $tache->getStatut() === 'TERMINEE') {
-                continue;
+           if (!$tache->getDeadline() || (string) $tache->getStatut() === 'TERMINEE') {
             }
             
             $employeId = $tache->getEmployeId();

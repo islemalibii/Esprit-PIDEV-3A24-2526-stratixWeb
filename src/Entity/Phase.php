@@ -11,12 +11,12 @@ use Doctrine\ORM\Mapping as ORM;
 class Phase
 {
    /**
-     * @var int|null
+     * @var int
      */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    private ?int $id;
 
     #[ORM\Column(length: 255)]
     private ?string $nom = null;

@@ -229,16 +229,16 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero(message: 'Le salaire doit être positif.')]
-    private ?float $salaire = null;
+    private ?string $salaire = null;
 
     public function getSalaire(): ?float
     {
-        return $this->salaire;
+        return $this->salaire !== null ? (float)$this->salaire : null;
     }
 
     public function setSalaire(?float $salaire): self
     {
-        $this->salaire = $salaire;
+        $this->salaire = $salaire !== null ? (string)$salaire : null;
         return $this;
     }
 
@@ -304,8 +304,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $avatar = null;
 
-    #[ORM\Column(type: 'string', nullable: true, options: ['default' => 'light'])]
-    private ?string $theme = 'light';
+    #[ORM\Column(type: 'string', nullable: false, options: ['default' => 'light'])]
+    private string $theme = 'light';
 
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTime $locked_at = null;
@@ -319,7 +319,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getAvatar(): ?string { return $this->avatar; }
     public function setAvatar(?string $avatar): static { $this->avatar = $avatar; return $this; }
 
-    public function getTheme(): string { return $this->theme ?? 'light'; }
+    public function getTheme(): string { return $this->theme; }
     public function setTheme(string $theme): static { $this->theme = $theme; return $this; }
 
     public function getLockedAt(): ?\DateTime { return $this->locked_at; }
@@ -342,7 +342,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDateAjout(): ?\DateTime
+    public function getDateAjout(): ?\DateTimeInterface
     {
         return $this->date_ajout;
     }
@@ -354,7 +354,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getDateEmbauche(): ?\DateTime
+    public function getDateEmbauche(): ?\DateTimeInterface
     {
         return $this->date_embauche;
     }
@@ -390,7 +390,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getLockedUntil(): ?\DateTime
+    public function getLockedUntil(): ?\DateTimeInterface
     {
         return $this->locked_until;
     }

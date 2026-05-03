@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Repository;
+use Doctrine\ORM\Query;
 
 use App\Entity\Projet;
 use App\Entity\Utilisateur; 
@@ -62,9 +63,12 @@ class ProjetRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    /**
+     * @return Query<Projet>
+     */
 
-public function findActiveWithFilters(?string $search, ?string $statut)
-    {
+
+    public function findActiveWithFilters(?string $search, ?string $statut): Query    {
         $qb = $this->createQueryBuilder('p')
             ->andWhere('p.isArchived = :val')
             ->setParameter('val', false);
@@ -85,6 +89,9 @@ public function findActiveWithFilters(?string $search, ?string $statut)
         return $qb->getQuery(); 
     }
 
+    /**
+     * @return Projet[]
+     */
     public function findProjetsProchesEcheance(int $days = 7): array
 {
     $dateCible = new \DateTime();

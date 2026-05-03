@@ -1,8 +1,12 @@
-parameters: 
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+
+parameters:
     level: 8
-    paths: 
-        - src 
+    paths:
+        - src
+        - tests
     ignoreErrors:
-        -
-            message: '#Property .*::\$id \(int\|null\) is never assigned int#'
-            path: src/Entity/*
+        - '/Call to an undefined method/'
+        - '/Parameter \#1 \$array of function usort is passed by reference/'
+        

@@ -21,7 +21,11 @@ class Projet
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    private ?int $id;
+
+    /**
+     * @var Collection<int, Phase>
+     */
     #[ORM\OneToMany(mappedBy: 'projet', targetEntity: Phase::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $phases;
 
@@ -78,6 +82,9 @@ class Projet
     #[Assert\NotNull(message: "Veuillez sélectionner un responsable.")]
     private ?Utilisateur $responsable = null;
 
+    /**
+     * @var Collection<int, Utilisateur>
+     */
     #[ORM\ManyToMany(targetEntity: Utilisateur::class)]
     private Collection $membres;
 
@@ -129,6 +136,9 @@ class Projet
     public function getResponsable(): ?Utilisateur { return $this->responsable; }
     public function setResponsable(?Utilisateur $responsable): self { $this->responsable = $responsable; return $this; }
 
+    /**
+     * @return Collection<int, Utilisateur>
+     */
     public function getMembres(): Collection { return $this->membres; }
     public function addMembre(Utilisateur $membre): self {
         if (!$this->membres->contains($membre)) { $this->membres->add($membre); }
@@ -167,6 +177,9 @@ class Projet
     }
 
     // Alias pour la compatibilité avec tes anciens templates Twig qui utilisent .sprints
+    /**
+     * @return Collection<int, Phase>
+     */
     public function getSprints(): Collection
     {
         return $this->getPhases();

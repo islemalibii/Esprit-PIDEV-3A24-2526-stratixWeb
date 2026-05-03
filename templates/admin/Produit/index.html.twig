@@ -1,12 +1,12 @@
-{# 1. ON CHANGE L'HÉRITAGE ICI #}
+{# templates/admin/produit/index.html.twig #}
+
 {% extends 'admin/base_admin.html.twig' %}
 
 {% block title %}Stratix - Liste des Produits{% endblock %}
 
-{# 2. ON UTILISE LE BLOC CONTENU DE TA SIDEBAR #}
 {% block admin_content %}
 
-<div class="container-fluid mt-4"> {# container-fluid est mieux pour les tableaux larges #}
+<div class="container-fluid mt-4"> 
     <div class="card shadow-sm border-0">
         <div class="card-body p-4">
             
@@ -69,15 +69,14 @@
                                     <small class="text-muted d-block" style="font-size: 0.7rem;">min: {{ produit.stockMin }}</small>
                                 </td>
                                 <td>
-                                    {# Utilisation sécurisée des propriétés de statut #}
-                                    <span class="badge {{ produit.statut.class|default('bg-secondary') }} p-2">
-                                        {{ produit.statut.text|default('Inconnu') }}
+                                    <span class="badge {{ (produit.stockActuel <= produit.stockMin) ? 'bg-danger' : 'bg-success' }} p-2">
+                                        {{ (produit.stockActuel <= produit.stockMin) ? 'Alerte Stock' : 'Disponible' }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group shadow-sm">
                                         <a href="{{ path('produit_edit', {id: produit.id}) }}" class="btn btn-sm btn-outline-warning" title="Modifier">✏</a>
-                                        <form method="post" action="{{ path('produit_delete', {id: produit.id}) }}" style="display:inline-block;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce produit de Stratix ?');">
+                                        <form method="post" action="{{ path('produit_delete', {id: produit.id}) }}" style="display:inline-block;" onsubmit="return confirm('Voulez-vous vraiment supprimer ce produit ?');">
                                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ produit.id) }}">
                                             <button class="btn btn-sm btn-outline-danger" title="Supprimer">🗑</button>
                                         </form>
@@ -112,4 +111,110 @@
         </div>
     </div>
 </div>
+
+{# --- CHATBOT IA PRODUITS (GROK NODE) --- #}
+<div id="chat-wrapper">
+    <div class="card chat-card shadow-lg border-0">
+        <div class="chat-header d-flex justify-content-between align-items-center" onclick="toggleChat()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); cursor: pointer; padding: 12px 15px; border-radius: 12px 12px 0 0;">
+            <div class="d-flex align-items-center text-white">
+                <div class="bg-white rounded-circle p-1 me-2 shadow-sm d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                    <i class="ti ti-robot text-success fs-5"></i>
+                </div>
+                <span class="fw-bold">Expert Stratix Produits</span>
+            </div>
+            <i id="chat-chevron" class="ti ti-chevron-up text-white"></i>
+        </div>
+        
+        <div id="chat-content" style="display: none; background: white;">
+            <div id="chat-body" style="height: 320px; overflow-y: auto; background: #f9fafb; padding: 15px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="msg-bot">
+                    Bonjour Rahma ! Je suis Grok, votre assistant IA. Je connais parfaitement votre inventaire actuel. Comment puis-je vous aider ?
+                </div>
+            </div>
+            <div class="p-3 border-top bg-white">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                    <input type="text" id="chat-input" class="form-control border-0 bg-light px-3" 
+                           placeholder="Ex: Quel produit manque ?" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button id="chat-send-btn" class="btn btn-success border-0 px-3" onclick="sendChatMessage()">
+                        <i class="ti ti-send"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #chat-wrapper { position: fixed; bottom: 25px; right: 25px; z-index: 9999; width: 340px; }
+    .chat-card { border-radius: 12px; overflow: hidden; }
+    .msg-user, .msg-bot { padding: 10px 14px; border-radius: 15px; font-size: 0.85rem; max-width: 85%; line-height: 1.4; position: relative; word-wrap: break-word; }
+    .msg-user { background: #10b981; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg-bot { background: white; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e5e7eb; }
+    .typing-dot { height: 6px; width: 6px; background: #10b981; border-radius: 50%; display: inline-block; animation: blink 1s infinite; margin: 0 2px; }
+    @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+</style>
+
+<script>
+    function toggleChat() {
+        const content = document.getElementById('chat-content');
+        const icon = document.getElementById('chat-chevron');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            icon.className = 'ti ti-chevron-down text-white';
+            const body = document.getElementById('chat-body');
+            body.scrollTop = body.scrollHeight;
+        } else {
+            content.style.display = 'none';
+            icon.className = 'ti ti-chevron-up text-white';
+        }
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const btn = document.getElementById('chat-send-btn');
+        const body = document.getElementById('chat-body');
+        const text = input.value.trim();
+        
+        if (!text) return;
+
+        // Désactiver l'entrée pendant le chargement
+        input.disabled = true;
+        btn.disabled = true;
+
+        // Ajouter message utilisateur
+        body.innerHTML += `<div class="msg-user">${text}</div>`;
+        input.value = '';
+        body.scrollTop = body.scrollHeight;
+
+        // Afficher Loader
+        const loaderId = 'loader-' + Date.now();
+        body.innerHTML += `
+            <div class="msg-bot" id="${loaderId}">
+                <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+            </div>`;
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            const response = await fetch("{{ path('produit_chat') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: text })
+            });
+
+            if (!response.ok) throw new Error('Erreur serveur');
+
+            const data = await response.json();
+            document.getElementById(loaderId).innerText = data.reponse;
+        } catch (e) {
+            document.getElementById(loaderId).innerText = "Désolé Rahma, je n'arrive pas à me connecter au serveur de Stratix.";
+            console.error(e);
+        } finally {
+            input.disabled = false;
+            btn.disabled = false;
+            input.focus();
+            body.scrollTop = body.scrollHeight;
+        }
+    }
+</script>
+
 {% endblock %}

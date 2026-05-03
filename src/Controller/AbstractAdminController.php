@@ -7,6 +7,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 abstract class AbstractAdminController extends AbstractController
 {
+    /**
+     * @return array<int, array{title: string, message: string|null, date: \DateTimeInterface|null, color: string, icon: string}>
+     */
     protected function getNotifications(UtilisateurRepository $repo): array
     {
         $notifications = [];

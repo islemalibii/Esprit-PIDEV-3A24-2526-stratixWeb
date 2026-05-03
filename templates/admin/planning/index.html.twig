@@ -1,3 +1,5 @@
+{# templates/admin/planning/index.html.twig #}
+
 {% extends 'base.html.twig' %}
 
 {% block title %}Gestion des Plannings{% endblock %}
@@ -5,16 +7,13 @@
 {% block body %}
 <main id="content" class="content py-4">
 <div class="container-fluid px-4">
+    
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-calendar-alt"></i> Gestion des Plannings</h1>
-        <div class="d-flex gap-2">
-            <a href="{{ path('api_planning_export_excel') }}" target="_blank" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Exporter Excel
-            </a>
-            <a href="{{ path('app_planning_new') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nouveau planning
-            </a>
-        </div>
+        <h1><i class="fas fa-calendar-alt text-primary me-2"></i> Gestion des Plannings</h1>
+        <a href="{{ path('app_planning_new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouveau planning
+        </a>
     </div>
 
     <!-- Statistiques -->
@@ -30,8 +29,8 @@
         <div class="col-md-3">
             <div class="card text-white bg-info">
                 <div class="card-body text-center">
-                    <h2 class="display-4">{{ plannings|filter(p => p.typeShift == 'JOUR')|length }}</h2>
-                    <h5>☀️ JOUR</h5>
+                    <h2 class="display-4">{{ plannings|filter(p => p.typeShift == 'MATIN')|length }}</h2>
+                    <h5>☀️ MATIN</h5>
                 </div>
             </div>
         </div>
@@ -53,86 +52,117 @@
         </div>
     </div>
 
-    <!-- Filtres -->
+    <!-- Formulaire de recherche PHP -->
     <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-search me-2"></i> Rechercher un planning
+        </div>
         <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un planning...">
+            <form method="GET" action="{{ path('app_planning_index') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">📅 Date</label>
+                        <input type="date" 
+                               name="search_date" 
+                               class="form-control"
+                               value="{{ search_date|default('') }}">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">📋 Type de shift</label>
+                        <select name="search_type" class="form-select">
+                            <option value="">Tous les types</option>
+                            <option value="MATIN" {% if search_type == 'MATIN' %}selected{% endif %}>☀️ MATIN</option>
+                            <option value="SOIR" {% if search_type == 'SOIR' %}selected{% endif %}>🌆 SOIR</option>
+                            <option value="NUIT" {% if search_type == 'NUIT' %}selected{% endif %}>🌙 NUIT</option>
+                            <option value="CONGE" {% if search_type == 'CONGE' %}selected{% endif %}>🏖️ CONGE</option>
+                            <option value="RTT" {% if search_type == 'RTT' %}selected{% endif %}>📅 RTT</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">👤 Employé</label>
+                        <select name="search_employe" class="form-select">
+                            <option value="">Tous les employés</option>
+                            {% for id, nom in employes %}
+                                <option value="{{ id }}" {% if search_employe|default('') == id|default('') %}selected{% endif %}>
+                                    {{ nom }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Rechercher
+                            </button>
+                            <a href="{{ path('app_planning_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-undo-alt"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <select id="typeFilter" class="form-select">
-                        <option value="">Tous les types</option>
-                        <option value="JOUR">☀️ JOUR</option>
-                        <option value="SOIR">🌆 SOIR</option>
-                        <option value="NUIT">🌙 NUIT</option>
-                        <option value="CONGE">🏖️ CONGÉ</option>
-                        <option value="MALADIE">🤒 MALADIE</option>
-                        <option value="FORMATION">📚 FORMATION</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button onclick="resetFilters()" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-undo-alt"></i> Réinitialiser
-                    </button>
-                </div>
-                <div class="col-md-2">
-                    <button onclick="showWeatherWeek()" class="btn btn-outline-info w-100">
-                        <i class="fas fa-cloud-sun"></i> Prévisions
-                    </button>
-                </div>
-            </div>
+                
+                <!-- Afficher les filtres actifs -->
+                {% if search_date|default('') or search_type|default('') or search_employe|default('') %}
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-filter"></i>
+                            <strong>{{ plannings|length }}</strong> résultat(s) trouvé(s)
+                            {% if search_date %} - Date: <strong>{{ search_date }}</strong>{% endif %}
+                            {% if search_type %} - Type: <strong>{{ search_type }}</strong>{% endif %}
+                            {% if search_employe %} - Employé: <strong>{{ employes[search_employe] ?? '' }}</strong>{% endif %}
+                        </small>
+                    </div>
+                {% endif %}
+            </form>
         </div>
     </div>
 
-    <!-- Tableau avec colonne Météo -->
+    <!-- Tableau des résultats -->
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
+                            <th>ID</th>
                             <th>Employé</th>
                             <th>Date</th>
-                            <th>Début</th>
-                            <th>Fin</th>
+                            <th>Heure début</th>
+                            <th>Heure fin</th>
                             <th>Type</th>
-                            <th>🌤️ Météo</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="planningTableBody">
+                    <tbody>
                         {% for planning in plannings %}
                         <tr>
+                            <td>{{ planning.id }}</td>
                             <td>{{ employes[planning.employeId] ?? 'Non assigné' }}</td>
-                            <td>{{ planning.date ? planning.date|date('d/m/Y') : '' }}</td>
-                            <td>{{ planning.heureDebut ? planning.heureDebut|date('H:i') : '' }}</td>
-                            <td>{{ planning.heureFin ? planning.heureFin|date('H:i') : '' }}</td>
+                            <td class="{% if planning.date and planning.date < date() %}text-danger{% endif %}">
+                                {{ planning.date ? planning.date|date('d/m/Y') : '-' }}
+                                {% if planning.date and planning.date < date() %}
+                                    <i class="fas fa-exclamation-triangle" title="Date passée"></i>
+                                {% endif %}
+                            </td>
+                            <td>{{ planning.heureDebut ? planning.heureDebut|date('H:i') : '-' }}</td>
+                            <td>{{ planning.heureFin ? planning.heureFin|date('H:i') : '-' }}</td>
                             <td>
-                                {% if planning.typeShift == 'JOUR' %}
-                                    <span class="badge bg-info">☀️ JOUR</span>
+                                {% if planning.typeShift == 'MATIN' %}
+                                    <span class="badge bg-info">☀️ MATIN</span>
                                 {% elseif planning.typeShift == 'SOIR' %}
                                     <span class="badge bg-warning">🌆 SOIR</span>
                                 {% elseif planning.typeShift == 'NUIT' %}
                                     <span class="badge bg-dark">🌙 NUIT</span>
                                 {% elseif planning.typeShift == 'CONGE' %}
-                                    <span class="badge bg-warning text-dark">🏖️ CONGÉ</span>
-                                {% elseif planning.typeShift == 'MALADIE' %}
-                                    <span class="badge bg-danger">🤒 MALADIE</span>
-                                {% elseif planning.typeShift == 'FORMATION' %}
-                                    <span class="badge bg-info">📚 FORMATION</span>
+                                    <span class="badge bg-warning text-dark">🏖️ CONGE</span>
+                                {% elseif planning.typeShift == 'RTT' %}
+                                    <span class="badge bg-secondary">📅 RTT</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">⚪ AUTRE</span>
+                                    <span class="badge bg-secondary">{{ planning.typeShift }}</span>
                                 {% endif %}
-                            </td>
-                            <td class="text-center">
-                                <button onclick="showWeatherForDate('{{ planning.date|date('Y-m-d') }}', '{{ planning.typeShift }}', {{ planning.id }})"
-                                        class="btn btn-sm btn-outline-info" title="Voir la météo">
-                                    <i class="fas fa-cloud-sun"></i>
-                                </button>
                             </td>
                             <td class="table-actions">
                                 <div class="btn-group btn-group-sm">
@@ -141,9 +171,6 @@
                                     </a>
                                     <a href="{{ path('app_planning_edit', {'id': planning.id}) }}" class="btn btn-outline-warning" title="Modifier">
                                         <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ path('api_planning_export_excel', {'employe_id': planning.employeId}) }}" target="_blank" class="btn btn-outline-success" title="Excel employé">
-                                        <i class="fas fa-file-excel"></i>
                                     </a>
                                     <form method="post" action="{{ path('app_planning_delete', {'id': planning.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer ce planning ?')">
                                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ planning.id) }}">
@@ -156,7 +183,13 @@
                         </tr>
                         {% else %}
                             <tr>
-                                <td colspan="7" class="text-center">Aucun planning trouvé</td>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="fas fa-calendar-times fa-3x mb-3 d-block"></i>
+                                    Aucun planning trouvé
+                                    {% if search_date|default('') or search_type|default('') or search_employe|default('') %}
+                                        — <a href="{{ path('app_planning_index') }}">Réinitialiser les filtres</a>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -165,118 +198,13 @@
         </div>
     </div>
 </div>
-
-<!-- Modal météo -->
-<div class="modal fade" id="weatherModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-cloud-sun"></i> Météo du planning</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="weatherModalBody">
-                <div class="text-center">Chargement...</div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
-    </div>
-</div>
 </main>
-<script>
-async function showWeatherForDate(date, shift, planningId) {
-    const modal = new bootstrap.Modal(document.getElementById('weatherModal'));
-    const modalBody = document.getElementById('weatherModalBody');
-    modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
-    modal.show();
-    try {
-        const response = await fetch(`/api/meteo/planning/${planningId}`);
-        const data = await response.json();
-        if (data.success) {
-            const meteo = data.data.meteo;
-            const conseils = data.data.conseils;
-            modalBody.innerHTML = `
-                <div class="text-center mb-3">
-                    <div style="font-size: 3rem;">${meteo.icon || '🌤️'}</div>
-                    <div class="display-4">${meteo.temperature}°C</div>
-                    <div class="text-muted">${meteo.condition}</div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-6"><small class="text-muted">💧 Humidité</small><div><strong>${meteo.humidity}%</strong></div></div>
-                    <div class="col-6"><small class="text-muted">💨 Vent</small><div><strong>${meteo.wind_speed} km/h</strong></div></div>
-                </div>
-                <hr>
-                <div class="alert alert-info">
-                    <strong>📋 Conseils pour le shift ${shift}</strong>
-                    <ul class="mb-0 mt-2">${conseils.map(c => `<li><small>${c}</small></li>`).join('')}</ul>
-                </div>
-                <div class="alert ${data.data.recommandation.includes('⚠️') ? 'alert-warning' : 'alert-success'} mt-2">
-                    <strong>Recommandation</strong><br>${data.data.recommandation}
-                </div>`;
-        } else {
-            modalBody.innerHTML = '<div class="alert alert-danger">Erreur chargement météo</div>';
-        }
-    } catch (error) {
-        modalBody.innerHTML = '<div class="alert alert-danger">Erreur de connexion</div>';
-    }
-}
-
-async function showWeatherWeek() {
-    const modal = new bootstrap.Modal(document.getElementById('weatherModal'));
-    const modalBody = document.getElementById('weatherModalBody');
-    modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
-    modal.show();
-    try {
-        const response = await fetch('/api/meteo/week');
-        const data = await response.json();
-        if (data.success) {
-            let html = `<h6 class="text-center mb-3">📅 Prévisions pour ${data.city}</h6><div class="row">`;
-            data.forecast.forEach(day => {
-                html += `<div class="col-4 mb-2 text-center"><div class="border rounded p-2">
-                    <strong>${day.day}</strong><br>
-                    <span style="font-size:1.2rem">${day.condition}</span><br>
-                    <small>${day.temp_min}°/${day.temp_max}°</small><br>
-                    <small class="text-muted">${day.advice}</small>
-                </div></div>`;
-            });
-            html += '</div>';
-            modalBody.innerHTML = html;
-        }
-    } catch (error) {
-        modalBody.innerHTML = '<div class="alert alert-danger">Erreur de connexion</div>';
-    }
-}
-
-const searchInput = document.getElementById('searchInput');
-const typeFilter = document.getElementById('typeFilter');
-const tbody = document.getElementById('planningTableBody');
-
-function filterTable() {
-    const searchText = searchInput.value.toLowerCase();
-    const typeValue = typeFilter.value;
-    Array.from(tbody.querySelectorAll('tr')).forEach(row => {
-        const employe = row.cells[0]?.innerText.toLowerCase() || '';
-        const type = row.cells[4]?.innerText || '';
-        row.style.display = (!typeValue || type.includes(typeValue)) && employe.includes(searchText) ? '' : 'none';
-    });
-}
-
-function resetFilters() {
-    searchInput.value = '';
-    typeFilter.value = '';
-    filterTable();
-}
-
-if (searchInput) searchInput.addEventListener('keyup', filterTable);
-if (typeFilter) typeFilter.addEventListener('change', filterTable);
-</script>
 
 <style>
     .table-actions .btn { padding: 2px 8px; margin: 0 2px; }
     .badge { font-size: 0.85rem; padding: 5px 10px; border-radius: 20px; }
     .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .modal-content { border-radius: 15px; }
+    .card-header { border-radius: 15px 15px 0 0; }
+    .btn-group .btn { margin: 0 1px; }
 </style>
 {% endblock %}

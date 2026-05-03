@@ -14,7 +14,11 @@ class RecommendationService
         private EventFeedbackRepository  $feedbackRepo,
         private string                   $apiKey
     ) {}
+    
 
+    /**
+     * @return list<array{event: \App\Entity\Evenement, reason: string}>
+     */
     public function getRecommendations(string $userEmail): array
     {
         $participations = $this->participationRepo->findUserHistory($userEmail);
@@ -75,7 +79,7 @@ class RecommendationService
             " . json_encode($userHistory, JSON_UNESCAPED_UNICODE) . "
             
             Événements disponibles:
-            " . json_encode(array_values($availableList), JSON_UNESCAPED_UNICODE) . "
+            " . json_encode($availableList, JSON_UNESCAPED_UNICODE) . "
             
             Analyse les préférences de l'employé et recommande les 6 événements 
             les plus pertinents pour lui.
@@ -102,7 +106,7 @@ class RecommendationService
 
    
         $clean = preg_replace('/```json|```/', '', $response);
-        $clean = trim($clean);
+        $clean = trim($clean ?? '');
 
         $recommended = json_decode($clean, true);
         if (!is_array($recommended)) return [];
@@ -127,29 +131,44 @@ class RecommendationService
     {
         $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
 
+        if ($ch === false) {
+            return null;
+        }
+
+        $payload = json_encode([
+            'model'      => 'llama-3.3-70b-versatile',
+            'messages'   => [
+                ['role' => 'user', 'content' => $prompt]
+            ],
+            'max_tokens' => 1000,
+        ]);
+
+        // Correction CRITICAL : On vérifie l'échec du JSON avant l'utilisation
+        if ($payload === false) {
+            curl_close($ch);
+            return null;
+        }
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
             ],
-            CURLOPT_POSTFIELDS => json_encode([
-                'model'      => 'llama-3.3-70b-versatile',
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt]
-                ],
-                'max_tokens' => 1000,
-            ]),
+            CURLOPT_POSTFIELDS => $payload,
         ]);
 
         $result = curl_exec($ch);
         curl_close($ch);
 
-        if (!$result) return null;
+        if (!is_string($result)) {
+            curl_close($ch);
+            return null;
+        }
 
+        /** @var array{choices?: array<array{message?: array{content?: string}}>} $data */
         $data = json_decode($result, true);
         return $data['choices'][0]['message']['content'] ?? null;
     }

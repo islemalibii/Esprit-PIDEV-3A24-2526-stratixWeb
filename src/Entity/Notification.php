@@ -32,7 +32,7 @@ class Notification
     private ?string $relatedType = null; // 'tache', 'planning'
 
     #[ORM\Column]
-    private ?bool $isRead = false;
+    private bool $isRead = false;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -56,7 +56,7 @@ class Notification
     public function setRelatedId(int $relatedId): self { $this->relatedId = $relatedId; return $this; }
     public function getRelatedType(): ?string { return $this->relatedType; }
     public function setRelatedType(string $relatedType): self { $this->relatedType = $relatedType; return $this; }
-    public function isRead(): ?bool { return $this->isRead; }
+    public function isRead(): bool { return $this->isRead; }
     public function setIsRead(bool $isRead): self { $this->isRead = $isRead; return $this; }
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
 }

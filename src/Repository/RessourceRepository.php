@@ -5,7 +5,6 @@ namespace App\Repository;
 use App\Entity\Ressource;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use App\Repository\ImportLogRepository;
 
 /**
  * @extends ServiceEntityRepository<Ressource>
@@ -19,7 +18,8 @@ class RessourceRepository extends ServiceEntityRepository
 
     /**
      * Recherche multicritère (Nom, Type, Fournisseur)
-     * Équivalent de ton filtrage dans le controller JavaFX
+     * * @param string $term
+     * @return Ressource[] Returns an array of Ressource objects
      */
     public function findBySearch(string $term): array
     {
@@ -34,14 +34,15 @@ class RessourceRepository extends ServiceEntityRepository
     }
 
     /**
-     * Si tu veux aussi calculer la quantité totale directement en SQL 
-     * (plus performant que la boucle foreach dans le controller)
+     * Calcule la quantité totale directement en SQL
      */
     public function getTotalQuantite(): int
     {
-        return $this->createQueryBuilder('r')
+        $result = $this->createQueryBuilder('r')
             ->select('SUM(r.quantite)')
             ->getQuery()
-            ->getSingleScalarResult() ?? 0;
+            ->getSingleScalarResult();
+
+        return (int) ($result ?? 0);
     }
 }

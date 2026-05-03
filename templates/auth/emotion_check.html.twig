@@ -87,13 +87,16 @@
     let hasExpressionModel = false;
     try {
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        // Charger le modèle expression depuis @vladmandic (face_expression_model)
         await Promise.race([
             faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-            new Promise((_, reject) => setTimeout(() => reject('timeout'), 5000))
+            new Promise((_, reject) => setTimeout(() => reject('timeout'), 8000))
         ]);
         hasExpressionModel = true;
+        loadingText.innerHTML = '<span class="text-success">✓ Modèle IA chargé — regardez la caméra</span>';
     } catch(e) {
         hasExpressionModel = false;
+        loadingText.innerHTML = '<span class="text-secondary">Modèle prêt — regardez la caméra</span>';
     }
 
     loadingText.innerHTML = '<span class="text-success">✓ Modèle prêt — regardez la caméra</span>';
@@ -151,6 +154,12 @@
                         confidence = 0.75 + Math.random() * 0.2;
                     }
                     showResult(emotion, confidence);
+                    // Sauvegarder l'émotion en BDD
+                    fetch('{{ path('app_emotion_save') }}', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: 'emotion=' + emotion
+                    });
                 } else {
                     showResult('neutral', 1);
                 }

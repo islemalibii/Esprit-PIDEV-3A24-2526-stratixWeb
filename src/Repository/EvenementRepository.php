@@ -26,6 +26,9 @@ class EvenementRepository extends ServiceEntityRepository
             ->setParameter('status', $status);
     }
 
+    /**
+     * @return Evenement[]
+     */
     public function findByArchiveStatusArray(bool $status): array
     { 
         return $this->createQueryBuilder('e')
