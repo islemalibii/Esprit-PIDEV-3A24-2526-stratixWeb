@@ -76,7 +76,9 @@
                             <option value="SOIR" {% if search_type == 'SOIR' %}selected{% endif %}>🌆 SOIR</option>
                             <option value="NUIT" {% if search_type == 'NUIT' %}selected{% endif %}>🌙 NUIT</option>
                             <option value="CONGE" {% if search_type == 'CONGE' %}selected{% endif %}>🏖️ CONGE</option>
-                            <option value="RTT" {% if search_type == 'RTT' %}selected{% endif %}>📅 RTT</option>
+                            <option value="JOUR" {% if search_type == 'JOUR' %}selected{% endif %}>📅 JOUR</option>
+                            <option value="FORMATION" {% if search_type == 'FORMATION' %}selected{% endif %}>📚 FORMATION</option>
+                            <option value="AUTRE" {% if search_type == 'AUTRE' %}selected{% endif %}>📅 AUTRE</option>
                         </select>
                     </div>
                     
@@ -127,7 +129,6 @@
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th>ID</th>
                             <th>Employé</th>
                             <th>Date</th>
                             <th>Heure début</th>
@@ -139,7 +140,6 @@
                     <tbody>
                         {% for planning in plannings %}
                         <tr>
-                            <td>{{ planning.id }}</td>
                             <td>{{ employes[planning.employeId] ?? 'Non assigné' }}</td>
                             <td class="{% if planning.date and planning.date < date() %}text-danger{% endif %}">
                                 {{ planning.date ? planning.date|date('d/m/Y') : '-' }}
@@ -183,7 +183,7 @@
                         </tr>
                         {% else %}
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="6" class="text-center py-5 text-muted">
                                     <i class="fas fa-calendar-times fa-3x mb-3 d-block"></i>
                                     Aucun planning trouvé
                                     {% if search_date|default('') or search_type|default('') or search_employe|default('') %}

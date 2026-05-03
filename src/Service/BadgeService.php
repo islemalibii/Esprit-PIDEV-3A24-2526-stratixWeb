@@ -11,7 +11,8 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class BadgeService
 {
-    private $badgesData = [
+    /** @var array<int, array{nom: string, icone: string, description: string, seuil: int, categorie: string}> */
+    private array $badgesData = [
         ['nom' => '🥉 Débutant', 'icone' => '🥉', 'description' => 'Terminer 5 tâches', 'seuil' => 5, 'categorie' => 'taches'],
         ['nom' => '🥈 Intermédiaire', 'icone' => '🥈', 'description' => 'Terminer 25 tâches', 'seuil' => 25, 'categorie' => 'taches'],
         ['nom' => '🥇 Expert', 'icone' => '🥇', 'description' => 'Terminer 50 tâches', 'seuil' => 50, 'categorie' => 'taches'],
@@ -44,6 +45,9 @@ class BadgeService
         $this->entityManager->flush();
     }
 
+    /**
+     * @return Badge[]
+     */
     public function checkAndAwardBadges(int $userId): array
     {
         $taches = $this->tacheRepository->findAll();
@@ -73,24 +77,34 @@ class BadgeService
         return $newBadges;
     }
 
+    /**
+     * @return array<int, array{id: int, nom: string, icone: string, description: string, obtenu_le: string}>
+     */
     public function getUserBadges(int $userId): array
     {
         $userBadges = $this->userBadgeRepository->findUserBadges($userId);
         $result = [];
         
         foreach ($userBadges as $ub) {
+            $badge = $ub->getBadge();
+            $badgeId = $ub->getId();
+            $obtenuLe = $ub->getObtenuLe();
+            
             $result[] = [
-                'id' => $ub->getId(),
-                'nom' => $ub->getBadge()->getNom(),
-                'icone' => $ub->getBadge()->getIcone(),
-                'description' => $ub->getBadge()->getDescription(),
-                'obtenu_le' => $ub->getObtenuLe()->format('d/m/Y')
+                'id' => $badgeId !== null ? $badgeId : 0,
+                'nom' => $badge?->getNom() ?? '',
+                'icone' => $badge?->getIcone() ?? '',
+                'description' => $badge?->getDescription() ?? '',
+                'obtenu_le' => $obtenuLe !== null ? $obtenuLe->format('d/m/Y') : ''
             ];
         }
         
         return $result;
     }
 
+    /**
+     * @return array{total_taches: int, taches_terminees: int, badges_obtenus: int, prochain_badge: array{nom: string, seuil: int, reste: int}|null}
+     */
     public function getUserStats(int $userId): array
     {
         $taches = $this->tacheRepository->findAll();
@@ -107,15 +121,24 @@ class BadgeService
         ];
     }
 
+    /**
+     * @return array{nom: string, seuil: int, reste: int}|null
+     */
     private function getNextBadge(int $terminees): ?array
     {
         $badges = $this->badgeRepository->findAllBadges();
         foreach ($badges as $badge) {
-            if ($terminees < $badge->getSeuil()) {
+            $seuil = $badge->getSeuil();
+            $nom = $badge->getNom();
+            
+            if ($terminees < $seuil) {
+                if ($nom === null) {
+                    return null;
+                }
                 return [
-                    'nom' => $badge->getNom(),
-                    'seuil' => $badge->getSeuil(),
-                    'reste' => $badge->getSeuil() - $terminees
+                    'nom' => $nom,
+                    'seuil' => $seuil,
+                    'reste' => $seuil - $terminees
                 ];
             }
         }

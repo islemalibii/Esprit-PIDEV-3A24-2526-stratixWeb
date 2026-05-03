@@ -16,27 +16,39 @@ class NotificationRepository extends ServiceEntityRepository
         parent::__construct($registry, Notification::class);
     }
 
-    /** @return Notification[] */
+    /**
+     * @return Notification[]
+     */
     public function findUnreadByUser(int $userId): array
     {
-        return $this->createQueryBuilder('n')
+        $qb = $this->createQueryBuilder('n')
             ->where('n.userId = :userId')
             ->andWhere('n.isRead = false')
             ->orderBy('n.createdAt', 'DESC')
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('userId', $userId);
+        
+        $query = $qb->getQuery();
+        $result = $query->getResult();
+        
+        /** @var Notification[] $result */
+        return $result;
     }
 
-    /** @return Notification[] */
+    /**
+     * @return Notification[]
+     */
     public function findRecentByUser(int $userId, int $limit = 10): array
     {
-        return $this->createQueryBuilder('n')
+        $qb = $this->createQueryBuilder('n')
             ->where('n.userId = :userId')
             ->orderBy('n.createdAt', 'DESC')
             ->setMaxResults($limit)
-            ->setParameter('userId', $userId)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('userId', $userId);
+        
+        $query = $qb->getQuery();
+        $result = $query->getResult();
+        
+        /** @var Notification[] $result */
+        return $result;
     }
 }

@@ -14,7 +14,7 @@ class Tache
     #[ORM\GeneratedValue]
     #[ORM\Column]
     /** @var int|null */
-private ?int $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le titre est obligatoire")]
