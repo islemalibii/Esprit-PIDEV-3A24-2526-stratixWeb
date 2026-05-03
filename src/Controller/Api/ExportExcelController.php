@@ -24,75 +24,122 @@ class ExportExcelController extends AbstractController
     #[Route('/excel', name: 'api_planning_export_excel', methods: ['GET'])]
     public function exportToExcel(Request $request): Response
     {
-        $typeShift  = $request->query->get('type_shift');
-        $employeId  = $request->query->get('employe_id');
-        $download   = $request->query->get('download');
+        $typeShift = $request->query->get('type_shift');
+        $employeId = $request->query->get('employe_id');
+        $download  = $request->query->get('download');
 
+        $typeShiftStr = is_string($typeShift) ? $typeShift : '';
+        $employeIdInt = is_numeric($employeId) ? (int) $employeId : null;
+
+        /** @var Planning[] $plannings */
         $plannings = $this->planningRepository->findAll();
 
-        if ($typeShift) {
-            $plannings = array_filter($plannings, fn($p) => $p->getTypeShift() === $typeShift);
+        if ($typeShiftStr !== '') {
+            $plannings = array_values(array_filter($plannings, fn(Planning $p) => $p->getTypeShift() === $typeShiftStr));
         }
-        if ($employeId) {
-            $plannings = array_filter($plannings, fn($p) => $p->getEmployeId() == $employeId);
+        if ($employeIdInt !== null) {
+            $plannings = array_values(array_filter($plannings, fn(Planning $p) => $p->getEmployeId() === $employeIdInt));
         }
 
+        // Garantit un tableau Planning[] avec clés entières
+        $plannings = array_values($plannings);
+
+        /** @var array<int, string> $employes */
         $employes = [];
         foreach ($this->utilisateurRepository->findAll() as $u) {
-            $employes[$u->getId()] = $u->getPrenom() . ' ' . $u->getNom();
+            $id = $u->getId();
+            if (is_int($id)) {
+                $employes[$id] = $u->getPrenom() . ' ' . $u->getNom();
+            }
         }
 
-        if ($download) {
-            $spreadsheet = new Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-            $sheet->setTitle('Plannings');
-
-            $sheet->setCellValue('A1', 'Employé');
-            $sheet->setCellValue('B1', 'Date');
-            $sheet->setCellValue('C1', 'Heure Début');
-            $sheet->setCellValue('D1', 'Heure Fin');
-            $sheet->setCellValue('E1', 'Type Shift');
-
-            $row = 2;
-            foreach ($plannings as $p) {
-                $sheet->setCellValue('A' . $row, $employes[$p->getEmployeId()] ?? 'Non assigné');
-                $date = $p->getDate();
-                $sheet->setCellValue('B' . $row, $date ? $date->format('d/m/Y') : '');
-                $heureDebut = $p->getHeureDebut();
-                $sheet->setCellValue('C' . $row, $heureDebut ? $heureDebut->format('H:i') : '');
-                $heureFin = $p->getHeureFin();
-                $sheet->setCellValue('D' . $row, $heureFin ? $heureFin->format('H:i') : '');
-                $sheet->setCellValue('E' . $row, $p->getTypeShift());
-                $row++;
-            }
-
-            foreach (range('A', 'E') as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-            }
-
-            $writer   = new Xlsx($spreadsheet);
-            $fileName = 'plannings_' . date('Y-m-d') . '.xlsx';
-            $tempFile = tempnam(sys_get_temp_dir(), $fileName);
-            $writer->save($tempFile);
-
-            return $this->file($tempFile, $fileName, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
+        if ($download !== null) {
+            return $this->generateExcelFile($plannings, $employes);
         }
 
+        /** @var array<string, array{label: string, class: string}> $shiftBadges */
         $shiftBadges = [
-            'MATIN'     => ['label' => '☀️ MATIN',     'class' => 'bg-info'],
-            'SOIR'      => ['label' => '🌆 SOIR',      'class' => 'bg-warning'],
-            'NUIT'      => ['label' => '🌙 NUIT',      'class' => 'bg-dark'],
-            'CONGE'     => ['label' => '🏖️ CONGÉ',    'class' => 'bg-warning text-dark'],
-            'RTT'       => ['label' => '📅 RTT',       'class' => 'bg-secondary'],
+            'MATIN' => ['label' => '☀️ MATIN',  'class' => 'bg-info'],
+            'SOIR'  => ['label' => '🌆 SOIR',   'class' => 'bg-warning'],
+            'NUIT'  => ['label' => '🌙 NUIT',   'class' => 'bg-dark'],
+            'CONGE' => ['label' => '🏖️ CONGÉ', 'class' => 'bg-warning text-dark'],
+            'RTT'   => ['label' => '📅 RTT',    'class' => 'bg-secondary'],
         ];
 
-        $titre = $typeShift
-            ? 'Plannings — ' . ($shiftBadges[$typeShift]['label'] ?? $typeShift)
-            : ($employeId ? 'Plannings de ' . ($employes[$employeId] ?? 'l\'employé') : 'Tous les plannings');
+        $titre = 'Tous les plannings';
+        if ($typeShiftStr !== '' && isset($shiftBadges[$typeShiftStr])) {
+            $titre = 'Plannings — ' . $shiftBadges[$typeShiftStr]['label'];
+        } elseif ($employeIdInt !== null && isset($employes[$employeIdInt])) {
+            $titre = 'Plannings de ' . $employes[$employeIdInt];
+        }
 
-        $downloadUrl = $request->getRequestUri()
-            . (str_contains($request->getRequestUri(), '?') ? '&' : '?')
-            . 'download=1';
+        $separator   = str_contains($request->getRequestUri(), '?') ? '&' : '?';
+        $downloadUrl = $request->getRequestUri() . $separator . 'download=1';
+
+        $html = $this->generateHtmlTable($titre, $plannings, $employes, $shiftBadges, $downloadUrl);
+
+        return new Response($html, 200, ['Content-Type' => 'text/html']);
+    }
+
+    /**
+     * @param Planning[]         $plannings
+     * @param array<int, string> $employes
+     */
+    private function generateExcelFile(array $plannings, array $employes): Response
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Plannings');
+
+        $sheet->setCellValue('A1', 'Employé');
+        $sheet->setCellValue('B1', 'Date');
+        $sheet->setCellValue('C1', 'Heure Début');
+        $sheet->setCellValue('D1', 'Heure Fin');
+        $sheet->setCellValue('E1', 'Type Shift');
+
+        $row = 2;
+        foreach ($plannings as $p) {
+            $empId = $p->getEmployeId();
+            $sheet->setCellValue('A' . $row, ($empId !== null && isset($employes[$empId])) ? $employes[$empId] : 'Non assigné');
+
+            $date = $p->getDate();
+            $sheet->setCellValue('B' . $row, $date !== null ? $date->format('d/m/Y') : '');
+
+            $heureDebut = $p->getHeureDebut();
+            $sheet->setCellValue('C' . $row, $heureDebut !== null ? $heureDebut->format('H:i') : '');
+
+            $heureFin = $p->getHeureFin();
+            $sheet->setCellValue('D' . $row, $heureFin !== null ? $heureFin->format('H:i') : '');
+
+            $sheet->setCellValue('E' . $row, $p->getTypeShift() ?? '');
+            $row++;
+        }
+
+        foreach (range('A', 'E') as $col) {
+            $sheet->getColumnDimension((string) $col)->setAutoSize(true);
+        }
+
+        $writer   = new Xlsx($spreadsheet);
+        $fileName = 'plannings_' . date('Y-m-d') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $writer->save((string) $tempFile);
+
+        return $this->file((string) $tempFile, $fileName, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
+    }
+
+    /**
+     * @param Planning[]                                         $plannings
+     * @param array<int, string>                                 $employes
+     * @param array<string, array{label: string, class: string}> $shiftBadges
+     */
+    private function generateHtmlTable(
+        string $titre,
+        array $plannings,
+        array $employes,
+        array $shiftBadges,
+        string $downloadUrl
+    ): string {
+        $count = count($plannings);
 
         $html = <<<HTML
         <!DOCTYPE html>
@@ -120,7 +167,7 @@ class ExportExcelController extends AbstractController
                     <div>
                         <h1 class="page-title"><i class="fas fa-calendar-alt me-2 text-primary"></i>{$titre}</h1>
                         <span class="count-badge mt-1 d-inline-block">
-                            <i class="fas fa-list me-1"></i> {$this->countPlannings($plannings)} entrée(s)
+                            <i class="fas fa-list me-1"></i> {$count} entrée(s)
                         </span>
                     </div>
                     <div class="d-flex gap-2 no-print">
@@ -135,7 +182,6 @@ class ExportExcelController extends AbstractController
                         </button>
                     </div>
                 </div>
-
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead>
@@ -152,12 +198,19 @@ class ExportExcelController extends AbstractController
 
         $rows = '';
         foreach ($plannings as $p) {
-            $shift     = $p->getTypeShift();
-            $badge     = $shiftBadges[$shift] ?? ['label' => $shift, 'class' => 'bg-secondary'];
-            $employe   = htmlspecialchars($employes[$p->getEmployeId()] ?? 'Non assigné');
-            $date      = $p->getDate() ? $p->getDate()->format('d/m/Y') : '';
-            $debut     = $p->getHeureDebut() ? $p->getHeureDebut()->format('H:i') : '—';
-            $fin       = $p->getHeureFin() ? $p->getHeureFin()->format('H:i') : '—';
+            $shift   = $p->getTypeShift() ?? 'AUTRE';
+            $badge   = $shiftBadges[$shift] ?? ['label' => $shift, 'class' => 'bg-secondary'];
+            $empId   = $p->getEmployeId();
+            $employe = htmlspecialchars(($empId !== null && isset($employes[$empId])) ? $employes[$empId] : 'Non assigné');
+
+            $dateObj = $p->getDate();
+            $date    = $dateObj !== null ? $dateObj->format('d/m/Y') : '';
+
+            $heureDebutObj = $p->getHeureDebut();
+            $debut         = $heureDebutObj !== null ? $heureDebutObj->format('H:i') : '—';
+
+            $heureFinObj = $p->getHeureFin();
+            $fin         = $heureFinObj !== null ? $heureFinObj->format('H:i') : '—';
 
             $rows .= <<<ROW
                         <tr>
@@ -170,8 +223,8 @@ class ExportExcelController extends AbstractController
             ROW;
         }
 
-        if (!$rows) {
-            $rows = '<td><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucun planning trouvé</td></tr>';
+        if ($rows === '') {
+            $rows = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucun planning trouvé</td></tr>';
         }
 
         $html .= $rows;
@@ -184,20 +237,6 @@ class ExportExcelController extends AbstractController
         </html>
         HTML;
 
-        return new Response($html, 200, ['Content-Type' => 'text/html']);
-    }
-
-    /**
-     * @param array<Planning>|iterable<Planning> $plannings
-     */
-    private function countPlannings(mixed $plannings): int
-    {
-        if (is_array($plannings)) {
-            return count($plannings);
-        }
-        if (is_iterable($plannings)) {
-            return iterator_count($plannings);
-        }
-        return 0;
+        return $html;
     }
 }

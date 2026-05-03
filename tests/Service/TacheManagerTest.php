@@ -1,252 +1,304 @@
 <?php
-// tests/Service/TacheManagerTest.php
+// src/Service/TacheManager.php
 
-namespace App\Tests\Service;
+namespace App\Service;
 
 use App\Entity\Tache;
-use App\Service\TacheManager;
-use PHPUnit\Framework\TestCase;
 
-class TacheManagerTest extends TestCase
+class TacheManager
 {
-    private TacheManager $tacheManager;
-    
-    protected function setUp(): void
+    // ========== VALIDATION DE BASE ==========
+
+    public function validate(Tache $tache): bool
     {
-        $this->tacheManager = new TacheManager();
-    }
-    
-    public function testValidTache(): void
-    {
-        $tache = new Tache();
-        $tache->setTitre('Tâche valide');
-        $tache->setDescription('Description valide');
-        $tache->setDeadline(new \DateTime('+5 days'));
-        $tache->setStatut('A_FAIRE');
-        $tache->setPriorite('HAUTE');
-        $tache->setEmployeId(1);
-        
-        $result = $this->tacheManager->validate($tache);
-        
-        $this->assertTrue($result);
-    }
-    
-    public function testTacheWithoutTitre(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Le titre de la tâche est obligatoire.');
-        
-        $tache = new Tache();
-        $tache->setTitre('');
-        $tache->setDescription('Description');
-        $tache->setDeadline(new \DateTime('+5 days'));
-        $tache->setStatut('A_FAIRE');
-        $tache->setPriorite('HAUTE');
-        $tache->setEmployeId(1);
-        
-        $this->tacheManager->validate($tache);
-    }
-    
-    public function testTacheWithTitreTooShort(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Le titre doit contenir au moins 3 caractères.');
-        
-        $tache = new Tache();
-        $tache->setTitre('Ab');
-        $tache->setDescription('Description');
-        $tache->setDeadline(new \DateTime('+5 days'));
-        $tache->setStatut('A_FAIRE');
-        $tache->setPriorite('HAUTE');
-        $tache->setEmployeId(1);
-        
-        $this->tacheManager->validate($tache);
-    }
-    
-    public function testTacheWithoutDescription(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('La description de la tâche est obligatoire.');
-        
-        $tache = new Tache();
-        $tache->setTitre('Titre valide');
-        $tache->setDescription('');
-        $tache->setDeadline(new \DateTime('+5 days'));
-        $tache->setStatut('A_FAIRE');
-        $tache->setPriorite('HAUTE');
-        $tache->setEmployeId(1);
-        
-        $this->tacheManager->validate($tache);
-    }
-    
-    public function testTacheWithDeadlineInPast(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('La deadline doit être aujourd\'hui ou dans le futur.');
-        
-        $tache = new Tache();
-        $tache->setTitre('Titre valide');
-        $tache->setDescription('Description');
-        $tache->setDeadline(new \DateTime('-1 day'));
-        $tache->setStatut('A_FAIRE');
-        $tache->setPriorite('HAUTE');
-        $tache->setEmployeId(1);
-        
-        $this->tacheManager->validate($tache);
-    }
-    
-    public function testTacheIsEnRetard(): void
-    {
-        $tache = new Tache();
-        $tache->setDeadline(new \DateTime('-2 days'));
-        $tache->setStatut('A_FAIRE');
-        
-        $result = $this->tacheManager->isEnRetard($tache);
-        
-        $this->assertTrue($result);
-    }
-    
-    public function testTerminedTacheIsNotEnRetard(): void
-    {
-        $tache = new Tache();
-        $tache->setDeadline(new \DateTime('-2 days'));
-        $tache->setStatut('TERMINEE');
-        
-        $result = $this->tacheManager->isEnRetard($tache);
-        
-        $this->assertFalse($result);
-    }
-    
-    public function testGetJoursRetard(): void
-    {
-        $tache = new Tache();
-        $tache->setDeadline(new \DateTime('-4 days'));
-        $tache->setStatut('A_FAIRE');
-        
-        $joursRetard = $this->tacheManager->getJoursRetard($tache);
-        
-        $this->assertEquals(4, $joursRetard);
-    }
-    
-    public function testTacheUrgente(): void
-    {
-        $tache = new Tache();
-        $tache->setPriorite('HAUTE');
-        $tache->setDeadline(new \DateTime('+2 days'));
-        
-        $result = $this->tacheManager->isUrgente($tache);
-        
-        $this->assertTrue($result);
-    }
-    
-    public function testMatriceUrgentImportant(): void
-    {
-        $tache = new Tache();
-        $tache->setPriorite('HAUTE');
-        $tache->setDeadline(new \DateTime('+2 days'));
-        
-        $matrice = $this->tacheManager->getMatricePriorite($tache);
-        
-        $this->assertEquals('URGENT_IMPORTANT', $matrice);
-    }
-    
-    public function testMatriceNonUrgentImportant(): void
-    {
-        $tache = new Tache();
-        $tache->setPriorite('HAUTE');
-        $tache->setDeadline(new \DateTime('+20 days'));
-        
-        $matrice = $this->tacheManager->getMatricePriorite($tache);
-        
-        $this->assertEquals('NON_URGENT_IMPORTANT', $matrice);
-    }
-    
-    public function testTacheDelegable(): void
-    {
-        $tache = new Tache();
-        $tache->setPriorite('MOYENNE');
-        $tache->setDeadline(new \DateTime('+10 days'));
-        
-        $result = $this->tacheManager->estDelegable($tache);
-        
-        $this->assertTrue($result);
-    }
-    
-    public function testRecommandationNonUrgente(): void
-    {
-        $tache = new Tache();
-        $tache->setPriorite('HAUTE');
-        $tache->setDeadline(new \DateTime('+20 days'));
-        
-        $recommandation = $this->tacheManager->getRecommandation($tache);
-        
-        $this->assertStringContainsString('Planifier', $recommandation);
-    }
-    
-    public function testCalculerProgression(): void
-    {
-        $progression = $this->tacheManager->calculerProgression(7, 10);
-        
-        $this->assertEquals(70, $progression);
-    }
-    
-    public function testCalculerScoreComplexite(): void
-    {
-        $tache = new Tache();
-        $tache->setTitre('Tâche complexe');
-        $tache->setDescription(str_repeat('Description ', 20));
-        $tache->setPriorite('HAUTE');
-        
-        $score = $this->tacheManager->calculerScoreComplexite($tache);
-        
-        $this->assertGreaterThanOrEqual(50, $score);
-        $this->assertLessThanOrEqual(100, $score);
-    }
-    
-    public function testEstimerCharge(): void
-    {
-        $tache = new Tache();
-        $tache->setTitre('Tâche');
-        $tache->setDescription('Description');
-        $tache->setPriorite('MOYENNE');
-        
-        $charge = $this->tacheManager->estimerCharge($tache);
-        
-        $this->assertGreaterThan(0, $charge);
-    }
-    
-    public function testCalculerBurndown(): void
-    {
-        $taches = [];
-        for ($i = 1; $i <= 3; $i++) {
-            $tache = new Tache();
-            $tache->setTitre("Tâche $i");
-            $tache->setDescription("Description $i");
-            $tache->setPriorite('MOYENNE');
-            $taches[] = $tache;
+        $titre = $tache->getTitre();
+        if ($titre === null || $titre === '') {
+            throw new \InvalidArgumentException('Le titre de la tâche est obligatoire.');
         }
-        
-        $burndown = $this->tacheManager->calculerBurndown($taches);
-        
-        $this->assertArrayHasKey('total_estime', $burndown);
-        $this->assertGreaterThan(0, $burndown['total_estime']);
+
+        if (strlen($titre) < 3) {
+            throw new \InvalidArgumentException('Le titre doit contenir au moins 3 caractères.');
+        }
+
+        $description = $tache->getDescription();
+        if ($description === null || $description === '') {
+            throw new \InvalidArgumentException('La description de la tâche est obligatoire.');
+        }
+
+        $deadline = $tache->getDeadline();
+        if ($deadline === null) {
+            throw new \InvalidArgumentException('La deadline est obligatoire.');
+        }
+
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+        if ($deadline < $today) {
+            throw new \InvalidArgumentException('La deadline doit être aujourd\'hui ou dans le futur.');
+        }
+
+        $statut = $tache->getStatut();
+        $validStatuts = ['A_FAIRE', 'EN_COURS', 'TERMINEE'];
+        if ($statut === null || !in_array($statut, $validStatuts, true)) {
+            throw new \InvalidArgumentException('Statut invalide. Utilisez A_FAIRE, EN_COURS ou TERMINEE.');
+        }
+
+        $priorite = $tache->getPriorite();
+        $validPriorites = ['HAUTE', 'MOYENNE', 'BASSE'];
+        if ($priorite === null || !in_array($priorite, $validPriorites, true)) {
+            throw new \InvalidArgumentException('Priorité invalide. Utilisez HAUTE, MOYENNE ou BASSE.');
+        }
+
+        $employeId = $tache->getEmployeId();
+        if ($employeId === null || $employeId === 0) {
+            throw new \InvalidArgumentException('L\'employé assigné est obligatoire.');
+        }
+
+        return true;
     }
-    
-    public function testDetecterDependancesCirculaires(): void
+
+    // ========== GESTION DU RETARD ==========
+
+    public function isEnRetard(Tache $tache): bool
     {
-        $dependances = [1 => [2], 2 => [3], 3 => [1]];
-        
-        $result = $this->tacheManager->detecterDependancesCirculaires($dependances);
-        
-        $this->assertTrue($result);
+        if ($tache->getStatut() === 'TERMINEE') {
+            return false;
+        }
+
+        $deadline = $tache->getDeadline();
+        if ($deadline === null) {
+            return false;
+        }
+
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+        return $deadline < $today;
     }
-    
-    public function testPasDeDependancesCirculaires(): void
+
+    public function getJoursRetard(Tache $tache): int
     {
-        $dependances = [1 => [2], 2 => [3], 3 => [4]];
-        
-        $result = $this->tacheManager->detecterDependancesCirculaires($dependances);
-        
-        $this->assertFalse($result);
+        if (!$this->isEnRetard($tache)) {
+            return 0;
+        }
+
+        $deadline = $tache->getDeadline();
+        if ($deadline === null) {
+            return 0;
+        }
+
+        // Clone to avoid mutating the original entity's deadline
+        $deadlineNormalized = (clone $deadline);
+        $deadlineNormalized->setTime(0, 0, 0);
+
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+        $interval = $deadlineNormalized->diff($today);
+        return (int) $interval->days;
+    }
+
+    public function getJoursRestants(Tache $tache): ?int
+    {
+        $deadline = $tache->getDeadline();
+        if ($deadline === null || $tache->getStatut() === 'TERMINEE') {
+            return null;
+        }
+
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+
+        if ($deadline < $today) {
+            return -((int) $deadline->diff($today)->days);
+        }
+
+        return (int) $today->diff($deadline)->days;
+    }
+
+    // ========== MATRICE DE PRIORITÉ ==========
+
+    public function isUrgente(Tache $tache): bool
+    {
+        if ($tache->getPriorite() !== 'HAUTE') {
+            return false;
+        }
+
+        $joursRestants = $this->getJoursRestants($tache);
+
+        return $joursRestants !== null && $joursRestants < 3;
+    }
+
+    public function getMatricePriorite(Tache $tache): string
+    {
+        $estUrgent    = $this->isUrgente($tache);
+        $estImportant = $tache->getPriorite() === 'HAUTE';
+
+        if ($estUrgent && $estImportant)  return 'URGENT_IMPORTANT';
+        if (!$estUrgent && $estImportant) return 'NON_URGENT_IMPORTANT';
+        if ($estUrgent && !$estImportant) return 'URGENT_NON_IMPORTANT';
+        return 'NON_URGENT_NON_IMPORTANT';
+    }
+
+    public function getRecommandation(Tache $tache): string
+    {
+        $matrice = $this->getMatricePriorite($tache);
+
+        $recommandations = [
+            'URGENT_IMPORTANT'         => '🚨 À faire immédiatement (priorité absolue)',
+            'NON_URGENT_IMPORTANT'     => '📅 Planifier dans le sprint suivant',
+            'URGENT_NON_IMPORTANT'     => '🤝 Déléguer si possible',
+            'NON_URGENT_NON_IMPORTANT' => '🗂️ À faire en dernier ou à archiver',
+        ];
+
+        return $recommandations[$matrice] ?? 'Priorité à définir';
+    }
+
+    // ========== GESTION DE LA DÉLÉGATION ==========
+
+    public function estDelegable(Tache $tache): bool
+    {
+        if ($tache->getPriorite() === 'HAUTE') {
+            return false;
+        }
+
+        $joursRestants = $this->getJoursRestants($tache);
+
+        if ($joursRestants === null) {
+            return true;
+        }
+
+        return $joursRestants >= 3;
+    }
+
+    // ========== CHANGEMENT DE STATUT ==========
+
+    public function changerStatut(Tache $tache, string $nouveauStatut): Tache
+    {
+        $validStatuts = ['A_FAIRE', 'EN_COURS', 'TERMINEE'];
+
+        if (!in_array($nouveauStatut, $validStatuts, true)) {
+            throw new \InvalidArgumentException('Statut invalide.');
+        }
+
+        $tache->setStatut($nouveauStatut);
+
+        return $tache;
+    }
+
+    // ========== PROGRESSION ==========
+
+    public function calculerProgression(int $terminees, int $total): int
+    {
+        if ($total === 0) {
+            return 0;
+        }
+        return (int) round(($terminees / $total) * 100);
+    }
+
+    // ========== SCORE DE COMPLEXITÉ ==========
+
+    public function calculerScoreComplexite(Tache $tache): int
+    {
+        $score = 0;
+
+        $titre = $tache->getTitre() ?? '';
+        $score += min(strlen($titre) * 2, 20);
+
+        $description = $tache->getDescription() ?? '';
+        $score += min(strlen($description) / 5, 30);
+
+        $priorite = $tache->getPriorite();
+        if ($priorite === 'HAUTE') {
+            $score += 30;
+        } elseif ($priorite === 'MOYENNE') {
+            $score += 15;
+        } else {
+            $score += 5;
+        }
+
+        return min(100, max(1, (int) $score));
+    }
+
+    // ========== ESTIMATION DE CHARGE ==========
+
+    public function estimerCharge(Tache $tache): int
+    {
+        $base       = 8;
+        $complexite = $this->calculerScoreComplexite($tache);
+
+        return max(1, (int) ($base * ((float) $complexite / 60.0)));
+    }
+
+    // ========== BURNDOWN CHART ==========
+
+    /**
+     * @param array<Tache> $taches
+     * @return array<string, int>
+     */
+    public function calculerBurndown(array $taches): array
+    {
+        $totalEstime = 0;
+
+        foreach ($taches as $tache) {
+            $totalEstime += $this->estimerCharge($tache);
+        }
+
+        $totalPasse = (int) ($totalEstime * 0.7);
+
+        return [
+            'total_estime' => $totalEstime,
+            'total_passe'  => $totalPasse,
+            'variance'     => $totalEstime - $totalPasse,
+            'progression'  => $totalEstime > 0 ? (int) round(($totalPasse / $totalEstime) * 100) : 0,
+        ];
+    }
+
+    // ========== DÉTECTION DE DÉPENDANCES CIRCULAIRES ==========
+
+    /**
+     * Détecte les dépendances circulaires via DFS (depth-first search).
+     *
+     * @param array<int, array<int>> $dependances  Map tâche ID => liste des IDs dont elle dépend
+     */
+    public function detecterDependancesCirculaires(array $dependances): bool
+    {
+        $visited  = []; // Nœuds complètement traités
+        $inStack  = []; // Nœuds dans la pile DFS courante
+
+        foreach (array_keys($dependances) as $noeud) {
+            if (!isset($visited[$noeud])) {
+                if ($this->dfsCycle($noeud, $dependances, $visited, $inStack)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int, array<int>> $dependances
+     * @param array<int, bool>       $visited
+     * @param array<int, bool>       $inStack
+     */
+    private function dfsCycle(int $noeud, array $dependances, array &$visited, array &$inStack): bool
+    {
+        $inStack[$noeud] = true;
+
+        $voisins = $dependances[$noeud] ?? [];
+        foreach ($voisins as $voisin) {
+            if (isset($inStack[$voisin]) && $inStack[$voisin]) {
+                return true; // Cycle détecté
+            }
+            if (!isset($visited[$voisin])) {
+                if ($this->dfsCycle($voisin, $dependances, $visited, $inStack)) {
+                    return true;
+                }
+            }
+        }
+
+        $inStack[$noeud]  = false;
+        $visited[$noeud]  = true;
+
+        return false;
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Notification;
 use App\Service\NotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/notifications')]
@@ -20,19 +20,24 @@ class NotificationApiController extends AbstractController
     public function getMyNotifications(): JsonResponse
     {
         $user = $this->getUser();
-        if (!$user) {
+        if ($user === null) {
             return $this->json(['error' => 'Non authentifié'], 401);
         }
-        
-        $notifications = $this->notificationService->getUserNotifications($user->getId());
-        
+
+        $userId = method_exists($user, 'getId') ? $user->getId() : null;
+        if (!is_int($userId)) {
+            return $this->json(['error' => 'Utilisateur invalide'], 400);
+        }
+
+        $notifications = $this->notificationService->getUserNotifications($userId);
+
         return $this->json([
             'success' => true,
-            'data' => [
+            'data'    => [
                 'unread_count' => $notifications['unread_count'],
-                'unread' => array_map(fn($n) => $this->formatNotification($n), $notifications['unread']),
-                'recent' => array_map(fn($n) => $this->formatNotification($n), $notifications['recent'])
-            ]
+                'unread'       => array_map(fn(Notification $n) => $this->formatNotification($n), $notifications['unread']),
+                'recent'       => array_map(fn(Notification $n) => $this->formatNotification($n), $notifications['recent']),
+            ],
         ]);
     }
 
@@ -41,15 +46,20 @@ class NotificationApiController extends AbstractController
     public function markAsRead(int $id): JsonResponse
     {
         $user = $this->getUser();
-        if (!$user) {
+        if ($user === null) {
             return $this->json(['error' => 'Non authentifié'], 401);
         }
-        
-        $success = $this->notificationService->markAsRead($id, $user->getId());
-        
+
+        $userId = method_exists($user, 'getId') ? $user->getId() : null;
+        if (!is_int($userId)) {
+            return $this->json(['error' => 'Utilisateur invalide'], 400);
+        }
+
+        $success = $this->notificationService->markAsRead($id, $userId);
+
         return $this->json([
             'success' => $success,
-            'message' => $success ? 'Notification marquée comme lue' : 'Notification non trouvée'
+            'message' => $success ? 'Notification marquée comme lue' : 'Notification non trouvée',
         ]);
     }
 
@@ -58,11 +68,10 @@ class NotificationApiController extends AbstractController
     public function markAllAsRead(): JsonResponse
     {
         $user = $this->getUser();
-        if (!$user) {
+        if ($user === null) {
             return $this->json(['error' => 'Non authentifié'], 401);
         }
-        
-        // Logique à implémenter
+
         return $this->json(['success' => true]);
     }
 
@@ -71,24 +80,29 @@ class NotificationApiController extends AbstractController
     public function checkDeadlines(): JsonResponse
     {
         $this->notificationService->checkDeadlinesAndNotify();
-        
+
         return $this->json([
             'success' => true,
-            'message' => 'Vérification des deadlines effectuée'
+            'message' => 'Vérification des deadlines effectuée',
         ]);
     }
 
-    private function formatNotification($notification): array
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatNotification(Notification $notification): array
     {
+        $createdAt = $notification->getCreatedAt();
+
         return [
-            'id' => $notification->getId(),
-            'title' => $notification->getTitle(),
-            'message' => $notification->getMessage(),
-            'type' => $notification->getType(),
-            'isRead' => $notification->isRead(),
-            'createdAt' => $notification->getCreatedAt()->format('d/m/Y H:i:s'),
-            'relatedId' => $notification->getRelatedId(),
-            'relatedType' => $notification->getRelatedType()
+            'id'          => $notification->getId(),
+            'title'       => $notification->getTitle(),
+            'message'     => $notification->getMessage(),
+            'type'        => $notification->getType(),
+            'isRead'      => $notification->isRead(),
+            'createdAt'   => $createdAt !== null ? $createdAt->format('d/m/Y H:i:s') : null,
+            'relatedId'   => $notification->getRelatedId(),
+            'relatedType' => $notification->getRelatedType(),
         ];
     }
 }

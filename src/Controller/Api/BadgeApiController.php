@@ -3,8 +3,6 @@
 namespace App\Controller\Api;
 
 use App\Repository\TacheRepository;
-use App\Repository\UserBadgeRepository;
-use App\Repository\BadgeRepository;
 use App\Service\BadgeService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,8 +15,6 @@ class BadgeApiController extends AbstractController
     public function __construct(
         private TacheRepository $tacheRepository,
         private BadgeService $badgeService,
-        private UserBadgeRepository $userBadgeRepository,
-        private BadgeRepository $badgeRepository,
         private EntityManagerInterface $entityManager
     ) {}
 
@@ -30,7 +26,6 @@ class BadgeApiController extends AbstractController
             return $this->json(['error' => 'Non authentifié'], 401);
         }
 
-        // FIX: getId() returns mixed — guard with is_int to narrow type to int
         $userId = $user->getId();
         if (!is_int($userId)) {
             return $this->json(['error' => 'Utilisateur invalide'], 400);
@@ -54,7 +49,6 @@ class BadgeApiController extends AbstractController
             return $this->json(['error' => 'Non authentifié'], 401);
         }
 
-        // FIX: getId() returns mixed — guard with is_int to narrow type to int
         $userId = $user->getId();
         if (!is_int($userId)) {
             return $this->json(['error' => 'Utilisateur invalide'], 400);

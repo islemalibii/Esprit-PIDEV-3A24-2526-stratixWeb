@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Utilisateur;
 use App\Repository\TacheRepository;
 use App\Repository\PlanningRepository;
-use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,10 +20,12 @@ class EmployeeController extends AbstractController
         TacheRepository $tacheRepository,
         PlanningRepository $planningRepository
     ): Response {
-        /** @var Utilisateur $employe */
+        /** @var Utilisateur|null $employe */
         $employe   = $this->getUser();
-        $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
-        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $employeId = $employe?->getId();
+
+        $taches    = $employeId ? $tacheRepository->findBy(['employeId' => $employeId]) : [];
+        $plannings = $employeId ? $planningRepository->findBy(['employeId' => $employeId]) : [];
 
         $aFaire = 0; $enCours = 0; $terminees = 0;
         $haute  = 0; $moyenne = 0; $basse     = 0;
@@ -40,7 +41,7 @@ class EmployeeController extends AbstractController
 
         $tachesRecentes = array_slice(array_reverse($taches), 0, 5);
 
-        $today = new \DateTime();
+        $today           = new \DateTime();
         $planningsAVenir = [];
         foreach ($plannings as $planning) {
             $datePlanning = $planning->getDate();
@@ -68,9 +69,10 @@ class EmployeeController extends AbstractController
     #[Route('/employee/taches', name: 'app_employee_taches')]
     public function mesTaches(TacheRepository $tacheRepository): Response
     {
-        /** @var Utilisateur $employe */
-        $employe = $this->getUser();
-        $taches  = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+        /** @var Utilisateur|null $employe */
+        $employe   = $this->getUser();
+        $employeId = $employe?->getId();
+        $taches    = $employeId ? $tacheRepository->findBy(['employeId' => $employeId]) : [];
 
         return $this->render('employee/taches.html.twig', [
             'taches'    => $taches,
@@ -81,9 +83,10 @@ class EmployeeController extends AbstractController
     #[Route('/employee/plannings', name: 'app_employee_plannings')]
     public function mesPlannings(PlanningRepository $planningRepository): Response
     {
-        /** @var Utilisateur $employe */
+        /** @var Utilisateur|null $employe */
         $employe   = $this->getUser();
-        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $employeId = $employe?->getId();
+        $plannings = $employeId ? $planningRepository->findBy(['employeId' => $employeId]) : [];
 
         return $this->render('employee/plannings.html.twig', [
             'plannings'    => $plannings,
@@ -96,33 +99,39 @@ class EmployeeController extends AbstractController
         TacheRepository $tacheRepository,
         PlanningRepository $planningRepository
     ): Response {
-        /** @var Utilisateur $employe */
+        /** @var Utilisateur|null $employe */
         $employe   = $this->getUser();
-        $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
-        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $employeId = $employe?->getId();
+
+        $taches    = $employeId ? $tacheRepository->findBy(['employeId' => $employeId]) : [];
+        $plannings = $employeId ? $planningRepository->findBy(['employeId' => $employeId]) : [];
 
         $events = [];
 
         foreach ($taches as $tache) {
-            if ($tache->getDeadline()) {
-                $color = '#ef4444';
-                if ($tache->getPriorite() === 'HAUTE')   $color = '#dc2626';
-                if ($tache->getPriorite() === 'MOYENNE') $color = '#f59e0b';
-                if ($tache->getPriorite() === 'BASSE')   $color = '#10b981';
+            $deadline = $tache->getDeadline();
+            if (!$deadline) continue;
 
-                $events[] = [
-                    'id'       => 'tache_' . $tache->getId(),
-                    'title'    => '📌 ' . $tache->getTitre(),
-                    'start'    => $tache->getDeadline()->format('Y-m-d'),
-                    'color'    => $color,
-                    'priorite' => $tache->getPriorite(),
-                    'statut'   => $tache->getStatut(),
-                    'type'     => 'tache',
-                ];
-            }
+            $color = '#ef4444';
+            if ($tache->getPriorite() === 'HAUTE')   $color = '#dc2626';
+            if ($tache->getPriorite() === 'MOYENNE') $color = '#f59e0b';
+            if ($tache->getPriorite() === 'BASSE')   $color = '#10b981';
+
+            $events[] = [
+                'id'       => 'tache_' . $tache->getId(),
+                'title'    => '📌 ' . $tache->getTitre(),
+                'start'    => $deadline->format('Y-m-d'),
+                'color'    => $color,
+                'priorite' => $tache->getPriorite(),
+                'statut'   => $tache->getStatut(),
+                'type'     => 'tache',
+            ];
         }
 
         foreach ($plannings as $planning) {
+            $date = $planning->getDate();
+            if (!$date) continue;
+
             $heureDebut = $planning->getHeureDebut() ? $planning->getHeureDebut()->format('H:i') : '';
             $heureFin   = $planning->getHeureFin()   ? $planning->getHeureFin()->format('H:i')   : '';
             $shift      = $planning->getTypeShift()  ?? 'Planning';
@@ -132,7 +141,7 @@ class EmployeeController extends AbstractController
             $events[] = [
                 'id'       => 'planning_' . $planning->getId(),
                 'title'    => '📅 ' . $titre,
-                'start'    => $planning->getDate()->format('Y-m-d'),
+                'start'    => $date->format('Y-m-d'),
                 'color'    => '#3b82f6',
                 'priorite' => null,
                 'statut'   => null,
@@ -148,9 +157,10 @@ class EmployeeController extends AbstractController
     #[Route('/employee/whiteboard', name: 'app_employee_whiteboard')]
     public function whiteboard(TacheRepository $tacheRepository): Response
     {
-        /** @var Utilisateur $employe */
-        $employe = $this->getUser();
-        $taches  = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+        /** @var Utilisateur|null $employe */
+        $employe   = $this->getUser();
+        $employeId = $employe?->getId();
+        $taches    = $employeId ? $tacheRepository->findBy(['employeId' => $employeId]) : [];
 
         $aFaire    = [];
         $enCours   = [];
@@ -177,27 +187,16 @@ class EmployeeController extends AbstractController
         TacheRepository $tacheRepository,
         EntityManagerInterface $em
     ): JsonResponse {
-        /** @var Utilisateur $user */
+        /** @var Utilisateur|null $user */
         $user  = $this->getUser();
         $tache = $tacheRepository->find($id);
 
-        if (!$tache || $tache->getEmployeId() !== $user->getId()) {
+        if (!$user || !$tache || $tache->getEmployeId() !== $user->getId()) {
             return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
         }
 
-        // FIX: json_decode returns mixed — guard with is_array + is_string before accessing offset
-        $decoded   = json_decode($request->getContent(), true);
-        $newStatus = null;
-
-        if (is_array($decoded) && isset($decoded['status']) && is_string($decoded['status'])) {
-            $newStatus = $decoded['status'];
-        }
-
-        if ($newStatus === null) {
-            // FIX: Request::get() returns mixed — narrow to string with is_string guard
-            $raw       = $request->request->get('status');
-            $newStatus = is_string($raw) ? $raw : null;
-        }
+        $body      = json_decode($request->getContent(), true);
+        $newStatus = (is_array($body) && isset($body['status'])) ? $body['status'] : $request->request->get('status');
 
         $statusMap = [
             'a_faire'   => 'A_FAIRE',
@@ -208,11 +207,7 @@ class EmployeeController extends AbstractController
             'TERMINEE'  => 'TERMINEE',
         ];
 
-        // FIX: $newStatus is now string|null — safe to use as array key after null check
-        $mapped = null;
-        if ($newStatus !== null && isset($statusMap[$newStatus])) {
-            $mapped = $statusMap[$newStatus];
-        }
+        $mapped = is_string($newStatus) ? ($statusMap[$newStatus] ?? null) : null;
 
         if (!$mapped) {
             return $this->json(['success' => false, 'error' => 'Statut invalide'], 400);
@@ -243,23 +238,20 @@ class EmployeeController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            // FIX: Request::get() returns mixed — cast explicitly to string via (string)(?? '')
-            // so that trim(), strlen(), preg_match() and the password hasher all receive string
-            $nom       = trim((string) ($request->request->get('nom')              ?? ''));
-            $prenom    = trim((string) ($request->request->get('prenom')           ?? ''));
-            $tel       = trim((string) ($request->request->get('tel')              ?? ''));
-            $currentPw = (string) ($request->request->get('current_password')      ?? '');
-            $newPw     = (string) ($request->request->get('new_password')          ?? '');
-            $confirmPw = (string) ($request->request->get('confirm_password')      ?? '');
+            $nom       = trim($request->request->get('nom', ''));
+            $prenom    = trim($request->request->get('prenom', ''));
+            $tel       = trim($request->request->get('tel', ''));
+            $currentPw = $request->request->get('current_password', '');
+            $newPw     = $request->request->get('new_password', '');
+            $confirmPw = $request->request->get('confirm_password', '');
 
-            if ($nom === '')    $errors['nom']    = 'Le nom est obligatoire.';
-            if ($prenom === '') $errors['prenom'] = 'Le prénom est obligatoire.';
-            if ($tel !== '' && !preg_match('/^\d{8}$/', $tel)) {
+            if (!$nom)    $errors['nom']    = 'Le nom est obligatoire.';
+            if (!$prenom) $errors['prenom'] = 'Le prénom est obligatoire.';
+            if ($tel && !preg_match('/^\d{8}$/', $tel)) {
                 $errors['tel'] = 'Le téléphone doit contenir 8 chiffres.';
             }
 
-            if ($newPw !== '') {
-                // FIX: $currentPw and $newPw are now string — safe for isPasswordValid / hashPassword
+            if ($newPw) {
                 if (!$hasher->isPasswordValid($user, $currentPw)) {
                     $errors['current_password'] = 'Mot de passe actuel incorrect.';
                 } elseif (strlen($newPw) < 8) {
@@ -274,8 +266,8 @@ class EmployeeController extends AbstractController
             }
 
             if (empty($errors)) {
-                $user->setNom($nom)->setPrenom($prenom)->setTel($tel !== '' ? $tel : null);
-                if ($newPw !== '') {
+                $user->setNom($nom)->setPrenom($prenom)->setTel($tel ?: null);
+                if ($newPw) {
                     $user->setPassword($hasher->hashPassword($user, $newPw));
                 }
                 $em->flush();
