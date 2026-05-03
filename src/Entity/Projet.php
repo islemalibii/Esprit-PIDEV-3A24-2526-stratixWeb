@@ -110,6 +110,7 @@ class Projet
         $this->statut = "Planifié";
         $this->isArchived = false;
         $this->dateDebut = new \DateTime();
+        
     }
 
     // --- GETTERS / SETTERS ---
@@ -125,7 +126,7 @@ class Projet
     public function setDateDebut(\DateTimeInterface $dateDebut): self {$this->dateDebut = $dateDebut;return $this;}
     public function getDateFin(): \DateTimeInterface { return $this->dateFin; }
    
-
+    public function setDateFin(\DateTimeInterface $dateFin): self {$this->dateFin = $dateFin;return $this;}
     public function getBudget(): float { return $this->budget; }
     public function setBudget(float $budget): self { $this->budget = $budget; return $this; }
     public function getStatut(): ?string { return $this->statut; }

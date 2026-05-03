@@ -35,9 +35,10 @@ class ProjetManagerTest extends TestCase
     public function testProjetWithoutNom(): void
     {
         $this->expectException(\InvalidArgumentException::class); 
+        $this->expectExceptionMessage("Le nom du projet est obligatoire.");
         
         $projet = new Projet();
-        $projet->setNom(''); 
+        $projet->setNom(''); // Nom vide
         $projet->setDateDebut(new \DateTime('2026-01-01'));
         $projet->setDateFin(new \DateTime('2026-12-31'));
 
@@ -50,6 +51,7 @@ class ProjetManagerTest extends TestCase
     public function testProjetWithInvalidDates(): void
     {
         $this->expectException(\InvalidArgumentException::class); 
+        $this->expectExceptionMessage("La date de fin ne peut pas être antérieure à la date de début.");
         
         $projet = new Projet();
         $projet->setNom('Projet Test');
@@ -65,15 +67,17 @@ class ProjetManagerTest extends TestCase
     public function testPhaseEndsAfterProjet(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Les dates de la phase sont hors limites du projet.");
 
         $projet = new Projet();
+        $projet->setNom('Projet Stratix'); // Initialisation cruciale
         $projet->setDateDebut(new \DateTime('2026-05-01'));
         $projet->setDateFin(new \DateTime('2026-05-31'));
 
         $phase = new Phase();
         $phase->setNom('Phase de test');
         $phase->setDateDebut(new \DateTime('2026-05-10'));
-        $phase->setDateFin(new \DateTime('2026-06-05')); // Invalide
+        $phase->setDateFin(new \DateTime('2026-06-05')); // Invalide (après le 31/05)
 
         $projet->addPhase($phase);
 
@@ -86,13 +90,16 @@ class ProjetManagerTest extends TestCase
     public function testPhaseStartsBeforeProjet(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Les dates de la phase sont hors limites du projet.");
 
         $projet = new Projet();
+        $projet->setNom('Projet Stratix'); // Initialisation cruciale
         $projet->setDateDebut(new \DateTime('2026-05-01'));
         $projet->setDateFin(new \DateTime('2026-05-31'));
 
         $phase = new Phase();
-        $phase->setDateDebut(new \DateTime('2026-04-20')); // Invalide
+        $phase->setNom('Phase de test');
+        $phase->setDateDebut(new \DateTime('2026-04-20')); // Invalide (avant le 01/05)
         $phase->setDateFin(new \DateTime('2026-05-15'));
 
         $projet->addPhase($phase);
@@ -101,11 +108,12 @@ class ProjetManagerTest extends TestCase
     }
 
     /**
-     * 6. TEST INNOVANT : Teste la détection de chevauchement entre deux phases
+     * 6. Teste la détection de chevauchement entre deux phases
      */
     public function testPhaseOverlapConflict(): void
     {
         $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Conflit de planning entre les phases.");
 
         $projet = new Projet();
         $projet->setNom('Chantier Stratix');
@@ -119,7 +127,7 @@ class ProjetManagerTest extends TestCase
         $p1->setDateFin(new \DateTime('2026-01-15'));
         $projet->addPhase($p1);
 
-        // Phase 2 : du 10 au 20 Janvier (Conflit avec Phase 1)
+        // Phase 2 : du 10 au 20 Janvier (Conflit car commence avant la fin de P1)
         $p2 = new Phase();
         $p2->setNom('Design');
         $p2->setDateDebut(new \DateTime('2026-01-10')); 
@@ -128,21 +136,24 @@ class ProjetManagerTest extends TestCase
 
         $this->manager->validate($projet);
     }
+
     /**
-     *Un projet ne peut pas être fini s'il reste des phases actives
+     * 7. Teste qu'un projet ne peut pas être fini s'il reste des phases actives
      */
-    public function testProjetCannotBeFinishedWithActivePhases(): void {
+    public function testProjetCannotBeFinishedWithActivePhases(): void 
+    {
         $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("Impossible de terminer le projet");
 
         $projet = new Projet();
         $projet->setNom('Projet Stratix');
-        $projet->setStatut('Terminée'); // On veut finir le projet...
+        $projet->setStatut('Terminée'); 
         $projet->setDateDebut(new \DateTime('2026-01-01'));
         $projet->setDateFin(new \DateTime('2026-12-31'));
 
         $phaseOuverte = new Phase();
         $phaseOuverte->setNom('Développement');
-        $phaseOuverte->setStatut('En cours'); 
+        $phaseOuverte->setStatut('En cours'); // Empêche la clôture du projet
         $phaseOuverte->setDateDebut(new \DateTime('2026-01-01'));
         $phaseOuverte->setDateFin(new \DateTime('2026-06-01'));
 

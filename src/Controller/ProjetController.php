@@ -356,9 +356,6 @@ class ProjetController extends AbstractController
         ]);
     }
 
-    // ─────────────────────────────────────────────
-    //  CALENDRIER
-    // ─────────────────────────────────────────────
     #[Route('/api/projets/calendar', name: 'api_projets_calendar', methods: ['GET'])]
     public function getCalendarEvents(ProjetRepository $projetRepository): JsonResponse
     {
