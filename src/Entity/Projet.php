@@ -41,17 +41,17 @@ class Projet
         pattern: "/^[a-zA-Z0-9\s\-]+$/",
         message: "Le nom ne doit contenir que des lettres, chiffres et tirets."
     )]
-    private ?string $nom = null;
+    private string $nom;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "La description est obligatoire.")]
     #[Assert\Length(min: 10, minMessage: "La description doit contenir au moins 10 caractères.")]
-    private ?string $description = null;
+    private string $description;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotBlank(message: "La date de début est obligatoire.")]
     #[Assert\Type("\DateTimeInterface")]
-    private ?\DateTimeInterface $dateDebut = null;
+    private \DateTimeInterface $dateDebut;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotBlank(message: "La date de fin est obligatoire.")]
@@ -60,13 +60,13 @@ class Projet
         "this.getDateFin() > this.getDateDebut()",
         message: "La date de fin doit être postérieure à la date de début."
     )]
-    private ?\DateTimeInterface $dateFin = null;
+    private \DateTimeInterface $dateFin;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: "Le budget est obligatoire.")]
     #[Assert\Positive(message: "Le budget doit être un nombre positif.")]
     #[Assert\LessThan(value: 10000000, message: "Le budget ne peut pas dépasser 10 000 000 DT.")]
-    private ?float $budget = null;
+    private float $budget;
 
     #[ORM\Column(length: 50)]
     private string $statut = "Planifié";
@@ -115,16 +115,19 @@ class Projet
     // --- GETTERS / SETTERS ---
 
     public function getId(): ?int { return $this->id; }
-    public function getNom(): ?string { return $this->nom; }
-    public function setNom(?string $nom): self { $this->nom = $nom; return $this; }
-    public function getDescription(): ?string { return $this->description; }
-    public function setDescription(?string $description): self { $this->description = $description; return $this; }
-    public function getDateDebut(): ?\DateTimeInterface { return $this->dateDebut; }
+    public function getNom(): string { return $this->nom; }
+    public function setNom(string $nom): self { $this->nom = $nom; return $this; }
+
+    public function getDescription(): string { return $this->description; }
+   public function setDescription(string $description): self { $this->description = $description; return $this; }
+
+    public function getDateDebut(): \DateTimeInterface { return $this->dateDebut; }
     public function setDateDebut(\DateTimeInterface $dateDebut): self {$this->dateDebut = $dateDebut;return $this;}
-    public function getDateFin(): ?\DateTimeInterface { return $this->dateFin; }
-    public function setDateFin(?\DateTimeInterface $dateFin): self { $this->dateFin = $dateFin; return $this; }
-    public function getBudget(): ?float { return $this->budget; }
-    public function setBudget(?float $budget): self { $this->budget = $budget; return $this; }
+    public function getDateFin(): \DateTimeInterface { return $this->dateFin; }
+   
+
+    public function getBudget(): float { return $this->budget; }
+    public function setBudget(float $budget): self { $this->budget = $budget; return $this; }
     public function getStatut(): ?string { return $this->statut; }
     public function setStatut(?string $statut): self { $this->statut = $statut ?? 'Planifié'; return $this; }
     public function isIsArchived(): ?bool { return $this->isArchived; }
