@@ -7,5 +7,5 @@ parameters:
         - tests
     ignoreErrors:
         - '/Call to an undefined method/'
-        - '/Parameter \#1 \$array of function usort is passed by reference/'
+        
         

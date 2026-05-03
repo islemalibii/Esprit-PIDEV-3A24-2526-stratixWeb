@@ -1,11 +1,11 @@
 <?php
- 
+
 namespace App\Repository;
- 
+
 use App\Entity\Tache;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
- 
+
 /**
  * @extends ServiceEntityRepository<Tache>
  */
@@ -15,9 +15,10 @@ class TacheRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Tache::class);
     }
- 
+
     /**
      * Real multi-criteria search in the database
+     * @return Tache[]
      */
     public function search(string $search = '', string $statut = '', string $priorite = ''): array
     {
@@ -40,7 +41,10 @@ class TacheRepository extends ServiceEntityRepository
  
         $qb->orderBy('t.deadline', 'ASC');
  
-        return $qb->getQuery()->getResult();
+        $query = $qb->getQuery();
+        $result = $query->getResult();
+        
+        /** @var Tache[] $result */
+        return $result;
     }
 }
- 

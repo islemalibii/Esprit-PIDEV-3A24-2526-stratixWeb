@@ -32,19 +32,21 @@ class KanbanApiController extends AbstractController
         $terminees = [];
         
         foreach ($taches as $tache) {
+            $deadline = $tache->getDeadline();
             $tacheData = [
                 'id' => $tache->getId(),
                 'titre' => $tache->getTitre(),
                 'description' => $tache->getDescription(),
                 'priorite' => $tache->getPriorite(),
-                'deadline' => $tache->getDeadline() ? $tache->getDeadline()->format('Y-m-d') : null,
+                'deadline' => $deadline ? $deadline->format('Y-m-d') : null,
                 'statut' => $tache->getStatut(),
-                'estEnRetard' => $tache->getDeadline() && $tache->getDeadline() < new \DateTime() && $tache->getStatut() !== 'TERMINEE',
+                'estEnRetard' => $deadline && $deadline < new \DateTime() && $tache->getStatut() !== 'TERMINEE',
             ];
             
-            if ($tache->getStatut() === 'A_FAIRE') {
+            $statut = $tache->getStatut();
+            if ($statut === 'A_FAIRE') {
                 $aFaire[] = $tacheData;
-            } elseif ($tache->getStatut() === 'EN_COURS') {
+            } elseif ($statut === 'EN_COURS') {
                 $enCours[] = $tacheData;
             } else {
                 $terminees[] = $tacheData;
@@ -83,8 +85,18 @@ class KanbanApiController extends AbstractController
         EntityManagerInterface $em
     ): JsonResponse {
         $user = $this->getUser();
-        $data = json_decode($request->getContent(), true);
-        $newStatus = $data['status'] ?? null;
+        
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Non authentifié'], 401);
+        }
+        
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+        
+        $newStatus = null;
+        if (is_array($data) && isset($data['status'])) {
+            $newStatus = $data['status'];
+        }
         
         $tache = $tacheRepository->find($id);
         
@@ -98,9 +110,12 @@ class KanbanApiController extends AbstractController
             'terminees' => 'TERMINEE'
         ];
         
-        $newStatus = $statusMap[$newStatus] ?? $newStatus;
+        // Correction ligne 114 - vérifier que la clé existe
+        if (is_string($newStatus) && isset($statusMap[$newStatus])) {
+            $newStatus = $statusMap[$newStatus];
+        }
         
-        if (!in_array($newStatus, ['A_FAIRE', 'EN_COURS', 'TERMINEE'])) {
+        if (!is_string($newStatus) || !in_array($newStatus, ['A_FAIRE', 'EN_COURS', 'TERMINEE'], true)) {
             return $this->json(['success' => false, 'error' => 'Statut invalide'], 400);
         }
         

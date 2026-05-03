@@ -346,7 +346,7 @@ class ProjetController extends AbstractController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $nomProjet = $projet->getNom() ?? 'projet';
+        $nomProjet = $projet->getNom();
         $safeFilename = str_replace([' ', '/', '\\'], '_', (string)$nomProjet);
         $fileName = 'Stratix_Rapport_' . $safeFilename . '_' . date('Y-m-d') . '.pdf';
 
@@ -356,7 +356,10 @@ class ProjetController extends AbstractController
         ]);
     }
 
-#[Route('/api/projets/calendar', name: 'api_projets_calendar', methods: ['GET'])]
+    // ─────────────────────────────────────────────
+    //  CALENDRIER
+    // ─────────────────────────────────────────────
+    #[Route('/api/projets/calendar', name: 'api_projets_calendar', methods: ['GET'])]
 public function getCalendarEvents(ProjetRepository $projetRepository): JsonResponse
 {
     $projets = $projetRepository->findBy(['isArchived' => false]);
@@ -381,7 +384,6 @@ public function getCalendarEvents(ProjetRepository $projetRepository): JsonRespo
 
     return new JsonResponse($events);
 }
-
     private function getColorByStatut(string $statut): string
     {
         return match ($statut) {

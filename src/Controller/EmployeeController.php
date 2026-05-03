@@ -1,12 +1,10 @@
 <?php
-// src/Controller/EmployeeController.php
 
 namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Repository\TacheRepository;
 use App\Repository\PlanningRepository;
-use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,152 +18,138 @@ class EmployeeController extends AbstractController
     #[Route('/employee/dashboard', name: 'app_employee_dashboard')]
     public function dashboard(
         TacheRepository $tacheRepository,
-        PlanningRepository $planningRepository,
-        UtilisateurRepository $utilisateurRepository
+        PlanningRepository $planningRepository
     ): Response {
-
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
         }
-        
-        $plannings = $planningRepository->findAll();
-        
-        $aFaire = 0;
-        $enCours = 0;
-        $terminees = 0;
-        $haute = 0;
-        $moyenne = 0;
-        $basse = 0;
-        
 
-        /** @var Utilisateur $employe */
-        $employe   = $this->getUser();
-        $taches    = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
-        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
+        $plannings = $planningRepository->findBy(['employeId' => $employe->getId()]);
 
-        $aFaire = 0; $enCours = 0; $terminees = 0;
-        $haute  = 0; $moyenne = 0; $basse     = 0;
-
+        $aFaire = $enCours = $terminees = $haute = $moyenne = $basse = 0;
         foreach ($taches as $tache) {
-            if ($tache->getStatut() === 'A_FAIRE')   $aFaire++;
-            if ($tache->getStatut() === 'EN_COURS')  $enCours++;
-            if ($tache->getStatut() === 'TERMINEE')  $terminees++;
-            if ($tache->getPriorite() === 'HAUTE')   $haute++;
-            if ($tache->getPriorite() === 'MOYENNE') $moyenne++;
-            if ($tache->getPriorite() === 'BASSE')   $basse++;
+            match ($tache->getStatut()) {
+                'A_FAIRE' => $aFaire++,
+                'EN_COURS' => $enCours++,
+                'TERMINEE' => $terminees++,
+                default => null,
+            };
+            match ($tache->getPriorite()) {
+                'HAUTE' => $haute++,
+                'MOYENNE' => $moyenne++,
+                'BASSE' => $basse++,
+                default => null,
+            };
         }
 
         $tachesRecentes = array_slice(array_reverse($taches), 0, 5);
-
         $today = new \DateTime();
         $planningsAVenir = [];
-        foreach ($plannings as $planning) {
-            $datePlanning = $planning->getDate();
-            if ($datePlanning && $datePlanning >= $today) {
-                $planningsAVenir[] = $planning;
+        foreach ($plannings as $p) {
+            $date = $p->getDate();
+            if ($date && $date >= $today) {
+                $planningsAVenir[] = $p;
             }
         }
         $planningsAVenir = array_slice($planningsAVenir, 0, 5);
 
         return $this->render('employee/dashboard.html.twig', [
-            'total'           => count($taches),
-            'aFaire'          => $aFaire,
-            'enCours'         => $enCours,
-            'terminees'       => $terminees,
-            'haute'           => $haute,
-            'moyenne'         => $moyenne,
-            'basse'           => $basse,
-            'tachesRecentes'  => $tachesRecentes,
-            'planningsAVenir' => $planningsAVenir,
-            'employe'         => $employe,
-            'hasTaches'       => count($taches) > 0,
+            'total' => count($taches),
+            'aFaire', 'enCours', 'terminees',
+            'haute', 'moyenne', 'basse',
+            'tachesRecentes',
+            'planningsAVenir',
+            'employe' => $employe,
+            'hasTaches' => !empty($taches),
         ]);
     }
 
     #[Route('/employee/taches', name: 'app_employee_taches')]
     public function mesTaches(TacheRepository $tacheRepository): Response
     {
-        /** @var Utilisateur $employe */
         $employe = $this->getUser();
-        $taches  = $employe ? $tacheRepository->findBy(['employeId' => $employe->getId()]) : [];
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
 
         return $this->render('employee/taches.html.twig', [
-            'taches'    => $taches,
-            'hasTaches' => count($taches) > 0,
+            'taches' => $taches,
+            'hasTaches' => !empty($taches),
         ]);
     }
 
     #[Route('/employee/plannings', name: 'app_employee_plannings')]
     public function mesPlannings(PlanningRepository $planningRepository): Response
     {
-        /** @var Utilisateur $employe */
-        $employe   = $this->getUser();
-        $plannings = $employe ? $planningRepository->findBy(['employeId' => $employe->getId()]) : [];
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $plannings = $planningRepository->findBy(['employeId' => $employe->getId()]);
 
         return $this->render('employee/plannings.html.twig', [
-            'plannings'    => $plannings,
-            'hasPlannings' => count($plannings) > 0,
+            'plannings' => $plannings,
+            'hasPlannings' => !empty($plannings),
         ]);
     }
 
     #[Route('/employee/calendar', name: 'app_employee_calendar')]
     public function calendar(
         TacheRepository $tacheRepository,
-        PlanningRepository $planningRepository,
-        UtilisateurRepository $utilisateurRepository
+        PlanningRepository $planningRepository
     ): Response {
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
         }
-        
-        $plannings = $planningRepository->findAll();
-        
-        $events = [];
-        
-        foreach ($taches as $tache) {
-            if ($tache->getDeadline()) {
-                $color = '#ef4444';
-                if ($tache->getPriorite() === 'HAUTE')   $color = '#dc2626';
-                if ($tache->getPriorite() === 'MOYENNE') $color = '#f59e0b';
-                if ($tache->getPriorite() === 'BASSE')   $color = '#10b981';
 
-                $events[] = [
-                    'id'       => 'tache_' . $tache->getId(),
-                    'title'    => '📌 ' . $tache->getTitre(),
-                    'start'    => $tache->getDeadline()->format('Y-m-d'),
-                    'color'    => $color,
-                    'priorite' => $tache->getPriorite(),
-                    'statut'   => $tache->getStatut(),
-                    'type'     => 'tache',
-                ];
-            }
+        $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
+        $plannings = $planningRepository->findBy(['employeId' => $employe->getId()]);
+
+        $events = [];
+
+        foreach ($taches as $tache) {
+            $deadline = $tache->getDeadline();
+            if (!$deadline) continue;
+
+            $color = match ($tache->getPriorite()) {
+                'HAUTE' => '#dc2626',
+                'MOYENNE' => '#f59e0b',
+                default => '#10b981',
+            };
+            $events[] = [
+                'id' => 'tache_' . $tache->getId(),
+                'title' => '📌 ' . ($tache->getTitre() ?? ''),
+                'start' => $deadline->format('Y-m-d'),
+                'color' => $color,
+                'priorite' => $tache->getPriorite(),
+                'statut' => $tache->getStatut(),
+                'type' => 'tache',
+            ];
         }
 
         foreach ($plannings as $planning) {
-            $heureDebut = $planning->getHeureDebut() ? $planning->getHeureDebut()->format('H:i') : '';
-            $heureFin   = $planning->getHeureFin()   ? $planning->getHeureFin()->format('H:i')   : '';
-            $shift      = $planning->getTypeShift()  ?? 'Planning';
-            $titre      = $shift;
-            if ($heureDebut && $heureFin) $titre .= ' (' . $heureDebut . ' - ' . $heureFin . ')';
+            $date = $planning->getDate();
+            if (!$date) continue;
 
+            $heureDebut = $planning->getHeureDebut()?->format('H:i') ?: '';
+            $heureFin   = $planning->getHeureFin()?->format('H:i') ?: '';
+            $shift = $planning->getTypeShift() ?? 'Planning';
+            $titre = $shift;
+            if ($heureDebut && $heureFin) {
+                $titre .= " ($heureDebut - $heureFin)";
+            }
             $events[] = [
-                'id'       => 'planning_' . $planning->getId(),
-                'title'    => '📅 ' . $titre,
-                'start'    => $planning->getDate()->format('Y-m-d'),
-                'color'    => '#3b82f6',
+                'id' => 'planning_' . $planning->getId(),
+                'title' => '📅 ' . $titre,
+                'start' => $date->format('Y-m-d'),
+                'color' => '#3b82f6',
                 'priorite' => null,
-                'statut'   => null,
-                'type'     => 'planning',
+                'statut' => null,
+                'type' => 'planning',
             ];
         }
 
@@ -175,34 +159,27 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/employee/whiteboard', name: 'app_employee_whiteboard')]
-    public function whiteboard(
-        TacheRepository $tacheRepository,
-        UtilisateurRepository $utilisateurRepository
-    ): Response {
-        $allUsers = $utilisateurRepository->findAll();
-        $employe = !empty($allUsers) ? $allUsers[0] : null;
-        
-        if ($employe) {
-            $taches = $tacheRepository->findBy(['employe_id' => $employe->getId()]);
-        } else {
-            $taches = [];
+    public function whiteboard(TacheRepository $tacheRepository): Response
+    {
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
         }
-        
-        $aFaire = [];
-        $enCours = [];
-        $terminees = [];
+        $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
 
+        $aFaire = $enCours = $terminees = [];
         foreach ($taches as $tache) {
-            if ($tache->getStatut() === 'A_FAIRE')      $aFaire[]    = $tache;
-            elseif ($tache->getStatut() === 'EN_COURS') $enCours[]   = $tache;
-            elseif ($tache->getStatut() === 'TERMINEE') $terminees[] = $tache;
+            match ($tache->getStatut()) {
+                'A_FAIRE' => $aFaire[] = $tache,
+                'EN_COURS' => $enCours[] = $tache,
+                'TERMINEE' => $terminees[] = $tache,
+                default => null,
+            };
         }
 
         return $this->render('employee/whiteboard.html.twig', [
-            'aFaire'    => $aFaire,
-            'enCours'   => $enCours,
-            'terminees' => $terminees,
-            'hasTaches' => count($taches) > 0,
+            'aFaire', 'enCours', 'terminees',
+            'hasTaches' => !empty($taches),
         ]);
     }
 
@@ -213,27 +190,39 @@ class EmployeeController extends AbstractController
         TacheRepository $tacheRepository,
         EntityManagerInterface $em
     ): JsonResponse {
-        /** @var Utilisateur $user */
-        $user  = $this->getUser();
-        $tache = $tacheRepository->find($id);
-
-        if (!$tache || $tache->getEmployeId() !== $user->getId()) {
+        $user = $this->getUser();
+        if (!$user instanceof Utilisateur) {
             return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
         }
 
-        $body      = json_decode($request->getContent(), true);
-        $newStatus = $body['status'] ?? $request->request->get('status');
+        $tache = $tacheRepository->find($id);
+        if (!$tache || $tache->getEmployeId() !== $user->getId()) {
+            return $this->json(['success' => false, 'error' => 'Tâche non trouvée ou non autorisée'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $newStatus = null;
+        if (is_array($data) && isset($data['status']) && is_string($data['status'])) {
+            $newStatus = $data['status'];
+        }
+        if ($newStatus === null) {
+            $raw = $request->request->get('status');
+            $newStatus = is_string($raw) ? $raw : null;
+        }
 
         $statusMap = [
-            'a_faire'   => 'A_FAIRE',
-            'en_cours'  => 'EN_COURS',
+            'a_faire' => 'A_FAIRE',
+            'en_cours' => 'EN_COURS',
             'terminees' => 'TERMINEE',
-            'A_FAIRE'   => 'A_FAIRE',
-            'EN_COURS'  => 'EN_COURS',
-            'TERMINEE'  => 'TERMINEE',
+            'A_FAIRE' => 'A_FAIRE',
+            'EN_COURS' => 'EN_COURS',
+            'TERMINEE' => 'TERMINEE',
         ];
 
-        $mapped = $statusMap[$newStatus] ?? null;
+        $mapped = null;
+        if ($newStatus !== null && isset($statusMap[$newStatus])) {
+            $mapped = $statusMap[$newStatus];
+        }
 
         if (!$mapped) {
             return $this->json(['success' => false, 'error' => 'Statut invalide'], 400);
@@ -259,25 +248,28 @@ class EmployeeController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher
     ): Response {
-        /** @var Utilisateur $user */
-        $user   = $this->getUser();
+        $user = $this->getUser();
+        if (!$user instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            $nom       = trim($request->request->get('nom', ''));
-            $prenom    = trim($request->request->get('prenom', ''));
-            $tel       = trim($request->request->get('tel', ''));
-            $currentPw = $request->request->get('current_password', '');
-            $newPw     = $request->request->get('new_password', '');
-            $confirmPw = $request->request->get('confirm_password', '');
+            $nom = trim((string) ($request->request->get('nom') ?? ''));
+            $prenom = trim((string) ($request->request->get('prenom') ?? ''));
+            $tel = trim((string) ($request->request->get('tel') ?? ''));
+            $currentPw = (string) ($request->request->get('current_password') ?? '');
+            $newPw = (string) ($request->request->get('new_password') ?? '');
+            $confirmPw = (string) ($request->request->get('confirm_password') ?? '');
 
-            if (!$nom)    $errors['nom']    = 'Le nom est obligatoire.';
-            if (!$prenom) $errors['prenom'] = 'Le prénom est obligatoire.';
-            if ($tel && !preg_match('/^\d{8}$/', $tel)) {
+            if ($nom === '') $errors['nom'] = 'Le nom est obligatoire.';
+            if ($prenom === '') $errors['prenom'] = 'Le prénom est obligatoire.';
+            if ($tel !== '' && !preg_match('/^\d{8}$/', $tel)) {
                 $errors['tel'] = 'Le téléphone doit contenir 8 chiffres.';
             }
 
-            if ($newPw) {
+            if ($newPw !== '') {
                 if (!$hasher->isPasswordValid($user, $currentPw)) {
                     $errors['current_password'] = 'Mot de passe actuel incorrect.';
                 } elseif (strlen($newPw) < 8) {
@@ -292,8 +284,8 @@ class EmployeeController extends AbstractController
             }
 
             if (empty($errors)) {
-                $user->setNom($nom)->setPrenom($prenom)->setTel($tel ?: null);
-                if ($newPw) {
+                $user->setNom($nom)->setPrenom($prenom)->setTel($tel !== '' ? $tel : null);
+                if ($newPw !== '') {
                     $user->setPassword($hasher->hashPassword($user, $newPw));
                 }
                 $em->flush();
@@ -303,7 +295,7 @@ class EmployeeController extends AbstractController
         }
 
         return $this->render('employee/profile_edit.html.twig', [
-            'user'   => $user,
+            'user' => $user,
             'errors' => $errors,
         ]);
     }
