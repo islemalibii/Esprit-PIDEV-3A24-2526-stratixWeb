@@ -20,6 +20,8 @@ use App\Entity\Favori;
 use App\Repository\FavoriRepository;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Repository\NotificationRepository;
+
 
 #[Route('/projet')]
 class ProjetController extends AbstractController
@@ -238,7 +240,7 @@ class ProjetController extends AbstractController
     //  VUES EMPLOYÉ
     // ─────────────────────────────────────────────
     #[Route('/employee/mes-projets', name: 'app_projet_employee_index')]
-    public function indexEmployee(ProjetRepository $repo, FavoriRepository $favoriRepo): Response
+    public function indexEmployee(ProjetRepository $repo, FavoriRepository $favoriRepo,NotificationRepository $notificationRepository): Response
     {
         $user = $this->getUser();
         if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
@@ -252,14 +254,36 @@ class ProjetController extends AbstractController
             }
         }
 
+         $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
         return $this->render('employee/projetEmploye.html.twig', [
             'projets' => $repo->findProjetsPourEmploye($user),
             'user_favoris_ids' => $userFavorisIds,
+             'employee_notifications' => $employeeNotifications,
         ]);
     }
 
     #[Route('/employee/projet/{id}/show', name: 'app_projet_employe_show', methods: ['GET'])]
-    public function showEmployee(Projet $projet): Response
+    public function showEmployee(Projet $projet,NotificationRepository $notificationRepository): Response
     {
         $user = $this->getUser();
         if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
@@ -269,9 +293,31 @@ class ProjetController extends AbstractController
             return $this->redirectToRoute('app_projet_employee_index');
         }
 
+         $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
         return $this->render('employee/employeProjetDetails.html.twig', [
             'projet' => $projet,
             'phases' => $projet->getPhases(),
+             'employee_notifications' => $employeeNotifications,
         ]);
     }
 
@@ -315,15 +361,37 @@ class ProjetController extends AbstractController
     }
 
     #[Route('/employee/mes-favoris', name: 'app_projet_employee_favoris')]
-    public function favorisEmployee(FavoriRepository $favoriRepo): Response
+    public function favorisEmployee(FavoriRepository $favoriRepo, NotificationRepository $notificationRepository): Response
     {
         $user = $this->getUser();
         if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
 
         $favoris = $favoriRepo->findBy(['utilisateur' => $user]);
 
+         $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
         return $this->render('employee/favoris_liste.html.twig', [
-            'favoris' => $favoris
+            'favoris' => $favoris,
+             'employee_notifications' => $employeeNotifications,
         ]);
     }
 
@@ -331,7 +399,7 @@ class ProjetController extends AbstractController
     //  EXPORT PDF
     // ─────────────────────────────────────────────
     #[Route('/employee/projet/{id}/export-pdf', name: 'app_projet_export_pdf', methods: ['GET'])]
-    public function exportPdf(Projet $projet): Response
+    public function exportPdf(Projet $projet,NotificationRepository $notificationRepository): Response
     {
         $pdfOptions = new Options();
         $pdfOptions->set('defaultFont', 'Arial');
@@ -350,9 +418,31 @@ class ProjetController extends AbstractController
         $safeFilename = str_replace([' ', '/', '\\'], '_', (string)$nomProjet);
         $fileName = 'Stratix_Rapport_' . $safeFilename . '_' . date('Y-m-d') . '.pdf';
 
+         $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
         return new Response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+             'employee_notifications' => $employeeNotifications,
         ]);
     }
 

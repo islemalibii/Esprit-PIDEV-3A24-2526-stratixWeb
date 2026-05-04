@@ -84,7 +84,7 @@ class PhaseController extends AbstractController
         $projet = $phase->getProjet();
         $projetId = $projet ? $projet->getId() : 0;
         
-        // Correction CSRF : Cast du token en string
+        
         $token = $request->request->get('_token');
         if ($this->isCsrfTokenValid('delete' . $phase->getId(), is_string($token) ? $token : '')) {
             $em->remove($phase);

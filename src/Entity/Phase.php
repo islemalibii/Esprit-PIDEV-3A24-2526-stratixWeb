@@ -33,7 +33,7 @@ class Phase
     private string $statut;
 
     #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'phases')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(name: 'projet_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Projet $projet = null;
 
     public function getId(): ?int
