@@ -60,12 +60,6 @@
             </a>
         </li>
         <li>
-            <a class="nav-link {% if app.request.attributes.get('_route') starts with 'app_employee_categorie' %}active{% endif %}"
-               href="{{ path('app_employee_categorie_index') }}">
-                <i class="ti ti-category"></i><span class="nav-text">Catégories</span>
-            </a>
-        </li>
-        <li>
             <a class="nav-link {% if app.request.attributes.get('_route') starts with 'front_produit' %}active{% endif %}"
                href="{{ path('front_produit_index') }}">
                 <i class="ti ti-shopping-bag"></i><span class="nav-text">Produits</span>

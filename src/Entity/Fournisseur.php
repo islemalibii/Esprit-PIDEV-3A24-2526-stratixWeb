@@ -6,6 +6,7 @@ use App\Repository\FournisseurRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FournisseurRepository::class)]
 class Fournisseur
@@ -14,23 +15,22 @@ class Fournisseur
     #[ORM\GeneratedValue]
     #[ORM\Column]
     /**
-     * @var int|null
      */
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $nom = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $email = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $telephone = null;
+    #[Assert\NotBlank(message: "Le nom du fournisseur est obligatoire.")]
+    private string $nom;
 
     /**
      * @var Collection<int, Offre>
      */
-    #[ORM\OneToMany(mappedBy: 'fournisseur', targetEntity: Offre::class, orphanRemoval: true)]
+    #[ORM\OneToMany(
+        mappedBy: 'fournisseur', 
+        targetEntity: Offre::class, 
+        cascade: ['persist', 'remove'], 
+        orphanRemoval: true
+    )]
     private Collection $offres;
 
     public function __construct()
@@ -43,7 +43,7 @@ class Fournisseur
         return $this->id; 
     }
 
-    public function getNom(): ?string 
+    public function getNom(): string 
     { 
         return $this->nom; 
     }
@@ -51,28 +51,6 @@ class Fournisseur
     public function setNom(string $nom): static 
     { 
         $this->nom = $nom; 
-        return $this; 
-    }
-
-    public function getEmail(): ?string 
-    { 
-        return $this->email; 
-    }
-
-    public function setEmail(?string $email): static 
-    { 
-        $this->email = $email; 
-        return $this; 
-    }
-
-    public function getTelephone(): ?string 
-    { 
-        return $this->telephone; 
-    }
-
-    public function setTelephone(?string $telephone): static 
-    { 
-        $this->telephone = $telephone; 
         return $this; 
     }
 
@@ -105,6 +83,6 @@ class Fournisseur
 
     public function __toString(): string
     {
-        return $this->nom ?? 'Fournisseur sans nom';
+        return $this->nom;
     }
 }

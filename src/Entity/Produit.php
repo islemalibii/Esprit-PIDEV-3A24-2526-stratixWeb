@@ -3,131 +3,184 @@
 namespace App\Entity;
 
 use App\Repository\ProduitRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
-#[ORM\Table(name: 'produit')]
 class Produit
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-
+    #[ORM\Column]
+    /** 
+     * @var int|null 
+     */
     private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Assert\NotBlank(message: "Le nom du produit est obligatoire.")]
-    private ?string $nom = null;
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom est obligatoire.")]
+    private string $nom = '';
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $categorie = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    #[Assert\PositiveOrZero(message: "Le prix ne peut pas être négatif.")]
-    private ?float $prix = null;
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    private string $prix = '0.00';
 
-    #[ORM\Column(type: 'integer', nullable: true)]
-    #[Assert\PositiveOrZero(message: "Le stock ne peut pas être négatif.")]
-    private ?int $stock_actuel = null;
+    #[ORM\Column]
+    private int $stock_actuel = 0;
 
-    #[ORM\Column(type: 'integer', nullable: true)]
-    #[Assert\PositiveOrZero(message: "Le stock minimum ne peut pas être négatif.")]
-    private ?int $stock_min = null;
+    #[ORM\Column]
+    private int $stock_min = 0;
 
-    #[ORM\Column(type: 'date', nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $date_creation = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $ressources_necessaires = null;
-
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $image_path = null;
-
-    #[ORM\Column(type: 'date', nullable: true)]
-    #[Assert\LessThanOrEqual("today", message: "La date de fabrication ne peut pas être dans le futur.")]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $date_fabrication = null;
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    #[Assert\GreaterThan(propertyPath: "date_fabrication", message: "La date de péremption doit être après la date de fabrication.")]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $date_peremption = null;
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_garantie = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $image_path = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $details = null;
-
-    // --- GETTERS ET SETTERS ---
+    // --- GETTERS ---
 
     public function getId(): ?int 
     { 
         return $this->id; 
     }
 
-    public function getNom(): ?string { return $this->nom; }
-    public function setNom(?string $nom): self { $this->nom = $nom; return $this; }
-
-    public function getDescription(): ?string { return $this->description; }
-    public function setDescription(?string $description): self { $this->description = $description; return $this; }
-
-    public function getCategorie(): ?string { return $this->categorie; }
-    public function setCategorie(?string $categorie): self { $this->categorie = $categorie; return $this; }
-
-    /**
-     * @return float|null
-     */
-    public function getPrix(): ?float 
+    public function getNom(): string 
     { 
-        return $this->prix !== null ? (float) $this->prix : null; 
+        return $this->nom; 
     }
 
-    public function setPrix(?float $prix): self { $this->prix = $prix; return $this; }
+    public function getDescription(): ?string 
+    { 
+        return $this->description; 
+    }
 
-    public function getStockActuel(): ?int { return $this->stock_actuel; }
-    public function setStockActuel(?int $stock_actuel): self { $this->stock_actuel = $stock_actuel; return $this; }
+    public function getCategorie(): ?string 
+    { 
+        return $this->categorie; 
+    }
 
-    public function getStockMin(): ?int { return $this->stock_min; }
-    public function setStockMin(?int $stock_min): self { $this->stock_min = $stock_min; return $this; }
+    public function getPrix(): string 
+    { 
+        return $this->prix; 
+    }
 
-    public function getDateCreation(): ?\DateTimeInterface { return $this->date_creation; }
-    public function setDateCreation(?\DateTimeInterface $date_creation): self { $this->date_creation = $date_creation; return $this; }
+    public function getStockActuel(): int 
+    { 
+        return $this->stock_actuel; 
+    }
 
-    public function getRessourcesNecessaires(): ?string { return $this->ressources_necessaires; }
-    public function setRessourcesNecessaires(?string $ressources_necessaires): self { $this->ressources_necessaires = $ressources_necessaires; return $this; }
+    public function getStockMin(): int 
+    { 
+        return $this->stock_min; 
+    }
 
-    public function getImagePath(): ?string { return $this->image_path; }
-    public function setImagePath(?string $image_path): self { $this->image_path = $image_path; return $this; }
+    public function getDateCreation(): ?\DateTimeInterface 
+    { 
+        return $this->date_creation; 
+    }
 
-    public function getDateFabrication(): ?\DateTimeInterface { return $this->date_fabrication; }
-    public function setDateFabrication(?\DateTimeInterface $date_fabrication): self { $this->date_fabrication = $date_fabrication; return $this; }
+    public function getDateFabrication(): ?\DateTimeInterface 
+    { 
+        return $this->date_fabrication; 
+    }
 
-    public function getDatePeremption(): ?\DateTimeInterface { return $this->date_peremption; }
-    public function setDatePeremption(?\DateTimeInterface $date_peremption): self { $this->date_peremption = $date_peremption; return $this; }
+    public function getDatePeremption(): ?\DateTimeInterface 
+    { 
+        return $this->date_peremption; 
+    }
 
-    public function getDateGarantie(): ?\DateTimeInterface { return $this->date_garantie; }
-    public function setDateGarantie(?\DateTimeInterface $date_garantie): self { $this->date_garantie = $date_garantie; return $this; }
+    public function getImagePath(): ?string 
+    { 
+        return $this->image_path; 
+    }
 
-    public function getDetails(): ?string { return $this->details; }
-    public function setDetails(?string $details): self { $this->details = $details; return $this; }
+    // --- SETTERS ---
+
+    public function setNom(string $nom): self 
+    { 
+        $this->nom = $nom; 
+        return $this; 
+    }
+
+    public function setDescription(?string $description): self 
+    { 
+        $this->description = $description; 
+        return $this; 
+    }
+
+    public function setCategorie(?string $categorie): self 
+    { 
+        $this->categorie = $categorie; 
+        return $this; 
+    }
+
+    public function setPrix(string $prix): self 
+    { 
+        $this->prix = $prix; 
+        return $this; 
+    }
+
+    public function setStockActuel(int $stock): self 
+    { 
+        $this->stock_actuel = $stock; 
+        return $this; 
+    }
+
+    public function setStockMin(int $min): self 
+    { 
+        $this->stock_min = $min; 
+        return $this; 
+    }
+
+    public function setDateCreation(?\DateTimeInterface $date): self 
+    { 
+        $this->date_creation = $date; 
+        return $this; 
+    }
+
+    public function setDateFabrication(?\DateTimeInterface $date): self 
+    { 
+        $this->date_fabrication = $date; 
+        return $this; 
+    }
+
+    public function setDatePeremption(?\DateTimeInterface $date): self 
+    { 
+        $this->date_peremption = $date; 
+        return $this; 
+    }
+
+    public function setImagePath(?string $path): self 
+    { 
+        $this->image_path = $path; 
+        return $this; 
+    }
 
     /**
-     * @return array<string, string>
+     * Logique métier pour l'affichage du statut (utile pour Twig)
+     * @return array{text: string, class: string}
      */
     public function getStatut(): array 
     {
         $now = new \DateTime();
-        
         if ($this->date_peremption && $this->date_peremption < $now) {
-            return ['text' => '⚠ PRODUIT PÉRIMÉ ⚠', 'class' => 'bg-danger-subtle text-danger'];
+            return ['text' => '⚠ PÉRIMÉ', 'class' => 'bg-danger-subtle text-danger'];
         }
-        if ($this->stock_actuel !== null && $this->stock_min !== null && $this->stock_actuel <= $this->stock_min) {
+        if ($this->stock_actuel <= $this->stock_min) {
             return ['text' => '⚠ Stock faible', 'class' => 'bg-warning-subtle text-warning'];
         }
-        
-        return ['text' => '✓ Produit en bon état', 'class' => 'bg-success-subtle text-success'];
+        return ['text' => '✓ En stock', 'class' => 'bg-success-subtle text-success'];
     }
 }

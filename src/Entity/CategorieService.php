@@ -30,9 +30,8 @@ class CategorieService
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $nom = null;
-
-    public function getNom(): ?string
+    private string $nom = '';  
+    public function getNom(): string 
     {
         return $this->nom;
     }
@@ -94,6 +93,7 @@ class CategorieService
     public function __construct()
     {
         $this->services = new ArrayCollection();
+        $this->nom = '';  // Valeur par défaut pour éviter les erreurs
     }
 
     /**

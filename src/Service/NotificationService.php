@@ -1,7 +1,7 @@
 <?php
- 
+
 namespace App\Service;
- 
+
 use App\Entity\Notification;
 use App\Entity\Tache;
 use App\Entity\Utilisateur;
@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
- 
+
 class NotificationService
 {
     public function __construct(
@@ -21,7 +21,7 @@ class NotificationService
         private UtilisateurRepository $utilisateurRepository,
         private HttpClientInterface $httpClient
     ) {}
- 
+
     // ==================== 1. CRÉER UNE NOTIFICATION ====================
     public function createNotification(
         int $userId,
@@ -36,54 +36,56 @@ class NotificationService
         $notification->setTitle($title);
         $notification->setMessage($message);
         $notification->setType($type);
-        $notification->setRelatedId($relatedId ?? 0);
-        $notification->setRelatedType($relatedType ?? '');
- 
+        
+        // CORRECTION: utilisation de ?: au lieu de ??
+        $notification->setRelatedId($relatedId !== null ? $relatedId : 0);
+        $notification->setRelatedType($relatedType ?: '');
+
         $this->entityManager->persist($notification);
         $this->entityManager->flush();
- 
+
         $this->sendRealtimeNotification($userId, $notification);
- 
+
         return $notification;
     }
- 
+
     // ==================== 2. NOTIFICATION POUR DÉLAIS PROCHES ====================
     public function checkDeadlinesAndNotify(): void
     {
         $taches = $this->entityManager
             ->getRepository(Tache::class)
             ->findAll();
- 
+
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
- 
+
         foreach ($taches as $tache) {
             $deadline = $tache->getDeadline();
             if (!$deadline || $tache->getStatut() === 'TERMINEE') {
                 continue;
             }
- 
+
             $employeId = $tache->getEmployeId();
             if ($employeId === null) {
                 continue;
             }
- 
+
             // Garantit que $employeId est un int
             $employeIdInt = (int) $employeId;
- 
+
             $diff         = (int) $today->diff($deadline)->days;
             $deadlineDate = $deadline->format('d/m/Y');
- 
+
             $existingNotif = $this->notificationRepository->findOneBy([
                 'relatedId'   => $tache->getId(),
                 'relatedType' => 'tache',
                 'userId'      => $employeIdInt,
             ]);
- 
+
             if ($existingNotif) {
                 continue;
             }
- 
+
             if ($diff === 3) {
                 $this->createNotification(
                     $employeIdInt,
@@ -95,7 +97,7 @@ class NotificationService
                 );
                 $this->sendEmailNotification($employeIdInt, 'Deadline approche', $tache->getTitre() ?? '', $deadlineDate);
             }
- 
+
             if ($diff === 1) {
                 $this->createNotification(
                     $employeIdInt,
@@ -107,7 +109,7 @@ class NotificationService
                 );
                 $this->sendEmailNotification($employeIdInt, 'URGENT - Deadline demain', $tache->getTitre() ?? '', $deadlineDate);
             }
- 
+
             if ($deadline < $today) {
                 $existingRetard = $this->notificationRepository->findOneBy([
                     'relatedId' => $tache->getId(),
@@ -127,7 +129,7 @@ class NotificationService
             }
         }
     }
- 
+
     // ==================== 3. NOTIFICATION POUR NOUVELLE TÂCHE ====================
     public function notifyNewTask(Tache $tache): void
     {
@@ -144,7 +146,7 @@ class NotificationService
             );
             $this->sendEmailNotification($employeIdInt, 'Nouvelle tâche', $tache->getTitre() ?? '', null);
         }
- 
+
         $admins = $this->utilisateurRepository->findByRole('ROLE_ADMIN');
         foreach ($admins as $admin) {
             $adminId = $admin->getId();
@@ -161,7 +163,7 @@ class NotificationService
             );
         }
     }
- 
+
     // ==================== 4. NOTIFICATION TÂCHE TERMINÉE ====================
     public function notifyTaskCompleted(Tache $tache): void
     {
@@ -181,7 +183,7 @@ class NotificationService
             );
         }
     }
- 
+
     // ==================== 5. NOTIFICATION MASSE ====================
     public function notifyAllAdmins(string $title, string $message, string $type = 'warning'): void
     {
@@ -194,7 +196,7 @@ class NotificationService
             $this->createNotification($adminId, $title, $message, $type);
         }
     }
- 
+
     // ==================== 6. ENVOI EMAIL ====================
     private function sendEmailNotification(int $userId, string $subject, string $taskTitle, ?string $deadline): void
     {
@@ -202,24 +204,24 @@ class NotificationService
         if (!$user || !$user->getEmail()) {
             return;
         }
- 
+
         $email = (new Email())
             ->from('noreply@stratix.com')
             ->to($user->getEmail())
             ->subject('[STRATIX] ' . $subject)
-            ->html($this->generateEmailHtml($subject, $taskTitle, $deadline, $user->getPrenom() ?? 'Utilisateur'));
- 
+            ->html($this->generateEmailHtml($subject, $taskTitle, $deadline, $user->getPrenom() ));
+
         try {
             $this->mailer->send($email);
         } catch (\Exception $e) {
             // Log erreur mais continue
         }
     }
- 
+
     private function generateEmailHtml(string $subject, string $taskTitle, ?string $deadline, string $userName): string
     {
         $deadlineHtml = $deadline ? "<p>Date limite : <strong>{$deadline}</strong></p>" : '';
- 
+
         return <<<HTML
         <!DOCTYPE html>
         <html>
@@ -253,16 +255,16 @@ class NotificationService
         </html>
         HTML;
     }
- 
+
     // ==================== 7. NOTIFICATION TEMPS RÉEL (MERCURE) ====================
     private function sendRealtimeNotification(int $userId, Notification $notification): void
     {
         $mercureHubUrl = 'http://localhost:3000/.well-known/mercure';
         $topic         = 'http://localhost:8000/notifications/' . $userId;
- 
+
         $createdAt    = $notification->getCreatedAt();
         $createdAtStr = $createdAt ? $createdAt->format('H:i:s') : date('H:i:s');
- 
+
         $data = json_encode([
             'id'        => $notification->getId(),
             'title'     => $notification->getTitle(),
@@ -271,7 +273,7 @@ class NotificationService
             'createdAt' => $createdAtStr,
             'isRead'    => $notification->isRead(),
         ]);
- 
+
         try {
             $this->httpClient->request('POST', $mercureHubUrl, [
                 'body' => http_build_query([
@@ -283,7 +285,7 @@ class NotificationService
             // Mercure pas configuré, on ignore
         }
     }
- 
+
     // ==================== 8. MARQUER COMME LU ====================
     public function markAsRead(int $notificationId, int $userId): bool
     {
@@ -291,13 +293,13 @@ class NotificationService
         if (!$notification || $notification->getUserId() !== $userId) {
             return false;
         }
- 
+
         $notification->setIsRead(true);
         $this->entityManager->flush();
- 
+
         return true;
     }
- 
+
     // ==================== 9. RÉCUPÉRER LES NOTIFICATIONS ====================
     /**
      * @return array{unread: Notification[], unread_count: int, recent: Notification[]}
@@ -306,7 +308,7 @@ class NotificationService
     {
         $unread = $this->notificationRepository->findUnreadByUser($userId);
         $recent = $this->notificationRepository->findRecentByUser($userId, 20);
- 
+
         return [
             'unread'       => $unread,
             'unread_count' => count($unread),

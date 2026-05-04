@@ -9,7 +9,8 @@ class CategorieManager
     public function validate(CategorieService $categorie): bool
     {
         $nom = $categorie->getNom();
-        if ($nom === null || trim($nom) === '') {
+
+        if ($nom === '') {
             throw new \InvalidArgumentException('Le nom de la catégorie est obligatoire.');
         }
 

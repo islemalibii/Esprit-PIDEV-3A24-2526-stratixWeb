@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Utilisateur;
 use App\Repository\TacheRepository;
 use App\Repository\PlanningRepository;
+use App\Repository\NotificationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,30 +19,64 @@ class EmployeeController extends AbstractController
     #[Route('/employee/dashboard', name: 'app_employee_dashboard')]
     public function dashboard(
         TacheRepository $tacheRepository,
-        PlanningRepository $planningRepository
+        PlanningRepository $planningRepository,
+        NotificationRepository $notificationRepository
     ): Response {
         $employe = $this->getUser();
         if (!$employe instanceof Utilisateur) {
             throw $this->createAccessDeniedException();
         }
 
+        // ========== NOTIFICATIONS EMPLOYÉ ==========
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+            ];
+        }
+
         $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
         $plannings = $planningRepository->findBy(['employeId' => $employe->getId()]);
 
-        $aFaire = $enCours = $terminees = $haute = $moyenne = $basse = 0;
+        $aFaire = 0;
+        $enCours = 0;
+        $terminees = 0;
+        $haute = 0;
+        $moyenne = 0;
+        $basse = 0;
+
         foreach ($taches as $tache) {
-            match ($tache->getStatut()) {
-                'A_FAIRE' => $aFaire++,
-                'EN_COURS' => $enCours++,
-                'TERMINEE' => $terminees++,
-                default => null,
-            };
-            match ($tache->getPriorite()) {
-                'HAUTE' => $haute++,
-                'MOYENNE' => $moyenne++,
-                'BASSE' => $basse++,
-                default => null,
-            };
+            switch ($tache->getStatut()) {
+                case 'A_FAIRE':
+                    $aFaire++;
+                    break;
+                case 'EN_COURS':
+                    $enCours++;
+                    break;
+                case 'TERMINEE':
+                    $terminees++;
+                    break;
+            }
+            switch ($tache->getPriorite()) {
+                case 'HAUTE':
+                    $haute++;
+                    break;
+                case 'MOYENNE':
+                    $moyenne++;
+                    break;
+                case 'BASSE':
+                    $basse++;
+                    break;
+            }
         }
 
         $tachesRecentes = array_slice(array_reverse($taches), 0, 5);
@@ -57,17 +92,22 @@ class EmployeeController extends AbstractController
 
         return $this->render('employee/dashboard.html.twig', [
             'total' => count($taches),
-            'aFaire', 'enCours', 'terminees',
-            'haute', 'moyenne', 'basse',
-            'tachesRecentes',
-            'planningsAVenir',
+            'aFaire' => $aFaire,
+            'enCours' => $enCours,
+            'terminees' => $terminees,
+            'haute' => $haute,
+            'moyenne' => $moyenne,
+            'basse' => $basse,
+            'tachesRecentes' => $tachesRecentes,
+            'planningsAVenir' => $planningsAVenir,
             'employe' => $employe,
             'hasTaches' => !empty($taches),
+            'employee_notifications' => $employeeNotifications,
         ]);
     }
 
     #[Route('/employee/taches', name: 'app_employee_taches')]
-    public function mesTaches(TacheRepository $tacheRepository): Response
+    public function mesTaches(TacheRepository $tacheRepository, NotificationRepository $notificationRepository): Response
     {
         $employe = $this->getUser();
         if (!$employe instanceof Utilisateur) {
@@ -75,14 +115,37 @@ class EmployeeController extends AbstractController
         }
         $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
 
+                
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
         return $this->render('employee/taches.html.twig', [
             'taches' => $taches,
             'hasTaches' => !empty($taches),
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 
     #[Route('/employee/plannings', name: 'app_employee_plannings')]
-    public function mesPlannings(PlanningRepository $planningRepository): Response
+    public function mesPlannings(PlanningRepository $planningRepository, NotificationRepository $notificationRepository): Response
     {
         $employe = $this->getUser();
         if (!$employe instanceof Utilisateur) {
@@ -90,22 +153,65 @@ class EmployeeController extends AbstractController
         }
         $plannings = $planningRepository->findBy(['employeId' => $employe->getId()]);
 
+                
+
+
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
         return $this->render('employee/plannings.html.twig', [
             'plannings' => $plannings,
             'hasPlannings' => !empty($plannings),
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 
     #[Route('/employee/calendar', name: 'app_employee_calendar')]
     public function calendar(
         TacheRepository $tacheRepository,
-        PlanningRepository $planningRepository
+        PlanningRepository $planningRepository,
+        NotificationRepository $notificationRepository
     ): Response {
         $employe = $this->getUser();
         if (!$employe instanceof Utilisateur) {
             throw $this->createAccessDeniedException();
         }
 
+                
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
         $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
         $plannings = $planningRepository->findBy(['employeId' => $employe->getId()]);
 
@@ -113,13 +219,16 @@ class EmployeeController extends AbstractController
 
         foreach ($taches as $tache) {
             $deadline = $tache->getDeadline();
-            if (!$deadline) continue;
+            if (!$deadline) {
+                continue;
+            }
 
             $color = match ($tache->getPriorite()) {
                 'HAUTE' => '#dc2626',
                 'MOYENNE' => '#f59e0b',
                 default => '#10b981',
             };
+
             $events[] = [
                 'id' => 'tache_' . $tache->getId(),
                 'title' => '📌 ' . ($tache->getTitre() ?? ''),
@@ -133,15 +242,18 @@ class EmployeeController extends AbstractController
 
         foreach ($plannings as $planning) {
             $date = $planning->getDate();
-            if (!$date) continue;
+            if (!$date) {
+                continue;
+            }
 
             $heureDebut = $planning->getHeureDebut()?->format('H:i') ?: '';
-            $heureFin   = $planning->getHeureFin()?->format('H:i') ?: '';
+            $heureFin = $planning->getHeureFin()?->format('H:i') ?: '';
             $shift = $planning->getTypeShift() ?? 'Planning';
             $titre = $shift;
             if ($heureDebut && $heureFin) {
                 $titre .= " ($heureDebut - $heureFin)";
             }
+
             $events[] = [
                 'id' => 'planning_' . $planning->getId(),
                 'title' => '📅 ' . $titre,
@@ -155,31 +267,62 @@ class EmployeeController extends AbstractController
 
         return $this->render('employee/calendar.html.twig', [
             'events' => json_encode($events),
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 
     #[Route('/employee/whiteboard', name: 'app_employee_whiteboard')]
-    public function whiteboard(TacheRepository $tacheRepository): Response
+    public function whiteboard(TacheRepository $tacheRepository, NotificationRepository $notificationRepository): Response
     {
         $employe = $this->getUser();
         if (!$employe instanceof Utilisateur) {
             throw $this->createAccessDeniedException();
         }
+
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
         $taches = $tacheRepository->findBy(['employeId' => $employe->getId()]);
 
-        $aFaire = $enCours = $terminees = [];
+        $aFaire = [];
+        $enCours = [];
+        $terminees = [];
+
         foreach ($taches as $tache) {
-            match ($tache->getStatut()) {
-                'A_FAIRE' => $aFaire[] = $tache,
-                'EN_COURS' => $enCours[] = $tache,
-                'TERMINEE' => $terminees[] = $tache,
-                default => null,
-            };
+            switch ($tache->getStatut()) {
+                case 'A_FAIRE':
+                    $aFaire[] = $tache;
+                    break;
+                case 'EN_COURS':
+                    $enCours[] = $tache;
+                    break;
+                case 'TERMINEE':
+                    $terminees[] = $tache;
+                    break;
+            }
         }
 
         return $this->render('employee/whiteboard.html.twig', [
-            'aFaire', 'enCours', 'terminees',
+            'aFaire' => $aFaire,
+            'enCours' => $enCours,
+            'terminees' => $terminees,
             'hasTaches' => !empty($taches),
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 
@@ -202,9 +345,11 @@ class EmployeeController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
         $newStatus = null;
+
         if (is_array($data) && isset($data['status']) && is_string($data['status'])) {
             $newStatus = $data['status'];
         }
+
         if ($newStatus === null) {
             $raw = $request->request->get('status');
             $newStatus = is_string($raw) ? $raw : null;
@@ -235,10 +380,33 @@ class EmployeeController extends AbstractController
     }
 
     #[Route('/employee/profile', name: 'employee_profile')]
-    public function profile(): Response
+    public function profile(NotificationRepository $notificationRepository): Response
     {
+            
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
         return $this->render('employee/profile.html.twig', [
             'user' => $this->getUser(),
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 
@@ -263,8 +431,12 @@ class EmployeeController extends AbstractController
             $newPw = (string) ($request->request->get('new_password') ?? '');
             $confirmPw = (string) ($request->request->get('confirm_password') ?? '');
 
-            if ($nom === '') $errors['nom'] = 'Le nom est obligatoire.';
-            if ($prenom === '') $errors['prenom'] = 'Le prénom est obligatoire.';
+            if ($nom === '') {
+                $errors['nom'] = 'Le nom est obligatoire.';
+            }
+            if ($prenom === '') {
+                $errors['prenom'] = 'Le prénom est obligatoire.';
+            }
             if ($tel !== '' && !preg_match('/^\d{8}$/', $tel)) {
                 $errors['tel'] = 'Le téléphone doit contenir 8 chiffres.';
             }

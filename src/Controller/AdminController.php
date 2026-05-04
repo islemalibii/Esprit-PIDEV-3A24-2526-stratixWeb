@@ -156,7 +156,7 @@ class AdminController extends AbstractController
                 $user->setAvatar($filename);
             }
 
-            $user->setUpdatedAt(new \DateTime());
+            $user->setUpdatedAt(new \DateTimeImmutable());
             $em->flush();
             $this->addFlash('success', 'Utilisateur mis à jour.');
             return $this->redirectToRoute('admin_users');
@@ -182,7 +182,7 @@ class AdminController extends AbstractController
         if ($this->isCsrfTokenValid('toggle'.$user->getId(), (string)$request->request->get('_token'))) {
             $user->setAccountLocked(!$user->isAccountLocked());
             if ($user->isAccountLocked()) {
-                $user->setLockedAt(new \DateTime()); // date du verrouillage
+                $user->setLockedAt(new \DateTimeImmutable()); // date du verrouillage
             } else {
                 $user->setFailedLoginAttempts(0);
                 $user->setLockedUntil(null);

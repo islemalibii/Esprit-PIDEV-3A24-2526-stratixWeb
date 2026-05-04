@@ -63,8 +63,9 @@ class PDFExportService
             $pdf->Cell(80, 8, $service->getTitre() ?? '', 1, 0, 'L', $fill);
             $pdf->Cell(40, 8, number_format((float)($service->getBudget() ?? 0), 0, ',', ' '), 1, 0, 'R', $fill);
             
-            $categorie = $service->getCategorie() !== null ? ($service->getCategorie()->getNom() ?? 'Non catégorisé') : 'Non catégorisé';
-            $pdf->Cell(50, 8, (string)$categorie, 1, 1, 'L', $fill);
+            // FIX: Remove ?? operator because $categorie is never null
+            $categorieName = $service->getCategorie() !== null ? $service->getCategorie()->getNom() : 'Non catégorisé';
+            $pdf->Cell(50, 8, $categorieName, 1, 1, 'L', $fill);
             
             $fill = !$fill;
         }

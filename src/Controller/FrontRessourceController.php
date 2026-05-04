@@ -7,11 +7,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\NotificationRepository;
+use App\Entity\Utilisateur;
 
 class FrontRessourceController extends AbstractController
 {
     #[Route('/catalogue-ressources', name: 'front_ressource_index')]
-    public function index(RessourceRepository $repository, Request $request): Response
+    public function index(RessourceRepository $repository, Request $request, NotificationRepository $notificationRepository): Response
     {
         // Correction : Utilisation de getString() pour garantir un type string à PHPStan
         $searchTerm = $request->query->getString('q');
@@ -33,6 +35,27 @@ class FrontRessourceController extends AbstractController
             $quantiteTotale += $r->getQuantite();
         }
 
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
         // Rendu vers le template employé (Stratix)
         return $this->render('employee/ressource/index.html.twig', [
             'ressources' => $ressources,
@@ -40,7 +63,9 @@ class FrontRessourceController extends AbstractController
             'stats' => [
                 'total' => $total,
                 'quantiteTotale' => $quantiteTotale
-            ]
+            ],
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 }

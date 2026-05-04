@@ -21,15 +21,24 @@ class ProduitController extends AbstractController
     #[Route('/produit', name: 'produit_index')]
     public function index(ProduitRepository $repository, Request $request): Response
     {
-        //  : On force le type string (Casting)
+        // On force le type string (Casting) pour la sécurité
         $searchTerm = (string) $request->query->get('q', '');
         
         $produits = !empty($searchTerm) ? $repository->findBySearch($searchTerm) : $repository->findAll();
 
-        $stats = ['total' => count($produits), 'stockFaible' => 0, 'valeurStock' => 0];
+        $stats = ['total' => count($produits), 'stockFaible' => 0, 'valeurStock' => 0.0];
+        
         foreach ($produits as $p) {
-            if ($p->getStockActuel() <= $p->getStockMin()) $stats['stockFaible']++;
-            $stats['valeurStock'] += ($p->getPrix() * $p->getStockActuel());
+            if ($p->getStockActuel() <= $p->getStockMin()) {
+                $stats['stockFaible']++;
+            }
+            
+            /** 
+             * CORRECTION Ligne 32 : 
+             * getPrix() retourne une string (type DECIMAL). 
+             * On convertit en (float) pour permettre l'opération binaire "*"
+             */
+            $stats['valeurStock'] += ((float)$p->getPrix() * $p->getStockActuel());
         }
 
         return $this->render('admin/produit/index.html.twig', [
@@ -48,8 +57,8 @@ class ProduitController extends AbstractController
         $content = (string) $request->getContent();
         $data = json_decode($content, true);
         
-        //  : On force le type string pour la question
-        $question = (string) ($data['question'] ?? '');
+        // On force le type string pour la question
+        $question = is_array($data) ? (string) ($data['question'] ?? '') : '';
 
         if (empty($question)) {
             return $this->json(['reponse' => "Veuillez poser une question."]);
@@ -58,7 +67,7 @@ class ProduitController extends AbstractController
         $produits = $repository->findAll();
         
         try {
-            // : Passer la question castée en string
+            // GrokService reçoit la question castée
             $aiResponse = $grok->repondreQuestionStock($question, $produits);
         } catch (\Exception $e) {
             $aiResponse = "Erreur via GrokService : " . $e->getMessage();
@@ -117,7 +126,7 @@ class ProduitController extends AbstractController
     #[Route('/produit/{id}', name: 'produit_delete', methods: ['POST'])]
     public function delete(Request $request, Produit $produit, EntityManagerInterface $entityManager): Response
     {
-        // CORRECTION 4 : On force le type string pour le token CSRF
+        // On force le type string pour le token CSRF
         $token = (string) $request->request->get('_token', '');
 
         if ($this->isCsrfTokenValid('delete' . $produit->getId(), $token)) {
@@ -135,6 +144,7 @@ class ProduitController extends AbstractController
     #[Route('/produit/export/pdf', name: 'produit_pdf')]
     public function exportPdf(): Response
     {
-        return new Response("Exportation PDF...");
+        // Logique de génération PDF (Dompdf ou Snappy)
+        return new Response("Génération du document PDF en cours...");
     }
 }

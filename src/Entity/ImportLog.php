@@ -17,17 +17,29 @@ class ImportLog
      */
     private ?int $id = null;
 
+    /**
+     * CORRECTION : Suppression du "?" et du "= null"
+     */
     #[ORM\Column(length: 255)]
-    private ?string $fileName = null;
+    private string $fileName;
 
+    /**
+     * CORRECTION : Suppression du "?" et du "= null"
+     */
     #[ORM\Column(length: 255)]
-    private ?string $senderEmail = null;
+    private string $senderEmail;
 
+    /**
+     * CORRECTION : Suppression du "?" pour correspondre au type datetime_immutable non-nullable
+     */
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
+    /**
+     * CORRECTION : Suppression du "?" et du "= null"
+     */
     #[ORM\Column(length: 50)]
-    private ?string $status = null; // Ex: 'SUCCESS', 'ERROR'
+    private string $status; 
 
     public function __construct()
     {
@@ -40,7 +52,10 @@ class ImportLog
         return $this->id; 
     }
 
-    public function getFileName(): ?string 
+    /**
+     * CORRECTION : Type de retour string
+     */
+    public function getFileName(): string 
     { 
         return $this->fileName; 
     }
@@ -51,7 +66,10 @@ class ImportLog
         return $this; 
     }
 
-    public function getSenderEmail(): ?string 
+    /**
+     * CORRECTION : Type de retour string
+     */
+    public function getSenderEmail(): string 
     { 
         return $this->senderEmail; 
     }
@@ -62,7 +80,10 @@ class ImportLog
         return $this; 
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable 
+    /**
+     * CORRECTION : Type de retour \DateTimeImmutable
+     */
+    public function getCreatedAt(): \DateTimeImmutable 
     { 
         return $this->createdAt; 
     }
@@ -73,7 +94,10 @@ class ImportLog
         return $this; 
     }
 
-    public function getStatus(): ?string 
+    /**
+     * CORRECTION : Type de retour string
+     */
+    public function getStatus(): string 
     { 
         return $this->status; 
     }

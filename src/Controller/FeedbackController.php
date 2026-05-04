@@ -11,6 +11,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\NotificationRepository;
+use App\Entity\Utilisateur;
 
 #[Route('/employee/feedback')]
 class FeedbackController extends AbstractController
@@ -20,9 +22,31 @@ class FeedbackController extends AbstractController
         Evenement $evenement,
         Request $request,
         EntityManagerInterface $em,
-        EventFeedbackRepository $feedbackRepo
+        EventFeedbackRepository $feedbackRepo,
+        NotificationRepository $notificationRepository
     ): Response {
         $userEmail = $this->getUser()?->getUserIdentifier();
+
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
 
         $existing = $feedbackRepo->findOneBy([
             'evenement'  => $evenement,
@@ -53,6 +77,8 @@ class FeedbackController extends AbstractController
         return $this->render('employee/events/feedback.html.twig', [
             'form'      => $form->createView(),
             'evenement' => $evenement,
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 }
