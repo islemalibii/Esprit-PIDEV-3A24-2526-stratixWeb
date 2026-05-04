@@ -1,0 +1,92 @@
+{# templates/employee/calendar.html.twig #}
+{% extends 'employee/base_employee.html.twig' %}
+
+{% block title %}Calendrier - STRATIX{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }} {# IMPORTANT: Garde les styles du layout (sidebar, fontawesome, etc.) #}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        #calendar {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .fc-event {
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 2px 5px;
+            border: none !important;
+        }
+        .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            font-weight: bold;
+            color: #1e3a5f;
+        }
+        .fc-day-today {
+            background-color: #f8faff !important;
+        }
+        /* Ajustement pour que le calendrier ne soit pas écrasé par le sidebar */
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+    </style>
+{% endblock %}
+
+{% block employee_content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <h4 class="mb-0 text-primary">
+                <i class="fas fa-calendar-alt me-2"></i>Mon Planning Stratix
+            </h4>
+        </div>
+        <div class="card-body">
+            {# Le div qui accueillera le calendrier #}
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }} {# IMPORTANT: Garde les scripts de base (Bootstrap, etc.) #}
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/fr.js'></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            
+            // Vérification si l'élément existe pour éviter les erreurs JS
+            if (calendarEl) {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    locale: 'fr',
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    },
+                    // Sécurité : si events est vide, on passe un tableau vide
+                    events: {{ events|default('[]')|raw }},
+                    
+                    eventClick: function(info) {
+                        alert('Tâche : ' + info.event.title);
+                    },
+                    height: 'auto',
+                    themeSystem: 'bootstrap5',
+                    slotMinTime: '08:00:00',
+                    slotMaxTime: '20:00:00',
+                    expandRows: true,
+                    handleWindowResize: true
+                });
+                
+                calendar.render();
+            }
+        });
+    </script>
+{% endblock %}

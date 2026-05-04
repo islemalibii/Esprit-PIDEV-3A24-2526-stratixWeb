@@ -136,7 +136,6 @@ class EventManagerTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Format d'image invalide. Utilisez JPG, PNG ou WEBP");
-
         $evenement = $this->createValidEvenement();
         $evenement->setImageUrl('/uploads/events/document.pdf');
         $manager = new EventManage();
@@ -186,7 +185,6 @@ class EventManagerTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage("Le commentaire ne peut pas dépasser 500 caractères");
-
         $manager = new EventManage();
         $manager->validateCommentaire(str_repeat('a', 501));
     }

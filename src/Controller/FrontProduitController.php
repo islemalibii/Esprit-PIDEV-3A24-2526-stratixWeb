@@ -7,11 +7,13 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\NotificationRepository;
+use App\Entity\Utilisateur;
 
 class FrontProduitController extends AbstractController
 {
     #[Route('/boutique', name: 'front_produit_index')]
-    public function index(ProduitRepository $repository, Request $request): Response
+    public function index(ProduitRepository $repository, Request $request, NotificationRepository $notificationRepository): Response
     {
         // Correction PHPStan : On utilise getString() pour garantir un retour de type string
         // Cela évite l'erreur "expects string, float|int|string|true given"
@@ -36,13 +38,36 @@ class FrontProduitController extends AbstractController
             }
         }
 
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
         return $this->render('employee/produit/index.html.twig', [
             'produits' => $produits,
             'searchTerm' => $searchTerm,
             'stats' => [
                 'total' => $total,
                 'disponibles' => $disponibles
-            ]
+            ],
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 }

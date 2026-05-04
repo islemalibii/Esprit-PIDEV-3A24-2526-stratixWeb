@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
@@ -68,12 +69,13 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password = null;
 
+    #[Ignore]
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
-    public function setPassword(?string $password): self
+    public function setPassword(#[\SensitiveParameter] ?string $password): self
     {
         $this->password = $password;
         return $this;
@@ -83,9 +85,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
     #[Assert\Length(min: 2, max: 50, minMessage: 'Minimum 2 caractères.', maxMessage: 'Maximum 50 caractères.')]
     #[Assert\Regex(pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/', message: 'Le nom ne doit contenir que des lettres.')]
-    private ?string $nom = null;
+    private string $nom = '';
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -100,9 +102,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Le prénom est obligatoire.')]
     #[Assert\Length(min: 2, max: 50, minMessage: 'Minimum 2 caractères.', maxMessage: 'Maximum 50 caractères.')]
     #[Assert\Regex(pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/', message: 'Le prénom ne doit contenir que des lettres.')]
-    private ?string $prenom = null;
+    private string $prenom = '';
 
-    public function getPrenom(): ?string
+    public function getPrenom(): string
     {
         return $this->prenom;
     }
@@ -116,9 +118,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'integer', nullable: false)]
     #[Assert\NotBlank(message: 'Le CIN est obligatoire.')]
     #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Le CIN doit contenir exactement 8 chiffres.')]
-    private ?int $cin = null;
+    private int $cin = 0;
 
-    public function getCin(): ?int
+    public function getCin(): int
     {
         return $this->cin;
     }
@@ -144,9 +146,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $role = null;
+    private string $role = '';
 
-    public function getRole(): ?string
+    public function getRole(): string
     {
         return $this->role;
     }
@@ -307,11 +309,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', nullable: false, options: ['default' => 'light'])]
     private string $theme = 'light';
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?\DateTime $locked_at = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $locked_at = null;
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?\DateTime $updated_at = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $updated_at = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $last_emotion = null;
@@ -322,21 +324,22 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getTheme(): string { return $this->theme; }
     public function setTheme(string $theme): static { $this->theme = $theme; return $this; }
 
-    public function getLockedAt(): ?\DateTime { return $this->locked_at; }
-    public function setLockedAt(?\DateTime $locked_at): static { $this->locked_at = $locked_at; return $this; }
+    public function getLockedAt(): ?\DateTimeImmutable { return $this->locked_at; }
+    public function setLockedAt(?\DateTimeImmutable $locked_at): static { $this->locked_at = $locked_at; return $this; }
 
-    public function getUpdatedAt(): ?\DateTime { return $this->updated_at; }
-    public function setUpdatedAt(?\DateTime $updated_at): static { $this->updated_at = $updated_at; return $this; }
+    public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updated_at; }
+    public function setUpdatedAt(?\DateTimeImmutable $updated_at): static { $this->updated_at = $updated_at; return $this; }
 
     public function getLastEmotion(): ?string { return $this->last_emotion; }
     public function setLastEmotion(?string $emotion): static { $this->last_emotion = $emotion; return $this; }
 
+    #[Ignore]
     public function getTwo_factor_secret(): ?string
     {
         return $this->two_factor_secret;
     }
 
-    public function setTwo_factor_secret(?string $two_factor_secret): self
+    public function setTwo_factor_secret(#[\SensitiveParameter] ?string $two_factor_secret): self
     {
         $this->two_factor_secret = $two_factor_secret;
         return $this;
@@ -414,12 +417,13 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Ignore]
     public function getTwoFactorSecret(): ?string
     {
         return $this->two_factor_secret;
     }
 
-    public function setTwoFactorSecret(?string $two_factor_secret): static
+    public function setTwoFactorSecret(#[\SensitiveParameter] ?string $two_factor_secret): static
     {
         $this->two_factor_secret = $two_factor_secret;
 
@@ -435,7 +439,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        $role = strtoupper(str_replace(' ', '_', $this->role ?? 'user'));
+        $role = strtoupper(str_replace(' ', '_', $this->role ?: 'user'));
         return ['ROLE_' . $role];
     }
 

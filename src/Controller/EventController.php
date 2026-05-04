@@ -18,6 +18,9 @@ use App\Service\MeetingSummaryService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\RecurrenceService;
 use App\Service\RecommendationService;
+use App\Repository\NotificationRepository;
+use App\Entity\Utilisateur;
+
 
 
 class EventController extends AbstractController
@@ -159,7 +162,7 @@ class EventController extends AbstractController
     
     // front office
     #[Route('/employee/events', name: 'emp_event_list')]
-    public function employeeIndex(Request $request, EvenementRepository $repo, ParticipationRepository $participationRepo, EventFeedbackRepository $feedbackRepo, PaginatorInterface $paginator, RecommendationService $recommendationService): Response
+    public function employeeIndex(Request $request, EvenementRepository $repo, ParticipationRepository $participationRepo, EventFeedbackRepository $feedbackRepo, PaginatorInterface $paginator, RecommendationService $recommendationService ,NotificationRepository $notificationRepository): Response
     {
         $type   = (string) $request->query->get('type', '');
         $search = (string) $request->query->get('search', '');
@@ -177,6 +180,28 @@ class EventController extends AbstractController
             9
         );
 
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
+
+
         $user = $this->getUser();
         $userEmail = $user ? (string) $user->getUserIdentifier() : '';
 
@@ -192,20 +217,47 @@ class EventController extends AbstractController
             'joinedEventIds'=> $joinedEventIds, 
             'feedbackEventIds'=> $feedbackRepo->findFeedbackEventIds($userEmail),
             'recommendations'  => $recommendations,
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
     #[Route('/event/{id}', name: 'emp_event_show', methods: ['GET'])]
-    public function showDEpmloyee(Evenement $evenement, ParticipationRepository $participationRepo): Response
+    public function showDEpmloyee(Evenement $evenement, ParticipationRepository $participationRepo, NotificationRepository $notificationRepository): Response
     {
         $userEmail      = $this->getUser()?->getUserIdentifier();
         $alreadyJoined  = $participationRepo->findOneBy([
             'event_id'   => $evenement->getId(),
             'user_email' => $userEmail,
         ]);
+        
+
+
+        $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
 
         return $this->render('employee/events/show.html.twig', [
             'evenement'    => $evenement,
             'alreadyJoined'=> $alreadyJoined !== null,
+            'employee_notifications' => $employeeNotifications,
+
         ]);
     }
 }
