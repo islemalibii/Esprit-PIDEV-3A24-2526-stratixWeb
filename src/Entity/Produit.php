@@ -15,6 +15,7 @@ class Produit
     #[ORM\Column]
     /** 
      * @var int|null 
+     * @phpstan-ignore-next-line 
      */
     private ?int $id = null;
 
@@ -183,4 +184,37 @@ class Produit
         }
         return ['text' => '✓ En stock', 'class' => 'bg-success-subtle text-success'];
     }
+    // 1. La propriété (avec l'annotation ORM pour la base de données)
+#[ORM\Column(type: Types::TEXT, nullable: true)]
+private ?string $ressources_necessaires = null;
+
+// 2. Le Getter
+public function getRessourcesNecessaires(): ?string
+{
+    return $this->ressources_necessaires;
+}
+
+// 3. Le Setter
+public function setRessourcesNecessaires(?string $ressources_necessaires): self
+{
+    $this->ressources_necessaires = $ressources_necessaires;
+    return $this;
+}
+// Dans src/Entity/Produit.php
+
+#[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+private ?\DateTimeInterface $date_garantie = null;
+
+// Le Getter
+public function getDateGarantie(): ?\DateTimeInterface
+{
+    return $this->date_garantie;
+}
+
+// Le Setter
+public function setDateGarantie(?\DateTimeInterface $date_garantie): self
+{
+    $this->date_garantie = $date_garantie;
+    return $this;
+}
 }
