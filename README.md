@@ -55,16 +55,6 @@ L'application exploite les technologies PHP modernes et s'intègre avec diverses
 - 📬 Notifications IA de rappel de deadlines (Groq/Llama)
 - 📊 Suivi de l'avancement des projets
 
-### 🏖️ Gestion des Congés
-- 📝 Demandes de congés par les employés
-- ✅ Validation par les responsables
-- 📅 Calendrier des absences
-
-### 📧 Notifications Email
-- ✅ Confirmation de participation aux événements
-- ❌ Annulation de participation
-- ⏰ Rappels d'événements automatiques
-- 🚀 Notifications IA de deadline de projets
 
 ---
 
