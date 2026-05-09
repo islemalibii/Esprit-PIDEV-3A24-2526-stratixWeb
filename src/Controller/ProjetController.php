@@ -192,10 +192,31 @@ class ProjetController extends AbstractController
     }
 
     #[Route('/{id}/chat', name: 'app_projet_chat', methods: ['GET'])]
-    public function chat(Projet $projet): Response
+    public function chat(Projet $projet,NotificationRepository $notificationRepository): Response
     {
+         $employe = $this->getUser();
+        if (!$employe instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+        $employeeNotifications = [];
+        $notifications = $notificationRepository->findBy(
+            ['userId' => $employe->getId(), 'isRead' => false],
+            ['createdAt' => 'DESC'],
+            5
+        );
+        foreach ($notifications as $notif) {
+            $employeeNotifications[] = [
+                'title' => $notif->getTitle(),
+                'message' => $notif->getMessage(),
+                'date' => $notif->getCreatedAt(),
+                'color' => '#3b82f6',
+                'icon' => 'ti-bell',
+
+            ];
+        }
         return $this->render('admin/Projet/chat.html.twig', [
-            'projet' => $projet
+            'projet' => $projet,
+             'employee_notifications' => $employeeNotifications,
         ]);
     }
 
