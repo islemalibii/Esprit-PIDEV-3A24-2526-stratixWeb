@@ -13,6 +13,8 @@ services:
         autowire: true
         autoconfigure: true
 
+    App\Security\Sha256PasswordHasher: ~
+
     App\:
         resource: '../src/'
         exclude:
@@ -37,6 +39,11 @@ services:
         arguments:
             $apiKey: '%grok_api_key%'
             
+
+    App\Service\GrokService:
+        arguments:
+            $apiKey: '%grok_api_key%'
+
     App\Service\AiResumeService:
         arguments:
             $apiKey: '%env(OPENAI_API_KEY_PROJET)%'
