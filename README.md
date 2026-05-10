@@ -49,13 +49,16 @@ L'application exploite les technologies PHP modernes et s'intègre avec diverses
 - 📄 Export PDF des détails d'événement
 - 📊 Export CSV de la liste des participants
 
-### 📋 Gestion des Projets & Tâches
-- 📁 Création et suivi des projets
-- ✅ Gestion des tâches et affectation aux membres
-- 📬 Notifications IA de rappel de deadlines (Groq/Llama)
-- 📊 Suivi de l'avancement des projets
-
-
+### 📋 Gestion des Projets
+- 📁 Création, modification et suivi des projets
+- 🛠️ Structuration et découpage des projets par phases
+- ⭐ Système de favoris pour l’accès rapide aux projets prioritaires
+- 📬 Notifications IA de rappel des deadlines (Groq/Llama)
+- 📂 Archivage et gestion de l’historique des projets
+- 🤖 Résumé intelligent des cahiers des charges par IA
+- 💬 Chat en temps réel entre les membres de l’équipe projet
+- 📄 Export PDF détaillé des fiches et bilans de projet
+- 👥 Sélection et affectation du chef de projet et des membres de l’équipe
 ---
 
 ## 🛠 Technologies utilisées
