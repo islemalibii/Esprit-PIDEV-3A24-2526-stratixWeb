@@ -6,96 +6,128 @@
 <main id="content" class="content py-4">
 <div class="container-fluid px-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-tasks"></i> Gestion des Tâches</h1>
+    <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
         <div>
-            <button onclick="toggleStats()" class="btn btn-info me-2" id="statsBtn">
-                <i class="fas fa-chart-line"></i> Afficher Statistiques
+            <h1 style="color: #1E293B; font-weight: 800; letter-spacing: -0.03em; font-size: 2rem;">
+                <i class="fas fa-tasks" style="color: #F97316; background: linear-gradient(135deg, #FFEDD5, #FED7AA); padding: 10px; border-radius: 16px;"></i>
+                <span style="margin-left: 12px;">Gestion des Tâches</span>
+            </h1>
+            
+        </div>
+        <div class="d-flex gap-3 flex-wrap">
+            <button onclick="toggleStats()" class="btn" id="statsBtn" style="background: linear-gradient(135deg, #F97316, #EA580C); color: white; border: none; border-radius: 16px; padding: 10px 24px; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);">
+                <i class="fas fa-chart-line"></i> <span id="statsBtnText">Afficher Statistiques</span>
             </button>
-            <a href="/api/export/taches" class="btn btn-danger me-2" target="_blank">
+            <a href="/api/export/taches" class="btn" target="_blank" style="background: linear-gradient(135deg, #1E293B, #0F172A); color: white; border: none; border-radius: 16px; padding: 10px 24px; font-weight: 600; transition: all 0.3s;">
                 <i class="fas fa-file-pdf"></i> Exporter PDF
             </a>
-            <a href="{{ path('app_tache_new') }}" class="btn btn-primary">
+            <a href="{{ path('app_tache_new') }}" class="btn" style="background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; border-radius: 16px; padding: 10px 24px; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
                 <i class="fas fa-plus"></i> Nouvelle tâche
             </a>
         </div>
     </div>
 
-    <!-- SECTION STATISTIQUES -->
     <div id="statsSection" style="display: none;">
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card text-white bg-primary">
-                    <div class="card-body text-center">
-                        <h2 class="display-4">{{ total }}</h2>
-                        <h5>📊 Total tâches</h5>
+        <div class="row mb-5">
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 h-100 animate-card" style="border-radius: 24px; background: linear-gradient(135deg, #FFF7ED, #FFEDD5); transition: all 0.3s;">
+                    <div class="card-body text-center py-4">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #F97316, #EA580C); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-chalkboard fa-2x" style="color: white;"></i>
+                        </div>
+                        <h2 class="display-4 fw-bold" style="color: #F97316;">{{ total }}</h2>
+                        <h5 class="mb-0" style="color: #1E293B;">Total tâches</h5>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-info">
-                    <div class="card-body text-center">
-                        <h2 class="display-4">{{ en_cours }}</h2>
-                        <h5>⚡ En cours</h5>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 h-100 animate-card" style="border-radius: 24px; background: linear-gradient(135deg, #E0F2FE, #BAE6FD); transition: all 0.3s;">
+                    <div class="card-body text-center py-4">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #0EA5E9, #0284C7); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-bolt fa-2x" style="color: white;"></i>
+                        </div>
+                        <h2 class="display-4 fw-bold" style="color: #0284C7;">{{ en_cours }}</h2>
+                        <h5 class="mb-0" style="color: #1E293B;">En cours</h5>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-success">
-                    <div class="card-body text-center">
-                        <h2 class="display-4">{{ terminees }}</h2>
-                        <h5>✅ Terminées</h5>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 h-100 animate-card" style="border-radius: 24px; background: linear-gradient(135deg, #D1FAE5, #A7F3D0); transition: all 0.3s;">
+                    <div class="card-body text-center py-4">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-check-circle fa-2x" style="color: white;"></i>
+                        </div>
+                        <h2 class="display-4 fw-bold" style="color: #059669;">{{ terminees }}</h2>
+                        <h5 class="mb-0" style="color: #1E293B;">Terminées</h5>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-warning">
-                    <div class="card-body text-center">
-                        <h2 class="display-4">{{ a_faire }}</h2>
-                        <h5>📌 À faire</h5>
+            <div class="col-md-3 mb-3">
+                <div class="card border-0 h-100 animate-card" style="border-radius: 24px; background: linear-gradient(135deg, #FEF3C7, #FDE68A); transition: all 0.3s;">
+                    <div class="card-body text-center py-4">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #F59E0B, #D97706); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                            <i class="fas fa-clipboard-list fa-2x" style="color: white;"></i>
+                        </div>
+                        <h2 class="display-4 fw-bold" style="color: #D97706;">{{ a_faire }}</h2>
+                        <h5 class="mb-0" style="color: #1E293B;">À faire</h5>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-chart-pie"></i> Répartition par Statut
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 h-100" style="border-radius: 24px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); overflow: hidden;">
+                    <div class="card-header border-0" style="background: linear-gradient(135deg, #1E293B, #0F172A); padding: 18px 24px;">
+                        <i class="fas fa-chart-pie" style="color: #F97316; margin-right: 10px;"></i>
+                        <span style="color: white; font-weight: 600;">Répartition par Statut</span>
                     </div>
-                    <div class="card-body text-center">
+                    <div class="card-body text-center py-4">
                         <canvas id="statutChart" width="300" height="300"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-chart-bar"></i> Répartition par Priorité
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 h-100" style="border-radius: 24px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); overflow: hidden;">
+                    <div class="card-header border-0" style="background: linear-gradient(135deg, #1E293B, #0F172A); padding: 18px 24px;">
+                        <i class="fas fa-chart-bar" style="color: #F97316; margin-right: 10px;"></i>
+                        <span style="color: white; font-weight: 600;">Répartition par Priorité</span>
                     </div>
-                    <div class="card-body text-center">
+                    <div class="card-body text-center py-4">
                         <canvas id="prioriteChart" width="300" height="300"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row mb-4">
+        <div class="row mb-5">
             <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-trophy"></i> Taux de Complétion
+                <div class="card border-0" style="border-radius: 24px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); overflow: hidden;">
+                    <div class="card-header border-0" style="background: linear-gradient(135deg, #1E293B, #0F172A); padding: 18px 24px;">
+                        <i class="fas fa-trophy" style="color: #F97316; margin-right: 10px;"></i>
+                        <span style="color: white; font-weight: 600;">Taux de Complétion</span>
                     </div>
-                    <div class="card-body text-center">
-                        <h1 class="display-1 text-success">{{ taux_completion }}%</h1>
-                        <div class="progress mt-3" style="height: 30px;">
-                            <div class="progress-bar bg-success progress-bar-striped" style="width: {{ taux_completion }}%">
-                                {{ taux_completion }}%
+                    <div class="card-body text-center py-5">
+                        <div style="position: relative; display: inline-block;">
+                            <div class="circular-progress" data-progress="{{ taux_completion }}">
+                                <svg width="150" height="150" viewBox="0 0 150 150">
+                                    <circle cx="75" cy="75" r="65" fill="none" stroke="#E2E8F0" stroke-width="8"/>
+                                    <circle id="completion-circle" cx="75" cy="75" r="65" fill="none" stroke="url(#grad1)" stroke-width="8" stroke-linecap="round"
+                                            stroke-dasharray="408.4" stroke-dashoffset="408.4" transform="rotate(-90 75 75)"/>
+                                    <defs>
+                                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#F97316"/>
+                                            <stop offset="100%" style="stop-color:#EA580C"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                    <span class="display-4 fw-bold" style="color: #F97316;">{{ taux_completion }}<span style="font-size: 1.5rem;">%</span></span>
+                                </div>
                             </div>
                         </div>
-                        <p class="mt-3">
-                            <i class="fas fa-check-circle text-success"></i> {{ terminees }} / {{ total }} tâches terminées
+                        <p class="mt-4 text-secondary">
+                            <i class="fas fa-check-circle" style="color: #10B981;"></i> {{ terminees }} / {{ total }} tâches terminées
                         </p>
                     </div>
                 </div>
@@ -103,23 +135,31 @@
         </div>
     </div>
 
-    {# ===== FILTRES : pure GET form, no JS, URL changes ===== #}
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card mb-5 border-0" style="border-radius: 24px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); background: white;">
+        <div class="card-body p-4">
             <form method="GET" action="{{ path('app_tache_index') }}">
-                <div class="row g-3 align-items-center">
+                <div class="row g-3 align-items-end">
                     <div class="col-md-5">
+                        <label class="form-label small text-uppercase fw-semibold text-secondary mb-2" style="letter-spacing: 0.5px;">
+                            <i class="fas fa-search" style="color: #F97316;"></i> Recherche
+                        </label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
                             <input type="text"
                                    name="search"
                                    class="form-control"
                                    placeholder="Rechercher une tâche..."
-                                   value="{{ search }}">
+                                   value="{{ search }}"
+                                   style="border-radius: 14px 0 0 14px; border: 1px solid #E2E8F0; padding: 12px 16px;">
+                            <span class="input-group-text" style="background: #F97316; color: white; border-radius: 0 14px 14px 0; border: none;">
+                                <i class="fas fa-search"></i>
+                            </span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <select name="statut" class="form-select" onchange="this.form.submit()">
+                        <label class="form-label small text-uppercase fw-semibold text-secondary mb-2" style="letter-spacing: 0.5px;">
+                            <i class="fas fa-filter" style="color: #F97316;"></i> Statut
+                        </label>
+                        <select name="statut" class="form-select" onchange="this.form.submit()" style="border-radius: 14px; border: 1px solid #E2E8F0; padding: 12px 16px;">
                             <option value="">Tous les statuts</option>
                             <option value="A_FAIRE"  {{ statut == 'A_FAIRE'  ? 'selected' : '' }}>📌 À faire</option>
                             <option value="EN_COURS" {{ statut == 'EN_COURS' ? 'selected' : '' }}>⚡ En cours</option>
@@ -127,99 +167,104 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <select name="priorite" class="form-select" onchange="this.form.submit()">
+                        <label class="form-label small text-uppercase fw-semibold text-secondary mb-2" style="letter-spacing: 0.5px;">
+                            <i class="fas fa-flag" style="color: #F97316;"></i> Priorité
+                        </label>
+                        <select name="priorite" class="form-select" onchange="this.form.submit()" style="border-radius: 14px; border: 1px solid #E2E8F0; padding: 12px 16px;">
                             <option value="">Priorité</option>
                             <option value="HAUTE"   {{ priorite == 'HAUTE'   ? 'selected' : '' }}>🔴 Haute</option>
                             <option value="MOYENNE" {{ priorite == 'MOYENNE' ? 'selected' : '' }}>🟡 Moyenne</option>
                             <option value="BASSE"   {{ priorite == 'BASSE'   ? 'selected' : '' }}>🟢 Basse</option>
                         </select>
                     </div>
-                    <div class="col-md-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-search"></i> Rechercher
-                        </button>
-                        <a href="{{ path('app_tache_index') }}" class="btn btn-outline-secondary" title="Réinitialiser">
-                            <i class="fas fa-undo-alt"></i>
-                        </a>
+                    <div class="col-md-2">
+                        <label class="form-label small text-uppercase fw-semibold text-secondary mb-2" style="letter-spacing: 0.5px;">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn flex-grow-1" style="background: linear-gradient(135deg, #F97316, #EA580C); color: white; border: none; border-radius: 14px; padding: 12px; font-weight: 600;">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                            <a href="{{ path('app_tache_index') }}" class="btn" style="background: #F1F5F9; color: #64748B; border: none; border-radius: 14px; padding: 12px 18px;">
+                                <i class="fas fa-undo-alt"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
                 {% if search or statut or priorite %}
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-filter"></i>
-                        <strong>{{ taches|length }}</strong> résultat(s)
+                <div class="mt-4 pt-2">
+                    <div class="alert" style="background: #FFF7ED; border-radius: 14px; border-left: 4px solid #F97316;">
+                        <i class="fas fa-filter" style="color: #F97316;"></i>
+                        <strong class="ms-1">{{ taches|length }}</strong> résultat(s)
                         {% if search %} pour "<strong>{{ search }}</strong>"{% endif %}
                         {% if statut %} — statut : <strong>{{ statut }}</strong>{% endif %}
                         {% if priorite %} — priorité : <strong>{{ priorite }}</strong>{% endif %}
-                        &nbsp;·&nbsp; <a href="{{ path('app_tache_index') }}">Effacer les filtres</a>
-                    </small>
+                        <a href="{{ path('app_tache_index') }}" class="ms-3" style="color: #F97316; text-decoration: none; font-weight: 500;">Effacer les filtres <i class="fas fa-times"></i></a>
+                    </div>
                 </div>
                 {% endif %}
             </form>
         </div>
     </div>
 
-    <!-- Tableau des tâches -->
-    <div class="card">
-        <div class="card-body">
+    <div class="card border-0" style="border-radius: 24px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06); overflow: hidden;">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
+                <table class="table table-hover mb-0">
+                    <thead style="background: linear-gradient(135deg, #1E293B, #0F172A);">
                         <tr>
-                            <th>Titre</th>
-                            <th>Description</th>
-                            <th>Deadline</th>
-                            <th>Statut</th>
-                            <th>Priorité</th>
-                            <th>Actions</th>
+                            <th style="color: white; padding: 18px 16px; font-weight: 600;"><i class="fas fa-heading me-2" style="color: #F97316;"></i>Titre</th>
+                            <th style="color: white; padding: 18px 16px; font-weight: 600;"><i class="fas fa-align-left me-2" style="color: #F97316;"></i>Description</th>
+                            <th style="color: white; padding: 18px 16px; font-weight: 600;"><i class="fas fa-calendar-alt me-2" style="color: #F97316;"></i>Deadline</th>
+                            <th style="color: white; padding: 18px 16px; font-weight: 600;"><i class="fas fa-chart-simple me-2" style="color: #F97316;"></i>Statut</th>
+                            <th style="color: white; padding: 18px 16px; font-weight: 600;"><i class="fas fa-flag me-2" style="color: #F97316;"></i>Priorité</th>
+                            <th style="color: white; padding: 18px 16px; font-weight: 600;"><i class="fas fa-cog me-2" style="color: #F97316;"></i>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for tache in taches %}
-                        <tr>
-                            <td><strong>{{ tache.titre }}</strong></td>
-                            <td>{{ tache.description|slice(0, 50) }}{% if tache.description|length > 50 %}...{% endif %}</td>
-                            <td class="{% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}text-danger fw-bold{% endif %}">
+                        <tr style="border-bottom: 1px solid #F1F5F9; transition: all 0.2s;" class="task-row">
+                            <td style="padding: 18px 16px;"><strong style="color: #1E293B;">{{ tache.titre }}</strong></td>
+                            <td style="padding: 18px 16px; color: #64748B;">{{ tache.description|slice(0, 55) }}{% if tache.description|length > 55 %}...{% endif %}</td>
+                            <td style="padding: 18px 16px;" class="{% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}text-danger fw-bold{% endif %}">
                                 {% if tache.deadline and tache.deadline|date('Y-m-d') < 'now'|date('Y-m-d') and tache.statut != 'TERMINEE' %}
-                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span class="badge" style="background: #FEE2E2; color: #DC2626; padding: 5px 10px;"><i class="fas fa-exclamation-triangle me-1"></i>En retard</span>
                                 {% else %}
-                                    <i class="fas fa-calendar-alt"></i>
+                                    <i class="fas fa-calendar-alt" style="color: #F97316; margin-right: 6px;"></i>
+                                    {{ tache.deadline ? tache.deadline|date('d/m/Y') : '—' }}
                                 {% endif %}
-                                {{ tache.deadline ? tache.deadline|date('d/m/Y') : '—' }}
                             </td>
-                            <td>
+                            <td style="padding: 18px 16px;">
                                 {% if tache.statut == 'A_FAIRE' %}
-                                    <span class="badge bg-warning text-dark">📌 À faire</span>
+                                    <span class="badge" style="background: #FEF3C7; color: #D97706; padding: 6px 14px; border-radius: 30px;">📌 À faire</span>
                                 {% elseif tache.statut == 'EN_COURS' %}
-                                    <span class="badge bg-info">⚡ En cours</span>
+                                    <span class="badge" style="background: #E0F2FE; color: #0284C7; padding: 6px 14px; border-radius: 30px;">⚡ En cours</span>
                                 {% else %}
-                                    <span class="badge bg-success">✅ Terminée</span>
+                                    <span class="badge" style="background: #D1FAE5; color: #059669; padding: 6px 14px; border-radius: 30px;">✅ Terminée</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td style="padding: 18px 16px;">
                                 {% if tache.priorite == 'HAUTE' %}
-                                    <span class="badge bg-danger">🔴 Haute</span>
+                                    <span class="badge" style="background: #FEE2E2; color: #DC2626; padding: 6px 14px; border-radius: 30px;">🔴 Haute</span>
                                 {% elseif tache.priorite == 'MOYENNE' %}
-                                    <span class="badge bg-warning text-dark">🟡 Moyenne</span>
+                                    <span class="badge" style="background: #FEF3C7; color: #D97706; padding: 6px 14px; border-radius: 30px;">🟡 Moyenne</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">🟢 Basse</span>
+                                    <span class="badge" style="background: #D1FAE5; color: #059669; padding: 6px 14px; border-radius: 30px;">🟢 Basse</span>
                                 {% endif %}
                             </td>
-                            <td class="table-actions">
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ path('app_tache_show', {'id': tache.id}) }}" class="btn btn-outline-info" title="Voir">
+                            <td style="padding: 18px 16px;">
+                                <div class="btn-group btn-group-sm gap-2">
+                                    <a href="{{ path('app_tache_show', {'id': tache.id}) }}" class="btn" style="background: #E0F2FE; color: #0284C7; border-radius: 12px; padding: 8px 12px;" title="Voir">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ path('app_tache_edit', {'id': tache.id}) }}" class="btn btn-outline-warning" title="Modifier">
+                                    <a href="{{ path('app_tache_edit', {'id': tache.id}) }}" class="btn" style="background: #FEF3C7; color: #D97706; border-radius: 12px; padding: 8px 12px;" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="/api/export/tache/{{ tache.id }}" class="btn btn-outline-danger" title="PDF" target="_blank">
+                                    <a href="/api/export/tache/{{ tache.id }}" class="btn" style="background: #FEE2E2; color: #DC2626; border-radius: 12px; padding: 8px 12px;" title="PDF" target="_blank">
                                         <i class="fas fa-file-pdf"></i>
                                     </a>
-                                    <form method="post" action="{{ path('app_tache_delete', {'id': tache.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette tâche ?')">
+                                    <form method="post" action="{{ path('app_tache_delete', {'id': tache.id}) }}" style="display:inline-block" onsubmit="return confirm('⚠️ Supprimer définitivement cette tâche ?')">
                                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ tache.id) }}">
-                                        <button class="btn btn-outline-danger" title="Supprimer">
+                                        <button class="btn" style="background: #FEE2E2; color: #DC2626; border-radius: 12px; padding: 8px 12px;" title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -227,15 +272,23 @@
                             </td>
                         </tr>
                         {% else %}
-                            <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
-                                    <i class="fas fa-search fa-2x mb-2 d-block"></i>
-                                    Aucune tâche trouvée
-                                    {% if search or statut or priorite %}
-                                        — <a href="{{ path('app_tache_index') }}">Effacer les filtres</a>
-                                    {% endif %}
-                                </td>
-                            </tr>
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div style="padding: 40px;">
+                                    <i class="fas fa-inbox fa-4x mb-3" style="color: #CBD5E1;"></i>
+                                    <h4 style="color: #64748B;">Aucune tâche trouvée</h4>
+                                    <p class="text-muted">
+                                        {% if search or statut or priorite %}
+                                            Aucun résultat ne correspond à vos critères.
+                                            <br><a href="{{ path('app_tache_index') }}" style="color: #F97316;">Effacer les filtres</a>
+                                        {% else %}
+                                            Commencez par créer votre première tâche !
+                                            <br><a href="{{ path('app_tache_new') }}" class="btn btn-sm mt-2" style="background: #F97316; color: white; border-radius: 12px;">Créer une tâche</a>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -247,18 +300,25 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Only stats toggle — zero filtering JS
 let statutChart, prioriteChart, statsVisible = false;
 
 function toggleStats() {
     const s = document.getElementById('statsSection');
-    const b = document.getElementById('statsBtn');
+    const btn = document.getElementById('statsBtn');
+    const btnText = document.getElementById('statsBtnText');
     statsVisible = !statsVisible;
-    s.style.display = statsVisible ? 'block' : 'none';
-    b.innerHTML = statsVisible
-        ? '<i class="fas fa-chart-line"></i> Masquer Statistiques'
-        : '<i class="fas fa-chart-line"></i> Afficher Statistiques';
-    if (statsVisible) setTimeout(createCharts, 100);
+    
+    if (statsVisible) {
+        s.style.display = 'block';
+        btnText.textContent = 'Masquer Statistiques';
+        setTimeout(() => {
+            createCharts();
+            animateProgressCircle();
+        }, 100);
+    } else {
+        s.style.display = 'none';
+        btnText.textContent = 'Afficher Statistiques';
+    }
 }
 
 function createCharts() {
@@ -268,9 +328,21 @@ function createCharts() {
             type: 'doughnut',
             data: {
                 labels: ['À faire', 'En cours', 'Terminées'],
-                datasets: [{ data: [{{ a_faire }}, {{ en_cours }}, {{ terminees }}], backgroundColor: ['#ffc107', '#0dcaf0', '#198754'], borderWidth: 0 }]
+                datasets: [{ 
+                    data: [{{ a_faire }}, {{ en_cours }}, {{ terminees }}], 
+                    backgroundColor: ['#F59E0B', '#0EA5E9', '#10B981'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true, 
+                plugins: { 
+                    legend: { position: 'bottom', labels: { font: { size: 12, weight: '600' } } },
+                    tooltip: { backgroundColor: '#1E293B', titleColor: '#F97316', bodyColor: 'white' }
+                }
+            }
         });
     }
     const pc = document.getElementById('prioriteChart')?.getContext('2d');
@@ -279,21 +351,108 @@ function createCharts() {
             type: 'doughnut',
             data: {
                 labels: ['Haute', 'Moyenne', 'Basse'],
-                datasets: [{ data: [{{ haute }}, {{ moyenne }}, {{ basse }}], backgroundColor: ['#dc3545', '#ffc107', '#198754'], borderWidth: 0 }]
+                datasets: [{ 
+                    data: [{{ haute }}, {{ moyenne }}, {{ basse }}], 
+                    backgroundColor: ['#EF4444', '#F59E0B', '#10B981'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true, 
+                plugins: { 
+                    legend: { position: 'bottom', labels: { font: { size: 12, weight: '600' } } },
+                    tooltip: { backgroundColor: '#1E293B', titleColor: '#F97316' }
+                }
+            }
         });
     }
 }
+
+function animateProgressCircle() {
+    const circle = document.getElementById('completion-circle');
+    if (circle) {
+        const circumference = 408.4;
+        const progress = {{ taux_completion }};
+        const dashOffset = circumference - (circumference * progress / 100);
+        circle.style.transition = 'stroke-dashoffset 1.5s ease';
+        circle.style.strokeDashoffset = dashOffset;
+    }
+}
+
+const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.animate-card').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(card);
+});
+
+document.querySelectorAll('.task-row').forEach(row => {
+    row.addEventListener('mouseenter', () => {
+        row.style.backgroundColor = '#FFF7ED';
+    });
+    row.addEventListener('mouseleave', () => {
+        row.style.backgroundColor = '';
+    });
+});
 </script>
 
 <style>
-    .table-actions .btn { padding: 2px 8px; margin: 0 2px; }
-    .badge { font-size: 0.85rem; padding: 5px 10px; border-radius: 20px; }
-    .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .card-header { border-radius: 15px 15px 0 0; }
-    .progress-bar { transition: width 0.5s ease; }
-    .btn-group .btn { margin: 0 1px; }
-    #statsSection { transition: all 0.3s ease; }
+    .btn, .form-control, .form-select {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.05);
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #F97316;
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
+        outline: none;
+    }
+    .card {
+        transition: all 0.3s ease;
+    }
+    .card:hover:not(.animate-card) {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+    .circular-progress {
+        position: relative;
+        display: inline-block;
+    }
+    .circular-progress svg {
+        transform: rotate(-90deg);
+    }
+    .badge {
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #F1F5F9;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #F97316, #EA580C);
+        border-radius: 10px;
+    }
 </style>
 {% endblock %}

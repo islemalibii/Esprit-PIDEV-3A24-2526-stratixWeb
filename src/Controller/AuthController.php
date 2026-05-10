@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Service\RecaptchaService;
+
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;use Symfony\Component\HttpFoundation\Request;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,19 +17,21 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class AuthController extends AbstractController
 {
     #[Route('/', name: 'app_home')]
+    #[Route('/homepage', name: 'app_homepage')]
     public function home(): Response
     {
         $user = $this->getUser();
-        if (!$user) {
-            return $this->redirectToRoute('app_login');
-        }
-        if (in_array('ROLE_ADMIN', $user->getRoles())) {
+        if ($user) {
+            if (in_array('ROLE_ADMIN', $user->getRoles())) {
+                return $this->redirectToRoute('app_emotion_check');
+            }
+            if (in_array($user->getRole(), ['responsable_rh', 'responsable_projet', 'responsable_production', 'ceo'])) {
+                return $this->redirectToRoute('app_emotion_check');
+            }
             return $this->redirectToRoute('app_emotion_check');
         }
-        if (in_array($user->getRole(), ['responsable_rh', 'responsable_projet', 'responsable_production', 'ceo'])) {
-            return $this->redirectToRoute('app_emotion_check');
-        }
-        return $this->redirectToRoute('app_emotion_check');
+
+        return $this->render('homepage.html.twig');
     }
 
     #[Route('/emotion-check', name: 'app_emotion_check')]
@@ -188,4 +192,4 @@ class AuthController extends AbstractController
             'old'    => $request->request->all(),
         ]);
     }
-}
+} 

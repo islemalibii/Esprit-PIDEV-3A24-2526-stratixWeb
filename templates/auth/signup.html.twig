@@ -1,172 +1,525 @@
-{% extends 'base_auth.html.twig' %}
-{% block title %}Inscription — Stratix{% endblock %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Stratix — Inscription</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block body %}
+        body {
+            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #faf8f6 0%, #ffffff 50%, #eef3ed 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-{# Logo en haut à gauche #}
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -40%;
+            right: -20%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(ellipse, rgba(16, 185, 129, 0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 55px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #10B981;
+            letter-spacing: 0.3px;
+        }
+
+        .form-control-login {
+            border: 1.5px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 0.85rem 1.2rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            background: #FFFFFF;
+        }
+
+        .form-control-login:focus {
+            border-color: #10B981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+            outline: none;
+        }
+
+        .form-control-login.is-valid {
+            border-color: #10B981;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2310B981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2rem;
+            padding-right: 2.5rem;
+        }
+
+        .form-control-login.is-invalid {
+            border-color: #EF4444;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23EF4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2rem;
+            padding-right: 2.5rem;
+        }
+
+        /* Password field with eye icon */
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper .form-control-login {
+            padding-right: 3rem;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94A3B8;
+            font-size: 1.2rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            z-index: 10;
+        }
+        .password-toggle:hover {
+            color: #10B981;
+        }
+        .password-toggle:focus {
+            outline: none;
+        }
+
+        .btn-login {
+            background: linear-gradient(105deg, #0F172A 0%, #1E293B 100%);
+            border: none;
+            padding: 0.9rem;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 14px;
+            transition: all 0.3s;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(105deg, #10B981, #059669);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #94A3B8;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .divider::before {
+            margin-right: 1rem;
+        }
+
+        .divider::after {
+            margin-left: 1rem;
+        }
+
+        .alert-custom {
+            border-radius: 14px;
+            border: none;
+            background: #F0FDF4;
+            color: #166534;
+            font-weight: 500;
+            padding: 0.85rem 1rem;
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            color: #991B1B;
+        }
+
+        .link-elegant {
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .link-elegant:hover {
+            color: #10B981;
+        }
+
+        .link-primary-elegant {
+            color: #0F172A;
+            font-weight: 700;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .link-primary-elegant:hover {
+            color: #10B981;
+        }
+
+        .strength-bar {
+            height: 3px;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .avatar-preview {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F1F5F9, #E2E8F0);
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-preview.has-image {
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        @media (max-width: 640px) {
+            .login-card { margin: 1rem; }
+            .login-card .p-md-5 { padding: 1.5rem !important; }
+        }
+    </style>
+</head>
+<body>
+
 <div style="position:fixed;top:1.5rem;left:1.5rem;z-index:100;">
     <img src="/images/logo.png" alt="Stratix" style="height:180px;width:auto;">
 </div>
 
-{# Formulaire centré #}
-<div class="d-flex align-items-center justify-content-center min-vh-100 bg-white">
-    <div style="position:relative;width:100%;max-width:650px;padding:2rem;margin:1.5rem;">
-        {# Rectangle gris en arrière-plan #}
-        <div style="position:absolute;top:8px;left:8px;right:-8px;bottom:-8px;background:#e9ecef;border-radius:16px;z-index:0;"></div>
-        {# Formulaire #}
-        <div style="position:relative;z-index:1;background:#fff;border-radius:16px;padding:3.5rem;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+<div class="d-flex align-items-center justify-content-center min-vh-100 p-3">
+    <div style="width:100%; max-width: 650px;">
+        <div class="login-card p-4 p-md-5">
+            
+            
 
-        <h2 class="fw-bold mb-1" style="color:#2196f3;font-size:2rem;">Créer un compte</h2>
-        <p class="text-secondary mb-4">Rejoignez la plateforme Stratix</p>
+            <h2 class="fw-bold mb-2" style="color: #0F172A; font-size: 1.9rem; letter-spacing: -0.02em;">Créer un compte</h2>
+            <p class="text-secondary mb-4" style="font-size: 0.9rem;">Rejoignez la plateforme Stratix et transformez votre gestion de projets</p>
 
-        {% if errors is defined and errors|length > 0 %}
-            <div class="alert alert-danger py-2 small">Veuillez corriger les erreurs ci-dessous.</div>
-        {% endif %}
-
-        <form method="post" enctype="multipart/form-data">
-            <input type="hidden" name="face_validated" id="face_validated" value="0">
-            <div class="row g-3 mb-2">
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Nom *</label>
-                    <input type="text" name="nom" value="{{ old.nom ?? '' }}"
-                           class="form-control form-control-lg {% if errors.nom is defined %}is-invalid{% endif %}"
-                           placeholder="Dupont" required>
-                    {% if errors.nom is defined %}<div class="invalid-feedback">{{ errors.nom }}</div>{% endif %}
+            {% if errors is defined and errors|length > 0 %}
+                <div class="alert alert-error mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Veuillez corriger les erreurs ci-dessous.</span>
                 </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Prénom *</label>
-                    <input type="text" name="prenom" value="{{ old.prenom ?? '' }}"
-                           class="form-control form-control-lg {% if errors.prenom is defined %}is-invalid{% endif %}"
-                           placeholder="Jean" required>
-                    {% if errors.prenom is defined %}<div class="invalid-feedback">{{ errors.prenom }}</div>{% endif %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" id="register-form">
+                <input type="hidden" name="face_validated" id="face_validated" value="0">
+                
+                <div class="row g-3 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">Nom *</label>
+                        <input type="text" name="nom" value="{{ old.nom ?? '' }}"
+                               class="form-control form-control-login {% if errors.nom is defined %}is-invalid{% endif %}"
+                               placeholder="Dupont" required>
+                        {% if errors.nom is defined %}<div class="invalid-feedback">{{ errors.nom }}</div>{% endif %}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">Prénom *</label>
+                        <input type="text" name="prenom" value="{{ old.prenom ?? '' }}"
+                               class="form-control form-control-login {% if errors.prenom is defined %}is-invalid{% endif %}"
+                               placeholder="Jean" required>
+                        {% if errors.prenom is defined %}<div class="invalid-feedback">{{ errors.prenom }}</div>{% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Email *</label>
-                <input type="email" name="email" value="{{ old.email ?? '' }}"
-                       class="form-control form-control-lg {% if errors.email is defined %}is-invalid{% endif %}"
-                       placeholder="votre@email.com" required>
-                {% if errors.email is defined %}<div class="invalid-feedback">{{ errors.email }}</div>{% endif %}
-            </div>
-            <div class="mb-3">
-                <label class="form-label fw-semibold">CIN *</label>
-                <input type="number" name="cin" value="{{ old.cin ?? '' }}"
-                       class="form-control form-control-lg {% if errors.cin is defined %}is-invalid{% endif %}"
-                       placeholder="8 chiffres" required>
-                {% if errors.cin is defined %}<div class="invalid-feedback">{{ errors.cin }}</div>{% endif %}
-            </div>
-            <div class="row g-3 mb-4">
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Mot de passe *</label>                    <input type="password" name="password" id="pw1"
-                           class="form-control form-control-lg {% if errors.password is defined %}is-invalid{% endif %}"
-                           placeholder="••••••••" required>
-                    {% if errors.password is defined %}
-                        <div class="invalid-feedback">{{ errors.password }}</div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">Email professionnel *</label>
+                    <input type="email" name="email" value="{{ old.email ?? '' }}"
+                           class="form-control form-control-login {% if errors.email is defined %}is-invalid{% endif %}"
+                           placeholder="votre@entreprise.com" required>
+                    {% if errors.email is defined %}<div class="invalid-feedback">{{ errors.email }}</div>{% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">CIN *</label>
+                    <input type="number" name="cin" value="{{ old.cin ?? '' }}"
+                           class="form-control form-control-login {% if errors.cin is defined %}is-invalid{% endif %}"
+                           placeholder="8 chiffres" required>
+                    {% if errors.cin is defined %}<div class="invalid-feedback">{{ errors.cin }}</div>{% endif %}
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">Mot de passe *</label>
+                        <div class="password-wrapper">
+                            <input type="password" name="password" id="pw1"
+                                   class="form-control form-control-login {% if errors.password is defined %}is-invalid{% endif %}"
+                                   placeholder="••••••••" required>
+                            <button type="button" class="password-toggle" id="togglePassword1" aria-label="Afficher/Masquer">
+                                <i class="bi bi-eye-slash" id="toggleIcon1"></i>
+                            </button>
+                        </div>
+                        {% if errors.password is defined %}
+                            <div class="invalid-feedback">{{ errors.password }}</div>
+                        {% endif %}
+                        <div class="d-flex gap-1 mt-2">
+                            <div class="flex-fill strength-bar" id="s1" style="background:#e5e7eb;"></div>
+                            <div class="flex-fill strength-bar" id="s2" style="background:#e5e7eb;"></div>
+                            <div class="flex-fill strength-bar" id="s3" style="background:#e5e7eb;"></div>
+                            <div class="flex-fill strength-bar" id="s4" style="background:#e5e7eb;"></div>
+                        </div>
+                        <div class="small text-secondary mt-1">8+ caractères, 1 majuscule, 1 chiffre</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">Confirmer *</label>
+                        <div class="password-wrapper">
+                            <input type="password" name="confirm" id="pw2"
+                                   class="form-control form-control-login {% if errors.confirm is defined %}is-invalid{% endif %}"
+                                   placeholder="••••••••" required>
+                            <button type="button" class="password-toggle" id="togglePassword2" aria-label="Afficher/Masquer">
+                                <i class="bi bi-eye-slash" id="toggleIcon2"></i>
+                            </button>
+                        </div>
+                        {% if errors.confirm is defined %}<div class="invalid-feedback">{{ errors.confirm }}</div>{% endif %}
+                    </div>
+                </div>
+                
+                <!-- Photo de profil avec détection IA -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-secondary mb-2">
+                        Photo de profil <span class="text-secondary fw-normal">(optionnel)</span>
+                    </label>
+                    <div class="border rounded-3 p-3 {% if errors.avatar is defined %}border-danger{% else %}border-secondary{% endif %}" style="background:#f8f9fa;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div id="avatar-preview" class="avatar-preview">
+                                <svg width="36" height="36" fill="#adb5bd" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                                </svg>
+                            </div>
+                            <div class="flex-fill">
+                                <input type="file" name="avatar" id="avatar-input" accept="image/*" class="form-control form-control-sm">
+                                <div id="face-status" class="mt-2 small"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if errors.avatar is defined %}
+                        <div class="text-danger small mt-1">{{ errors.avatar }}</div>
                     {% endif %}
-                    <div class="d-flex gap-1 mt-1">
-                        <div class="flex-fill rounded" id="s1" style="height:3px;background:#e5e7eb;transition:background .3s;"></div>
-                        <div class="flex-fill rounded" id="s2" style="height:3px;background:#e5e7eb;transition:background .3s;"></div>
-                        <div class="flex-fill rounded" id="s3" style="height:3px;background:#e5e7eb;transition:background .3s;"></div>
-                        <div class="flex-fill rounded" id="s4" style="height:3px;background:#e5e7eb;transition:background .3s;"></div>
-                    </div>
                 </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">Confirmer *</label>
-                    <input type="password" name="confirm"
-                           class="form-control form-control-lg {% if errors.confirm is defined %}is-invalid{% endif %}"
-                           placeholder="••••••••" required>
-                    {% if errors.confirm is defined %}<div class="invalid-feedback">{{ errors.confirm }}</div>{% endif %}
+
+                <button type="submit" class="btn btn-login w-100 mb-3">
+                    S'inscrire <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+
+                <div class="divider my-3">
+                    <span>ou</span>
                 </div>
-            </div>
-            {# --- Photo de profil avec détection IA --- #}
-            <div class="mb-4">
-                <label class="form-label fw-semibold">Photo de profil <span class="text-secondary fw-normal">(optionnel)</span></label>
-                <div class="border rounded-3 p-3 {% if errors.avatar is defined %}border-danger{% else %}border-secondary{% endif %}" style="background:#f8f9fa;">
-                    <div class="d-flex align-items-center gap-3">
-                        <div id="avatar-preview" style="width:72px;height:72px;border-radius:50%;background:#e9ecef;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-                            <svg width="36" height="36" fill="#adb5bd" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-                        </div>
-                        <div class="flex-fill">
-                            <input type="file" name="avatar" id="avatar-input" accept="image/*" class="form-control form-control-sm">
-                            <div id="face-status" class="mt-2 small"></div>
-                        </div>
-                    </div>
-                </div>
-                {% if errors.avatar is defined %}
-                    <div class="text-danger small mt-1">{{ errors.avatar }}</div>
-                {% endif %}
-            </div>
 
-            <button type="submit" class="btn btn-primary w-100 fw-bold text-uppercase btn-lg" style="letter-spacing:1px;">
-                S'inscrire
-            </button>
-        </form>
+                
 
-        <p class="text-center text-secondary mt-4 mb-0">
-            Déjà un compte ?
-            <a href="{{ path('app_login') }}" class="text-primary fw-semibold text-decoration-none">Se connecter</a>
-        </p>
+                <p class="text-center text-secondary mt-3 mb-0" style="font-size: 0.85rem;">
+                    Déjà un compte ?
+                    <a href="{{ path('app_login') }}" class="link-primary-elegant">Se connecter</a>
+                </p>
+            </form>
+        </div>
 
-        </div>{# fin formulaire blanc #}
-    </div>{# fin wrapper relatif #}
+     
+    </div>
 </div>
 
+<style>
+.btn-google {
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 0.8rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.25s;
+    background: white;
+    color: #1E293B;
+    text-decoration: none;
+}
+.btn-google:hover {
+    background: #F8FAFE;
+    border-color: #10B981;
+    transform: translateY(-1px);
+}
+</style>
+
 <script>
-// Force du mot de passe
-const colors = ['#ef4444','#f97316','#eab308','#22c55e'];
-document.getElementById('pw1').addEventListener('input', function() {
-    const v = this.value; let s = 0;
-    if (v.length >= 8) s++;
-    if (/[A-Z]/.test(v)) s++;
-    if (/[0-9]/.test(v)) s++;
-    if (/[^A-Za-z0-9]/.test(v)) s++;
-    for (let i = 1; i <= 4; i++) {
-        document.getElementById('s'+i).style.background = i <= s ? colors[s-1] : '#e5e7eb';
+// Toggle password visibility for both fields
+function setupPasswordToggle(toggleBtnId, passwordFieldId, iconId) {
+    const toggleBtn = document.getElementById(toggleBtnId);
+    const passwordField = document.getElementById(passwordFieldId);
+    const icon = document.getElementById(iconId);
+    
+    if (toggleBtn && passwordField) {
+        toggleBtn.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            if (type === 'text') {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        });
     }
-});
+}
+
+setupPasswordToggle('togglePassword1', 'pw1', 'toggleIcon1');
+setupPasswordToggle('togglePassword2', 'pw2', 'toggleIcon2');
+
+// Force du mot de passe
+const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
+const pw1 = document.getElementById('pw1');
+if (pw1) {
+    pw1.addEventListener('input', function() {
+        const v = this.value;
+        let s = 0;
+        if (v.length >= 😎 s++;
+        if (/[A-Z]/.test(v)) s++;
+        if (/[0-9]/.test(v)) s++;
+        if (/[^A-Za-z0-9]/.test(v)) s++;
+        for (let i = 1; i <= 4; i++) {
+            const bar = document.getElementById('s' + i);
+            if (bar) {
+                bar.style.background = i <= s ? colors[s-1] : '#e5e7eb';
+            }
+        }
+    });
+}
 
 // Validation en temps réel
-function setValid(el)   { el.classList.remove('is-invalid'); el.classList.add('is-valid'); }
-function setInvalid(el) { el.classList.remove('is-valid');   el.classList.add('is-invalid'); }
-function clearState(el) { el.classList.remove('is-valid','is-invalid'); }
+function setValid(el) { el.classList.remove('is-invalid'); el.classList.add('is-valid'); }
+function setInvalid(el) { el.classList.remove('is-valid'); el.classList.add('is-invalid'); }
+function clearState(el) { el.classList.remove('is-valid', 'is-invalid'); }
 
 // Nom
-document.querySelector('[name=nom]').addEventListener('blur', function() {
-    this.value.trim() && /^[a-zA-ZÀ-ÿ\s\-]+$/.test(this.value) ? setValid(this) : setInvalid(this);
-});
+const nomInput = document.querySelector('[name=nom]');
+if (nomInput) {
+    nomInput.addEventListener('blur', function() {
+        this.value.trim() && /^[a-zA-ZÀ-ÿ\s\-]+$/.test(this.value) ? setValid(this) : (this.value.trim() ? setInvalid(this) : clearState(this));
+    });
+}
 
 // Prénom
-document.querySelector('[name=prenom]').addEventListener('blur', function() {
-    this.value.trim() && /^[a-zA-ZÀ-ÿ\s\-]+$/.test(this.value) ? setValid(this) : setInvalid(this);
-});
+const prenomInput = document.querySelector('[name=prenom]');
+if (prenomInput) {
+    prenomInput.addEventListener('blur', function() {
+        this.value.trim() && /^[a-zA-ZÀ-ÿ\s\-]+$/.test(this.value) ? setValid(this) : (this.value.trim() ? setInvalid(this) : clearState(this));
+    });
+}
 
 // Email
-document.querySelector('[name=email]').addEventListener('blur', function() {
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value) ? setValid(this) : setInvalid(this);
-});
+const emailInput = document.querySelector('[name=email]');
+if (emailInput) {
+    emailInput.addEventListener('blur', function() {
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value) ? setValid(this) : (this.value ? setInvalid(this) : clearState(this));
+    });
+}
 
 // CIN
-document.querySelector('[name=cin]').addEventListener('blur', function() {
-    /^\d{8}$/.test(this.value) ? setValid(this) : setInvalid(this);
-});
+const cinInput = document.querySelector('[name=cin]');
+if (cinInput) {
+    cinInput.addEventListener('blur', function() {
+        /^\d{8}$/.test(this.value) ? setValid(this) : (this.value ? setInvalid(this) : clearState(this));
+    });
+}
 
 // Mot de passe
-document.getElementById('pw1').addEventListener('blur', function() {
-    const v = this.value;
-    v.length >= 8 && /[A-Z]/.test(v) && /[0-9]/.test(v) ? setValid(this) : setInvalid(this);
-});
+if (pw1) {
+    pw1.addEventListener('blur', function() {
+        const v = this.value;
+        if (v.length >= 8 && /[A-Z]/.test(v) && /[0-9]/.test(v)) {
+            setValid(this);
+        } else if (v) {
+            setInvalid(this);
+        } else {
+            clearState(this);
+        }
+    });
+}
 
 // Confirmation
-document.querySelector('[name=confirm]').addEventListener('blur', function() {
-    this.value && this.value === document.getElementById('pw1').value ? setValid(this) : setInvalid(this);
-});
-document.querySelector('[name=confirm]').addEventListener('input', function() {
-    if (!this.value) { clearState(this); return; }
-    this.value === document.getElementById('pw1').value ? setValid(this) : setInvalid(this);
-});
+const pw2 = document.getElementById('pw2');
+if (pw2) {
+    pw2.addEventListener('blur', function() {
+        if (this.value && this.value === pw1.value) {
+            setValid(this);
+        } else if (this.value) {
+            setInvalid(this);
+        } else {
+            clearState(this);
+        }
+    });
+    pw2.addEventListener('input', function() {
+        if (!this.value) { clearState(this); return; }
+        this.value === pw1.value ? setValid(this) : setInvalid(this);
+    });
+}
 </script>
 
-{# face-api.js depuis CDN #}
+<!-- face-api.js depuis CDN -->
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 (async function() {
@@ -175,53 +528,64 @@ document.querySelector('[name=confirm]').addEventListener('input', function() {
     const preview   = document.getElementById('avatar-preview');
     const status    = document.getElementById('face-status');
     const validated = document.getElementById('face_validated');
-    const form      = document.querySelector('form');
+    const form      = document.getElementById('register-form');
 
     // Charger le modèle au démarrage
-    status.innerHTML = '<span class="text-secondary small">Chargement du modèle IA...</span>';
+    if (status) {
+        status.innerHTML = '<span class="text-secondary small"><i class="bi bi-hourglass-split me-1"></i>Chargement du modèle IA...</span>';
+    }
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    status.innerHTML = '';
+    if (status) status.innerHTML = '';
 
-    input.addEventListener('change', async function() {
-        const file = this.files[0];
-        if (!file) return;
+    if (input) {
+        input.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file) return;
 
-        validated.value = '0';
-        status.innerHTML = '<span class="text-secondary"><span class="spinner-border spinner-border-sm me-1"></span>Analyse du visage...</span>';
-
-        // Prévisualisation
-        const objectUrl = URL.createObjectURL(file);
-        preview.innerHTML = `<img src="${objectUrl}" style="width:100%;height:100%;object-fit:cover;">`;
-
-        // Créer un élément image pour face-api
-        const img = new Image();
-        img.src = objectUrl;
-        await new Promise(r => img.onload = r);
-
-        const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
-
-        if (detection) {
-            validated.value = '1';
-            status.innerHTML = '<span class="text-success fw-semibold">✓ Visage humain détecté</span>';
-        } else {
             validated.value = '0';
-            status.innerHTML = '<span class="text-danger fw-semibold">✗ Aucun visage détecté — choisissez une photo avec votre visage visible</span>';
-            setTimeout(() => {
-                preview.innerHTML = `<svg width="36" height="36" fill="#adb5bd" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>`;
-                input.value = '';
-                status.innerHTML = '';
-            }, 3000);
-        }
-    });
+            if (status) status.innerHTML = '<span class="text-secondary"><span class="spinner-border spinner-border-sm me-1"></span>Analyse du visage...</span>';
+
+            // Prévisualisation
+            const objectUrl = URL.createObjectURL(file);
+            preview.innerHTML = <img src="${objectUrl}" style="width:100%;height:100%;object-fit:cover;">;
+            preview.classList.add('has-image');
+
+            // Créer un élément image pour face-api
+            const img = new Image();
+            img.src = objectUrl;
+            await new Promise(r => img.onload = r);
+
+            const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.3 }));
+
+            if (detection) {
+                validated.value = '1';
+                if (status) status.innerHTML = '<span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>✓ Visage humain détecté</span>';
+            } else {
+                validated.value = '0';
+                if (status) status.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>✗ Aucun visage détecté — choisissez une photo avec votre visage visible</span>';
+                setTimeout(() => {
+                    preview.innerHTML = `<svg width="36" height="36" fill="#adb5bd" viewBox="0 0 24 24">
+                        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                    </svg>`;
+                    preview.classList.remove('has-image');
+                    input.value = '';
+                    if (status) status.innerHTML = '';
+                }, 3000);
+            }
+        });
+    }
 
     // Bloquer soumission si photo uploadée mais pas validée
-    form.addEventListener('submit', function(e) {
-        if (input.files.length > 0 && validated.value !== '1') {
-            e.preventDefault();
-            status.innerHTML = '<span class="text-danger fw-semibold">✗ Attendez la validation du visage avant de soumettre</span>';
-        }
-    });
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (input && input.files.length > 0 && validated.value !== '1') {
+                e.preventDefault();
+                if (status) status.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>✗ Attendez la validation du visage avant de soumettre</span>';
+            }
+        });
+    }
 })();
 </script>
 
-{% endblock %}
+</body>
+</html>

@@ -1,65 +1,246 @@
-{% extends 'base_auth.html.twig' %}
-{% block title %}Bienvenue — Stratix{% endblock %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bienvenue — Stratix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block body %}
+        body {
+            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #faf8f6 0%, #ffffff 50%, #eef3ed 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -40%;
+            right: -20%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(ellipse, rgba(16, 185, 129, 0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .welcome-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 55px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #10B981;
+            letter-spacing: 0.3px;
+        }
+
+        .webcam-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .webcam-video {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #FFFFFF;
+            box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.2);
+            display: block;
+        }
+
+        .webcam-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: 232px;
+            height: 232px;
+        }
+
+        .result-container {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .emotion-emoji {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .emotion-message {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #0F172A;
+        }
+
+        .emotion-label {
+            color: #64748B;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-custom {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #E2E8F0;
+        }
+
+        .progress-bar-custom {
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .btn-continue {
+            background: linear-gradient(105deg, #0F172A 0%, #1E293B 100%);
+            border: none;
+            padding: 0.85rem 1.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 14px;
+            transition: all 0.3s;
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-continue:hover {
+            background: linear-gradient(105deg, #10B981, #059669);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .loading-text {
+            font-size: 0.8rem;
+            color: #64748B;
+            margin-top: 0.5rem;
+        }
+
+        .loading-text-success {
+            color: #10B981;
+        }
+
+        @media (max-width: 640px) {
+            .welcome-card { margin: 1rem; }
+            .welcome-card .p-md-5 { padding: 2rem !important; }
+            .webcam-video { width: 180px; height: 180px; }
+            .webcam-overlay { width: 180px; height: 180px; }
+            .progress-ring { width: 192px; height: 192px; top: -6px; left: -6px; }
+        }
+    </style>
+</head>
+<body>
+
 <div style="position:fixed;top:1.5rem;left:1.5rem;z-index:100;">
     <img src="/images/logo.png" alt="Stratix" style="height:180px;width:auto;">
 </div>
 
-<div class="d-flex align-items-center justify-content-center min-vh-100 bg-white">
-    <div style="position:relative;width:100%;max-width:520px;padding:2rem;margin:1.5rem;">
-        <div style="position:absolute;top:8px;left:8px;right:-8px;bottom:-8px;background:#e9ecef;border-radius:16px;z-index:0;"></div>
-        <div style="position:relative;z-index:1;background:#fff;border-radius:16px;padding:3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:center;">
+<div class="d-flex align-items-center justify-content-center min-vh-100 p-3">
+    <div style="width:100%; max-width: 520px; margin: 1.5rem;">
+        <div class="welcome-card p-4 p-md-5" style="text-align: center;">
 
-            <h2 class="fw-bold mb-1" style="color:#2196f3;font-size:1.8rem;">
-                Bonjour, {{ app.user.prenom }} 👋
+            <h2 class="fw-bold mb-2" style="color: #0F172A; font-size: 1.8rem; letter-spacing: -0.02em;">
+                Bonjour, {{ app.user.prenom }} 
             </h2>
-            <p class="text-secondary mb-4">Analyse de votre humeur en cours...</p>
+            <p class="text-secondary mb-4" style="font-size: 0.9rem;">Analyse de votre humeur en cours...</p>
 
-            {# Webcam #}
-            <div style="position:relative;display:inline-block;margin-bottom:1.5rem;">
-                <video id="video" autoplay muted playsinline
-                       style="width:220px;height:220px;border-radius:50%;object-fit:cover;border:4px solid #e9ecef;display:block;"></video>
-                <canvas id="overlay" style="position:absolute;top:0;left:0;width:220px;height:220px;border-radius:50%;"></canvas>
+            <div class="webcam-container">
+                <video id="video" autoplay muted playsinline class="webcam-video"></video>
+                <canvas id="overlay" class="webcam-overlay"></canvas>
 
-                {# Cercle de progression SVG #}
-                <svg style="position:absolute;top:-6px;left:-6px;width:232px;height:232px;" viewBox="0 0 232 232">
-                    <circle cx="116" cy="116" r="110" fill="none" stroke="#e9ecef" stroke-width="5"/>
+                <svg class="progress-ring" viewBox="0 0 232 232">
+                    <circle cx="116" cy="116" r="110" fill="none" stroke="#E2E8F0" stroke-width="5"/>
                     <circle id="progress-circle" cx="116" cy="116" r="110" fill="none"
-                            stroke="#2196f3" stroke-width="5"
+                            stroke="#b94b10" stroke-width="5"
                             stroke-dasharray="691" stroke-dashoffset="691"
                             stroke-linecap="round"
                             transform="rotate(-90 116 116)"
-                            style="transition:stroke-dashoffset .1s linear;"/>
+                            style="transition: stroke-dashoffset 0.1s linear;"/>
                 </svg>
             </div>
 
-            {# Résultat #}
-            <div id="result" style="display:none;animation:fadeIn .5s ease;">
-                <div id="emotion-emoji" style="font-size:4rem;margin-bottom:.5rem;"></div>
-                <h3 id="emotion-message" class="fw-bold" style="color:#1e1b4b;font-size:1.2rem;"></h3>
-                <p id="emotion-label" class="text-secondary small mb-3"></p>
-                <div class="progress mb-3" style="height:8px;border-radius:4px;">
-                    <div id="emotion-bar" class="progress-bar" style="width:0%;transition:width 1s ease;border-radius:4px;"></div>
+            <div id="result" style="display:none;">
+                <div id="emotion-emoji" class="emotion-emoji"></div>
+                <h3 id="emotion-message" class="emotion-message"></h3>
+                <p id="emotion-label" class="emotion-label"></p>
+                <div class="progress-custom mb-3">
+                    <div id="emotion-bar" class="progress-bar-custom" style="width:0%; height:100%;"></div>
                 </div>
                 <a id="continue-btn" href="{{ path('app_emotion_redirect') }}"
-                   class="btn btn-primary px-4 fw-bold">
-                    Continuer vers le dashboard →
+                   class="btn-continue">
+                    Continuer vers le dashboard <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
 
-            <div id="loading-text" class="text-secondary small mt-2">
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                Chargement du modèle IA...
+            <div id="loading-text" class="loading-text">
+                <span class="spinner-border spinner-border-sm me-1" style="width:0.8rem; height:0.8rem;"></span>
+                
             </div>
 
         </div>
     </div>
 </div>
-
-<style>
-@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-</style>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
@@ -80,28 +261,25 @@
         neutral:   { emoji: '😐', msg: 'Bonne journée productive !',              label: 'Neutre',    color: '#6b7280' },
     };
 
-    // Charger les modèles localement
     const MODEL_URL = '/models';
-    loadingText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Chargement du modèle IA...';
+    loadingText.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:0.8rem; height:0.8rem;"></span>';
 
     let hasExpressionModel = false;
     try {
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        // Charger le modèle expression depuis @vladmandic (face_expression_model)
         await Promise.race([
             faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
             new Promise((_, reject) => setTimeout(() => reject('timeout'), 8000))
         ]);
         hasExpressionModel = true;
-        loadingText.innerHTML = '<span class="text-success">✓ Modèle IA chargé — regardez la caméra</span>';
+        loadingText.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>✓ Modèle IA chargé — regardez la caméra</span>';
     } catch(e) {
         hasExpressionModel = false;
-        loadingText.innerHTML = '<span class="text-secondary">Modèle prêt — regardez la caméra</span>';
+        loadingText.innerHTML = '<span class="text-secondary"><i class="bi bi-info-circle-fill me-1"></i>Modèle prêt — regardez la caméra</span>';
     }
 
-    loadingText.innerHTML = '<span class="text-success">✓ Modèle prêt — regardez la caméra</span>';
+    loadingText.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>✓ Modèle prêt — regardez la caméra</span>';
 
-    // Activer la webcam
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
@@ -111,7 +289,6 @@
         return;
     }
 
-    // Countdown 3 secondes avec progression
     let elapsed = 0;
     const duration = 3000;
     const interval = 50;
@@ -124,7 +301,6 @@
         if (elapsed >= duration) {
             clearInterval(timer);
 
-            // Détecter l'émotion
             let detection;
             if (hasExpressionModel) {
                 detection = await faceapi
@@ -135,10 +311,9 @@
                     .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }));
             }
 
-            // Arrêter la webcam
             video.srcObject.getTracks().forEach(t => t.stop());
             video.style.display = 'none';
-            document.querySelector('svg').style.display = 'none';
+            document.querySelector('.progress-ring').style.display = 'none';
 
             if (detection) {
                     let emotion, confidence;
@@ -148,13 +323,11 @@
                         emotion = dominant[0];
                         confidence = dominant[1];
                     } else {
-                        // Fallback : visage détecté mais pas d'expression → neutre ou aléatoire
                         const fallbacks = ['happy', 'neutral', 'neutral', 'happy', 'surprised'];
                         emotion = fallbacks[Math.floor(Math.random() * fallbacks.length)];
                         confidence = 0.75 + Math.random() * 0.2;
                     }
                     showResult(emotion, confidence);
-                    // Sauvegarder l'émotion en BDD
                     fetch('{{ path('app_emotion_save') }}', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -166,21 +339,21 @@
         }
     }, interval);
 
-    function showResult(emotion, confidence = 0.8) {
+    function showResult(emotion, confidence = 0.😎 {
         const data = messages[emotion] || messages.neutral;
         document.getElementById('emotion-emoji').textContent = data.emoji;
         document.getElementById('emotion-message').textContent = data.msg;
-        document.getElementById('emotion-label').textContent = `Émotion détectée : ${data.label} (${Math.round(confidence * 100)}%)`;
+        document.getElementById('emotion-label').textContent = Émotion détectée : ${data.label} (${Math.round(confidence * 100)}%);
         document.getElementById('emotion-bar').style.width = Math.round(confidence * 100) + '%';
         document.getElementById('emotion-bar').style.background = data.color;
         loadingText.style.display = 'none';
         result.style.display = 'block';
 
-        // Redirection automatique après 4 secondes
         setTimeout(() => {
             window.location.href = document.getElementById('continue-btn').href;
         }, 4000);
     }
 })();
 </script>
-{% endblock %}
+</body>
+</html> 

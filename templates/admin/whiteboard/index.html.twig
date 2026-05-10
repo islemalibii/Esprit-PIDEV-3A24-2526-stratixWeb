@@ -5,154 +5,366 @@
 {% block stylesheets %}
 {{ parent() }}
 <style>
+    /* Orange Theme Variables */
+    :root {
+        --orange-primary: #F97316;
+        --orange-dark: #EA580C;
+        --orange-light: #FFEDD5;
+        --orange-bg: #FFF7ED;
+        --gray-bg: #F8FAFE;
+        --gray-border: #E2E8F0;
+        --text-dark: #1E293B;
+        --text-gray: #64748B;
+    }
+
+    .container-fluid {
+        background: linear-gradient(135deg, #FFF9F0 0%, #FFFFFF 50%, #FFF5E6 100%);
+        min-height: 100vh;
+        padding: 1.5rem;
+    }
+
+    /* Header Section */
+    .page-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--orange-light);
+    }
+
+    .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        letter-spacing: -0.02em;
+    }
+
+    .page-header h1 i {
+        color: var(--orange-primary);
+        margin-right: 12px;
+        background: var(--orange-light);
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    /* Kanban Board */
     .kanban-board {
         display: flex;
-        gap: 16px;
+        gap: 24px;
         padding: 10px 0;
         align-items: flex-start;
+        overflow-x: auto;
+        padding-bottom: 20px;
     }
 
     .kanban-column {
-        background-color: #ebecf0;
-        border-radius: 12px;
-        padding: 12px;
-        width: 320px;
-        min-width: 320px;
-        min-height: 500px;
+        background: white;
+        border-radius: 20px;
+        padding: 16px;
+        width: 340px;
+        min-width: 340px;
+        min-height: 550px;
         flex-shrink: 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--gray-border);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kanban-column:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(249, 115, 22, 0.12);
+        border-color: var(--orange-light);
     }
 
     .column-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 12px;
-        margin-bottom: 10px;
-        font-weight: bold;
-        font-size: 15px;
-        color: #172b4d;
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+        border-bottom: 2px solid var(--orange-light);
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text-dark);
+    }
+
+    .column-header span:first-child {
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .count-badge {
-        background-color: #dfe1e6;
-        color: #172b4d;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
+        background: linear-gradient(135deg, var(--orange-primary), var(--orange-dark));
+        color: white;
+        border-radius: 30px;
+        width: 30px;
+        height: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 13px;
-        font-weight: bold;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
     }
 
     .tasks-container {
-        min-height: 60px;
+        min-height: 80px;
         transition: background 0.2s;
-        border-radius: 8px;
-        padding: 4px;
+        border-radius: 12px;
+        padding: 6px;
     }
 
     .tasks-container.drag-over {
-        background-color: #c1c7d0;
+        background-color: var(--orange-light);
+        border: 2px dashed var(--orange-primary);
     }
 
+    /* Task Card */
     .task-card {
         background: white;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         cursor: grab;
-        border-left: 4px solid;
-        transition: box-shadow 0.2s, transform 0.2s;
+        border-left: 5px solid;
+        transition: all 0.25s ease;
         position: relative;
     }
 
-    .task-card:active { cursor: grabbing; }
+    .task-card:active { 
+        cursor: grabbing; 
+    }
 
     .task-card.dragging {
-        opacity: 0.5;
-        transform: rotate(2deg);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        opacity: 0.4;
+        transform: rotate(2deg) scale(0.98);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
     }
 
     .task-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+        transform: translateX(4px);
+        box-shadow: 0 8px 20px rgba(249, 115, 22, 0.15);
+        border-left-width: 6px;
     }
 
-    .task-priorite-haute   { border-left-color: #ef4444; }
-    .task-priorite-moyenne { border-left-color: #f59e0b; }
-    .task-priorite-basse   { border-left-color: #10b981; }
+    .task-priorite-haute   { border-left-color: #EF4444; }
+    .task-priorite-moyenne { border-left-color: #F59E0B; }
+    .task-priorite-basse   { border-left-color: #10B981; }
 
     .task-title {
-        font-weight: 600;
+        font-weight: 700;
         font-size: 15px;
-        margin-bottom: 6px;
-        color: #172b4d;
+        margin-bottom: 8px;
+        color: var(--text-dark);
     }
 
     .task-description {
-        font-size: 13px;
-        color: #5e6c84;
-        margin-bottom: 8px;
+        font-size: 12px;
+        color: var(--text-gray);
+        margin-bottom: 10px;
+        line-height: 1.4;
     }
 
     .task-meta {
         font-size: 11px;
-        color: #97a0af;
+        color: #94A3B8;
         display: flex;
         justify-content: space-between;
         margin-top: 8px;
         padding-top: 8px;
-        border-top: 1px solid #f0f0f0;
+        border-top: 1px solid #F1F5F9;
+    }
+
+    .task-meta i {
+        margin-right: 4px;
+        color: var(--orange-primary);
     }
 
     .badge-priorite {
-        padding: 3px 8px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 30px;
+        font-size: 10px;
+        font-weight: 700;
         display: inline-block;
-        margin-top: 6px;
+        margin-top: 8px;
     }
 
-    .badge-haute   { background-color: #fee2e2; color: #ef4444; }
-    .badge-moyenne { background-color: #fef3c7; color: #f59e0b; }
-    .badge-basse   { background-color: #dcfce7; color: #10b981; }
+    .badge-haute   { background-color: #FEE2E2; color: #DC2626; }
+    .badge-moyenne { background-color: #FEF3C7; color: #D97706; }
+    .badge-basse   { background-color: #D1FAE5; color: #059669; }
 
+    /* Boutons d'action */
     .task-actions {
         display: flex;
         gap: 6px;
-        margin-top: 10px;
+        margin-top: 12px;
         flex-wrap: wrap;
     }
 
     .task-actions .btn-sm {
-        padding: 2px 8px;
+        padding: 4px 10px;
         font-size: 11px;
+        border-radius: 20px;
+        font-weight: 600;
+        transition: all 0.2s;
     }
 
+    .task-actions .btn-warning {
+        background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+        border: none;
+        color: #B45309;
+    }
+
+    .task-actions .btn-warning:hover {
+        background: linear-gradient(135deg, #FDE68A, #FCD34D);
+        transform: translateY(-1px);
+    }
+
+    .task-actions .btn-info {
+        background: linear-gradient(135deg, var(--orange-light), #FED7AA);
+        border: none;
+        color: var(--orange-dark);
+    }
+
+    .task-actions .btn-info:hover {
+        background: linear-gradient(135deg, #FED7AA, #FDC68A);
+        transform: translateY(-1px);
+    }
+
+    .task-actions .btn-success {
+        background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
+        border: none;
+        color: #047857;
+    }
+
+    .task-actions .btn-success:hover {
+        background: linear-gradient(135deg, #A7F3D0, #6EE7B7);
+        transform: translateY(-1px);
+    }
+
+    .task-actions .btn-secondary {
+        background: #F1F5F9;
+        border: none;
+        color: #475569;
+    }
+
+    .task-actions .btn-secondary:hover {
+        background: #E2E8F0;
+        transform: translateY(-1px);
+    }
+
+    .task-actions .btn-danger {
+        background: linear-gradient(135deg, #FEE2E2, #FECACA);
+        border: none;
+        color: #DC2626;
+    }
+
+    .task-actions .btn-danger:hover {
+        background: linear-gradient(135deg, #FECACA, #FCA5A5);
+        transform: translateY(-1px);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-gray);
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        opacity: 0.5;
+        color: var(--orange-primary);
+    }
+
+    .empty-state p {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    /* Drop placeholder */
     .drop-placeholder {
-        background: #c1c7d0;
-        border: 2px dashed #97a0af;
-        border-radius: 8px;
-        height: 80px;
-        margin-bottom: 10px;
+        background: linear-gradient(135deg, var(--orange-light), #FFF7ED);
+        border: 2px dashed var(--orange-primary);
+        border-radius: 14px;
+        height: 90px;
+        margin-bottom: 12px;
     }
 
+    /* Toast notifications */
     .toast-container {
         position: fixed;
         top: 20px;
         right: 20px;
         z-index: 9999;
     }
+
+    .toast-custom {
+        background: white;
+        border-radius: 16px;
+        padding: 12px 20px;
+        margin-bottom: 10px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideInRight 0.3s ease;
+        border-left: 4px solid var(--orange-primary);
+    }
+
+    .toast-custom.success {
+        border-left-color: #10B981;
+    }
+
+    .toast-custom.danger {
+        border-left-color: #EF4444;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    /* Scrollbar styling */
+    .kanban-board::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .kanban-board::-webkit-scrollbar-track {
+        background: var(--orange-light);
+        border-radius: 10px;
+    }
+
+    .kanban-board::-webkit-scrollbar-thumb {
+        background: var(--orange-primary);
+        border-radius: 10px;
+    }
+
+    .kanban-board::-webkit-scrollbar-thumb:hover {
+        background: var(--orange-dark);
+    }
 </style>
 {% endblock %}
 
 {% block admin_content %}
 <div class="container-fluid">
-    <div class="mb-4">
+    <div class="page-header">
         <h1><i class="fas fa-chalkboard"></i> Tableau Kanban</h1>
     </div>
 
@@ -163,7 +375,7 @@
         {# ===== COLONNE À FAIRE ===== #}
         <div class="kanban-column">
             <div class="column-header">
-                <span>📌 À FAIRE</span>
+                <span><i class="fas fa-clipboard-list" style="color: var(--orange-primary);"></i> À FAIRE</span>
                 <span class="count-badge" id="count-A_FAIRE">{{ countAFaire }}</span>
             </div>
             <div class="tasks-container" data-statut="A_FAIRE" id="col-A_FAIRE">
@@ -176,7 +388,7 @@
                     <div class="task-description">{{ tache.description|slice(0,80) }}{% if tache.description|length > 80 %}...{% endif %}</div>
                     <div class="task-meta">
                         <span><i class="fas fa-user"></i> {{ tache.employeNom }}</span>
-                        <span><i class="fas fa-calendar"></i> {{ tache.deadline }}</span>
+                        <span><i class="fas fa-calendar-alt"></i> {{ tache.deadline }}</span>
                     </div>
                     <span class="badge-priorite badge-{{ tache.priorite|lower }}">
                         {% if tache.priorite == 'HAUTE' %}🔴 Haute
@@ -199,8 +411,9 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-2x mb-2"></i><p>Aucune tâche à faire</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucune tâche à faire</p>
                 </div>
                 {% endfor %}
             </div>
@@ -209,7 +422,7 @@
         {# ===== COLONNE EN COURS ===== #}
         <div class="kanban-column">
             <div class="column-header">
-                <span>⚡ EN COURS</span>
+                <span><i class="fas fa-bolt" style="color: var(--orange-primary);"></i> EN COURS</span>
                 <span class="count-badge" id="count-EN_COURS">{{ countEnCours }}</span>
             </div>
             <div class="tasks-container" data-statut="EN_COURS" id="col-EN_COURS">
@@ -222,7 +435,7 @@
                     <div class="task-description">{{ tache.description|slice(0,80) }}{% if tache.description|length > 80 %}...{% endif %}</div>
                     <div class="task-meta">
                         <span><i class="fas fa-user"></i> {{ tache.employeNom }}</span>
-                        <span><i class="fas fa-calendar"></i> {{ tache.deadline }}</span>
+                        <span><i class="fas fa-calendar-alt"></i> {{ tache.deadline }}</span>
                     </div>
                     <span class="badge-priorite badge-{{ tache.priorite|lower }}">
                         {% if tache.priorite == 'HAUTE' %}🔴 Haute
@@ -249,8 +462,9 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-2x mb-2"></i><p>Aucune tâche en cours</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucune tâche en cours</p>
                 </div>
                 {% endfor %}
             </div>
@@ -259,7 +473,7 @@
         {# ===== COLONNE TERMINÉE ===== #}
         <div class="kanban-column">
             <div class="column-header">
-                <span>✅ TERMINÉE</span>
+                <span><i class="fas fa-check-circle" style="color: var(--orange-primary);"></i> TERMINÉE</span>
                 <span class="count-badge" id="count-TERMINEE">{{ countTerminees }}</span>
             </div>
             <div class="tasks-container" data-statut="TERMINEE" id="col-TERMINEE">
@@ -272,7 +486,7 @@
                     <div class="task-description">{{ tache.description|slice(0,80) }}{% if tache.description|length > 80 %}...{% endif %}</div>
                     <div class="task-meta">
                         <span><i class="fas fa-user"></i> {{ tache.employeNom }}</span>
-                        <span><i class="fas fa-calendar"></i> {{ tache.deadline }}</span>
+                        <span><i class="fas fa-calendar-alt"></i> {{ tache.deadline }}</span>
                     </div>
                     <span class="badge-priorite badge-{{ tache.priorite|lower }}">
                         {% if tache.priorite == 'HAUTE' %}🔴 Haute
@@ -294,8 +508,9 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-2x mb-2"></i><p>Aucune tâche terminée</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucune tâche terminée</p>
                 </div>
                 {% endfor %}
             </div>
@@ -416,12 +631,16 @@ function labelStatut(s) {
 }
 
 function showToast(msg, type = 'success') {
-    const t = document.createElement('div');
-    t.className = `alert alert-${type} shadow`;
-    t.style.cssText = 'min-width:250px;animation:fadeIn .3s';
-    t.textContent = msg;
-    document.getElementById('toastContainer').appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = toast-custom ${type};
+    const icon = type === 'success' ? '✅' : '❌';
+    toast.innerHTML = ${icon} ${msg};
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 </script>
 {% endblock %}
