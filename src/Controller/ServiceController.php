@@ -19,6 +19,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+
 
 #[Route('/admin/services')]
 final class ServiceController extends AbstractController
@@ -31,7 +37,6 @@ final class ServiceController extends AbstractController
         $archive = $request->query->get('archive', '0') === '1';
 
         $queryBuilder = $serviceRepository->createQueryBuilder('s')
-            ->leftJoin('s.categorie', 'c')
             ->where('s.archive = :archive')
             ->setParameter('archive', $archive);
 
@@ -41,17 +46,23 @@ final class ServiceController extends AbstractController
         }
 
         if (!empty($categorie)) {
-            $queryBuilder->andWhere('c.nom = :categorie')
+            $queryBuilder->leftJoin('s.categorie', 'c')
+                ->andWhere('c.nom = :categorie')
                 ->setParameter('categorie', $categorie);
         }
 
-        $queryBuilder->orderBy('s.id', 'DESC');
-        
         $services = $paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
             6
         );
+        
+        $items = $services->getItems();
+        $itemsArray = is_array($items) ? $items : iterator_to_array($items);
+        usort($itemsArray, function($a, $b) {
+            return $b->getId() <=> $a->getId();
+        });
+        $services->setItems($itemsArray);
         
         $now = new \DateTime();
         $sevenDaysAgo = (new \DateTime())->modify('-7 days');
@@ -129,7 +140,8 @@ final class ServiceController extends AbstractController
     #[Route('/{id}/archive', name: 'app_service_archive', methods: ['POST'])]
     public function archive(Request $request, Service $service, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('archive'.$service->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token', '');
+        if (is_string($token) && $this->isCsrfTokenValid('archive' . $service->getId(), $token)) {
             $service->setArchive(!$service->isArchive());
             $entityManager->flush();
 
@@ -143,7 +155,8 @@ final class ServiceController extends AbstractController
     #[Route('/{id}', name: 'app_service_delete', methods: ['POST'])]
     public function delete(Request $request, Service $service, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$service->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token', '');
+        if (is_string($token) && $this->isCsrfTokenValid('delete' . $service->getId(), $token)) {
             $entityManager->remove($service);
             $entityManager->flush();
 
@@ -187,7 +200,7 @@ final class ServiceController extends AbstractController
         }
 
         try {
-            $services = $serviceRepository->findBy(['archive' => false]);
+            $services = $serviceRepository->findBy(['archive' => false], null, 500);
             $groqService->setServices($services);
             $response = $groqService->ask($question);
             
@@ -202,12 +215,18 @@ final class ServiceController extends AbstractController
     public function ajaxSearch(Request $request, ServiceRepository $serviceRepository, PaginatorInterface $paginator): JsonResponse
     {
         $keyword = $request->query->get('keyword');
+        $keyword = is_string($keyword) ? $keyword : null;
         $categorie = $request->query->get('categorie');
+        $categorie = is_string($categorie) ? $categorie : null;
         $archive = $request->query->get('archive') === '1';
         $budgetMin = $request->query->get('budgetMin') ? (float) $request->query->get('budgetMin') : null;
         $budgetMax = $request->query->get('budgetMax') ? (float) $request->query->get('budgetMax') : null;
-        $dateStart = $request->query->get('dateStart') ? new \DateTime($request->query->get('dateStart')) : null;
-        $dateEnd = $request->query->get('dateEnd') ? new \DateTime($request->query->get('dateEnd')) : null;
+        
+        $dateStartValue = $request->query->get('dateStart');
+        $dateStart = ($dateStartValue && is_string($dateStartValue)) ? new \DateTime($dateStartValue) : null;
+        $dateEndValue = $request->query->get('dateEnd');
+        $dateEnd = ($dateEndValue && is_string($dateEndValue)) ? new \DateTime($dateEndValue) : null;
+        
         $page = $request->query->getInt('page', 1);
         $limit = 6;
 
@@ -236,7 +255,7 @@ final class ServiceController extends AbstractController
             $data[] = [
                 'id'          => $service->getId(),
                 'titre'       => $service->getTitre(),
-                'budget'      => $service->getBudget(),
+                'budget'      => (float)$service->getBudget(),
                 'categorie'   => $service->getCategorie() ? $service->getCategorie()->getNom() : null,
                 'description' => $service->getDescription(),
                 'dateDebut'   => $service->getDateDebut() ? $service->getDateDebut()->format('d/m/Y') : 'N/A',
@@ -246,12 +265,14 @@ final class ServiceController extends AbstractController
             ];
         }
 
+        $pageCount = method_exists($pagination, 'getPageCount') ? $pagination->getPageCount() : 1;
+
         return $this->json([
             'services' => $data,
             'paginationHtml' => $paginationHtml,
             'total' => $pagination->getTotalItemCount(),
             'currentPage' => $pagination->getCurrentPageNumber(),
-            'pageCount' => $pagination->getPageCount(),
+            'pageCount' => $pageCount,
         ]);
     }
 
@@ -259,7 +280,7 @@ final class ServiceController extends AbstractController
     public function exportPDF(ServiceRepository $serviceRepository, PDFExportService $pdfExportService): Response
     {
         try {
-            $services = $serviceRepository->findBy(['archive' => false]);
+            $services = $serviceRepository->findBy(['archive' => false], null, 500);
             
             $pdfContent = $pdfExportService->exportServicesToPDF($services, 'Liste des Services');
             
@@ -271,5 +292,109 @@ final class ServiceController extends AbstractController
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    #[Route('/api/export-excel', name: 'app_service_export_excel', methods: ['GET'])]
+    public function exportExcel(ServiceRepository $serviceRepository): Response
+    {
+        $services = $serviceRepository->findBy(['archive' => false], ['id' => 'DESC']);
+        
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        $spreadsheet->getProperties()
+            ->setCreator('stratiX')
+            ->setTitle('Liste des Services')
+            ->setSubject('Export des services')
+            ->setDescription('Liste complète des services');
+        
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F97316']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ];
+        
+        $headers = ['ID', 'Titre du Service', 'Budget (DT)', 'Catégorie', 'Date Début', 'Date Fin', 'Statut'];
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . '1', $header);
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+            $sheet->getStyle($column . '1')->applyFromArray($headerStyle);
+            $column++;
+        }
+        
+        $dataStyle = [
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+        ];
+        
+        $row = 2;
+        foreach ($services as $service) {
+            $status = $this->getServiceStatus($service);
+            
+            $sheet->setCellValue('A' . $row, $service->getId());
+            $sheet->setCellValue('B' . $row, $service->getTitre());
+            $sheet->setCellValue('C' . $row, number_format((float)$service->getBudget(), 0, ',', ' '));
+            $sheet->setCellValue('D' . $row, $service->getCategorie() ? $service->getCategorie()->getNom() : 'Non catégorisé');
+            $sheet->setCellValue('E' . $row, $service->getDateDebut() ? $service->getDateDebut()->format('d/m/Y') : 'N/A');
+            $sheet->setCellValue('F' . $row, $service->getDateFin() ? $service->getDateFin()->format('d/m/Y') : 'N/A');
+            $sheet->setCellValue('G' . $row, $status);
+            
+            $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray($dataStyle);
+            
+            if ($row % 2 == 0) {
+                $sheet->getStyle('A' . $row . ':G' . $row)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F5F5F5');
+            }
+            
+            $row++;
+        }
+        
+        $totalBudget = array_sum(array_map(fn($s) => (float)$s->getBudget(), $services));
+        $sheet->setCellValue('A' . $row, 'TOTAL');
+        $sheet->setCellValue('C' . $row, number_format($totalBudget, 0, ',', ' ') . ' DT');
+        $sheet->getStyle('A' . $row . ':G' . $row)->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFE0B2']],
+        ]);
+        
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        $writer = new Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'services_');
+        $writer->save($tempFile);
+        
+        $fileContent = file_get_contents($tempFile);
+        if ($fileContent === false) {
+            unlink($tempFile);
+            throw new \Exception('Could not read generated Excel file');
+        }
+        
+        $response = new Response(
+            $fileContent,
+            200,
+            [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="services_' . date('Y-m-d_H-i-s') . '.xlsx"',
+            ]
+        );
+        unlink($tempFile);
+        return $response;
+    }
+
+    private function getServiceStatus(Service $service): string
+    {
+        $now = new \DateTime();
+        if ($service->getDateFin() && $service->getDateFin() < $now) {
+            return 'Terminé';
+        }
+        if ($service->getDateFin() && $service->getDateFin() > $now) {
+            return 'En cours';
+        }
+        return 'Non commencé';
     }
 }

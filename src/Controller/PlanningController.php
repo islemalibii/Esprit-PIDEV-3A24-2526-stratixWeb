@@ -1,4 +1,5 @@
 <?php
+// src/Controller/PlanningController.php
 
 namespace App\Controller;
 
@@ -11,53 +12,82 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/planning')]
 final class PlanningController extends AbstractController
 {
-    #[Route(name: 'app_planning_index', methods: ['GET'])]
-    public function index(PlanningRepository $planningRepository, UtilisateurRepository $utilisateurRepository): Response
+    #[Route('/', name: 'app_planning_index', methods: ['GET'])]
+    public function index(Request $request, PlanningRepository $planningRepository, UtilisateurRepository $utilisateurRepository): Response
     {
-        $plannings = $planningRepository->findAll();
-
+        // ========== RECHERCHE PHP (côté serveur) ==========
+        $searchDate = $request->query->get('search_date', '');
+        $searchType = $request->query->get('search_type', '');
+        $searchEmploye = $request->query->get('search_employe', '');
+        
+        // FORCER LES TYPES EN STRING
+        if (!is_string($searchDate)) $searchDate = '';
+        if (!is_string($searchType)) $searchType = '';
+        if (!is_string($searchEmploye)) $searchEmploye = '';
+        
+        // Construire la requête avec filtres
+        $qb = $planningRepository->createQueryBuilder('p');
+        
+        // Filtre par date (CORRIGÉ - sans is_string redondant)
+        if (!empty($searchDate)) {
+            $date = new \DateTime($searchDate);
+            $qb->andWhere('p.date = :date')
+               ->setParameter('date', $date);
+        }
+        
+        // Filtre par type de shift
+        if (!empty($searchType)) {
+            $qb->andWhere('p.typeShift = :type')
+               ->setParameter('type', $searchType);
+        }
+        
+        // Filtre par employé
+        if (!empty($searchEmploye)) {
+            $qb->andWhere('p.employeId = :employe')
+               ->setParameter('employe', (int)$searchEmploye);
+        }
+        
+        // Trier par date décroissante
+        $qb->orderBy('p.date', 'DESC');
+        
+        $plannings = $qb->getQuery()->getResult();
+        
+        // Récupérer tous les employés
         $employes = [];
         foreach ($utilisateurRepository->findAll() as $u) {
             $employes[$u->getId()] = $u->getPrenom() . ' ' . $u->getNom();
         }
-
+        
         return $this->render('admin/planning/index.html.twig', [
             'plannings' => $plannings,
-            'employes'  => $employes,
+            'employes' => $employes,
+            'search_date' => $searchDate,
+            'search_type' => $searchType,
+            'search_employe' => $searchEmploye,
         ]);
     }
 
     #[Route('/new', name: 'app_planning_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $planning = new Planning();
         $form = $this->createForm(PlanningType::class, $planning);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted()) {
-            // Validation manuelle
-            $errors = $validator->validate($planning);
-            
-            if (count($errors) === 0) {
-                $entityManager->persist($planning);
-                $entityManager->flush();
-                $this->addFlash('success', '✅ Planning ajouté avec succès !');
-                return $this->redirectToRoute('app_planning_index');
-            } else {
-                foreach ($errors as $error) {
-                    $this->addFlash('danger', $error->getMessage());
-                }
-            }
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($planning);
+            $entityManager->flush();
+            $this->addFlash('success', '✅ Planning ajouté avec succès !');
+            return $this->redirectToRoute('app_planning_index');
         }
 
         return $this->render('admin/planning/new.html.twig', [
             'planning' => $planning,
-            'form'     => $form,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -76,35 +106,28 @@ final class PlanningController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_planning_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Planning $planning, EntityManagerInterface $entityManager, ValidatorInterface $validator): Response
+    public function edit(Request $request, Planning $planning, EntityManagerInterface $entityManager): Response
     {
         $form = $this->createForm(PlanningType::class, $planning);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted()) {
-            $errors = $validator->validate($planning);
-            
-            if (count($errors) === 0) {
-                $entityManager->flush();
-                $this->addFlash('success', '✅ Planning modifié avec succès !');
-                return $this->redirectToRoute('app_planning_index');
-            } else {
-                foreach ($errors as $error) {
-                    $this->addFlash('danger', $error->getMessage());
-                }
-            }
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', '✅ Planning modifié avec succès !');
+            return $this->redirectToRoute('app_planning_index');
         }
 
         return $this->render('admin/planning/edit.html.twig', [
             'planning' => $planning,
-            'form'     => $form,
+            'form' => $form->createView(),
         ]);
     }
 
     #[Route('/{id}', name: 'app_planning_delete', methods: ['POST'])]
     public function delete(Request $request, Planning $planning, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $planning->getId(), $request->getPayload()->getString('_token'))) {
+        $token = $request->request->get('_token');
+        if ($token !== null && is_string($token) && $this->isCsrfTokenValid('delete' . $planning->getId(), $token)) {
             $entityManager->remove($planning);
             $entityManager->flush();
             $this->addFlash('success', '✅ Planning supprimé avec succès !');

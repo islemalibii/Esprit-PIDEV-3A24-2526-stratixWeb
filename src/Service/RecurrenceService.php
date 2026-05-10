@@ -9,33 +9,35 @@ class RecurrenceService
 {
     public function __construct(private EntityManagerInterface $em) {}
 
+    
     public function generateRecurringEvents(Evenement $original): void
     {
         $recurrence = $original->getRecurrence();
+        $originalDate = $original->getDateEvent();
 
-        if (!$recurrence || $recurrence === 'none') return;
+        if (!$recurrence || $recurrence === 'none' || !$originalDate instanceof \DateTimeInterface) {
+            return;
+        }
+
+        $originalDay = (int) $originalDate->format('d');
 
         for ($i = 1; $i <= 4; $i++) {
-            $newDate = clone $original->getDateEvent();
+            $newDate = clone $originalDate;
 
-            if ($recurrence === 'weekly') {
+            if ($recurrence === 'weekly' && $newDate instanceof \DateTime) {
                 $newDate->modify("+{$i} week");
             } elseif ($recurrence === 'monthly') {
-                $newMonth = (int) $original->getDateEvent()->format('m') + $i;
-                $newYear  = (int) $original->getDateEvent()->format('Y');
-    
-                // Handle year overflow (month > 12)
+                $newMonth = (int) $originalDate->format('m') + $i;
+                $newYear  = (int) $originalDate->format('Y');    
                 while ($newMonth > 12) {
                     $newMonth -= 12;
                     $newYear++;
                 }
     
-                // Get the last day of the target month
                 $lastDayOfMonth = (int) (new \DateTime("{$newYear}-{$newMonth}-01"))
                     ->modify('last day of this month')
                     ->format('d');
     
-                // Use original day OR last day of month if original day doesn't exist
                 $safeDay = min($originalDay, $lastDayOfMonth);
     
                 $newDate = new \DateTime(
@@ -50,7 +52,11 @@ class RecurrenceService
             $newEvent->setTypeEvent($original->getTypeEvent());
             $newEvent->setStatut($original->getStatut());
             $newEvent->setIsArchived(false);
-            $newEvent->setDateEvent($newDate);
+
+            if ($newDate instanceof \DateTime) {
+                $newEvent->setDateEvent($newDate);
+            }
+
             $newEvent->setImageUrl($original->getImageUrl());
             $newEvent->setLatitude($original->getLatitude());
             $newEvent->setLongitude($original->getLongitude());

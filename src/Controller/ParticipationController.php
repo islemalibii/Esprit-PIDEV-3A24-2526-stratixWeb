@@ -1,5 +1,4 @@
 <?php
-// src/Controller/ParticipationController.php
 
 namespace App\Controller;
 use App\Entity\Utilisateur;
@@ -28,7 +27,7 @@ class ParticipationController extends AbstractController
         return $this->json(['success' => false, 'message' => 'Vous devez être connecté.'], 401);
     }
 
-    $result = $this->participationService->participate($evenement, $user->getEmail());
+    $result = $this->participationService->participate($evenement, $user->getEmail() ?? '');
 
     return $this->json($result, $result['success'] ? 200 : 409);
     }
@@ -72,7 +71,10 @@ class ParticipationController extends AbstractController
         $row = 2;
         foreach ($participations as $p) {
             $sheet->setCellValue('A' . $row, $p->getUserEmail());
-            $sheet->setCellValue('B' . $row, $p->getParticipationDate()->format('d/m/Y H:i'));
+            $date = $p->getParticipationDate();
+            $formattedDate = $date ? $date->format('d/m/Y H:i') : 'N/A';
+
+            $sheet->setCellValue('B' . $row, $formattedDate);
             $sheet->setCellValue('C' . $row, $evenement->getTitre());
             $row++;
         }

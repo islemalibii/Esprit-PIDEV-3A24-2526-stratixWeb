@@ -6,6 +6,9 @@ use App\Entity\Service;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Service>
+ */
 class ServiceRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -21,9 +24,8 @@ class ServiceRepository extends ServiceEntityRepository
         ?float $budgetMax = null,
         ?\DateTime $dateStartAfter = null,
         ?\DateTime $dateEndBefore = null
-    ) {
-        $qb = $this->createQueryBuilder('s')
-            ->leftJoin('s.categorie', 'c');
+    ): \Doctrine\ORM\QueryBuilder {
+        $qb = $this->createQueryBuilder('s');
 
         if ($archive !== null) {
             $qb->andWhere('s.archive = :archive')
@@ -36,7 +38,8 @@ class ServiceRepository extends ServiceEntityRepository
         }
 
         if (!empty($categorie)) {
-            $qb->andWhere('c.nom = :cat')
+            $qb->leftJoin('s.categorie', 'c')
+               ->andWhere('c.nom = :cat')
                ->setParameter('cat', $categorie);
         }
 
@@ -64,4 +67,4 @@ class ServiceRepository extends ServiceEntityRepository
 
         return $qb;
     }
-}
+} 

@@ -9,10 +9,10 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport\TransportInterface;
-use Symfony\Component\Mime\Address;use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
@@ -29,7 +29,6 @@ class ResetPasswordController extends AbstractController
         private TransportInterface $defaultTransport
     ) {}
 
-    // Étape 1 — Formulaire email
     #[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
     public function request(Request $request, UtilisateurRepository $repo): Response
     {
@@ -71,7 +70,6 @@ class ResetPasswordController extends AbstractController
         return $this->render('auth/forgot_password.html.twig');
     }
 
-    // Étape 2 — Page "vérifiez votre email"
     #[Route('/check-email', name: 'app_check_email')]
     public function checkEmail(): Response
     {
@@ -81,7 +79,6 @@ class ResetPasswordController extends AbstractController
         return $this->render('auth/check_email.html.twig', ['resetToken' => $resetToken]);
     }
 
-    // Étape 3 — Lien du mail → nouveau mot de passe
     #[Route('/reset-password/{token}', name: 'app_reset_password')]
     public function reset(Request $request, UserPasswordHasherInterface $hasher, string $token = null): Response
     {

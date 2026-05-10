@@ -21,7 +21,6 @@ parameters:
         - src/Security/LoginAuthenticator.php
         - tests/Entity/UtilisateurTest.php
     ignoreErrors:
-        - '#should return DateTime\|null but returns DateTimeInterface\|null#'
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getRole\(\)#'
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getId\(\)#'
         - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::getPrenom\(\)#'

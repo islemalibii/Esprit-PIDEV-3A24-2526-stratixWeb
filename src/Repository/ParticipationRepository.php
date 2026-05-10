@@ -15,6 +15,9 @@ class ParticipationRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Participation::class);
     }
+    /**
+     * @return array<int, int|string>
+     */
     public function findUserEventIds(string $userEmail): array
     {
         $results = $this->createQueryBuilder('p')
@@ -26,6 +29,9 @@ class ParticipationRepository extends ServiceEntityRepository
 
         return array_column($results, 'event_id');
     }
+    /**
+     * @return Participation[]
+     */
     public function findUserHistory(string $userEmail): array
     {
         return $this->createQueryBuilder('p')

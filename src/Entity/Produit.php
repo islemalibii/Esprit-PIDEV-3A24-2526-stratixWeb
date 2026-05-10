@@ -13,6 +13,7 @@ class Produit
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
@@ -61,10 +62,11 @@ class Produit
     private ?string $details = null;
 
     // --- GETTERS ET SETTERS ---
-    // Note : Pour éviter l'erreur NoSuchPropertyException, on garde les noms CamelCase 
-    // qui sont le standard de Symfony pour accéder aux propriétés avec underscores.
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int 
+    { 
+        return $this->id; 
+    }
 
     public function getNom(): ?string { return $this->nom; }
     public function setNom(?string $nom): self { $this->nom = $nom; return $this; }
@@ -75,46 +77,48 @@ class Produit
     public function getCategorie(): ?string { return $this->categorie; }
     public function setCategorie(?string $categorie): self { $this->categorie = $categorie; return $this; }
 
-    public function getPrix(): ?float { return $this->prix; }
+    /**
+     * @return float|null
+     */
+    public function getPrix(): ?float 
+    { 
+        return $this->prix !== null ? (float) $this->prix : null; 
+    }
+
     public function setPrix(?float $prix): self { $this->prix = $prix; return $this; }
 
-    // --- Synchronisation stock_actuel ---
     public function getStockActuel(): ?int { return $this->stock_actuel; }
     public function setStockActuel(?int $stock_actuel): self { $this->stock_actuel = $stock_actuel; return $this; }
 
-    // --- Synchronisation stock_min ---
     public function getStockMin(): ?int { return $this->stock_min; }
     public function setStockMin(?int $stock_min): self { $this->stock_min = $stock_min; return $this; }
 
-    // --- Synchronisation date_creation ---
     public function getDateCreation(): ?\DateTimeInterface { return $this->date_creation; }
     public function setDateCreation(?\DateTimeInterface $date_creation): self { $this->date_creation = $date_creation; return $this; }
 
-    // --- Synchronisation ressources_necessaires ---
     public function getRessourcesNecessaires(): ?string { return $this->ressources_necessaires; }
     public function setRessourcesNecessaires(?string $ressources_necessaires): self { $this->ressources_necessaires = $ressources_necessaires; return $this; }
 
-    // --- Synchronisation image_path ---
     public function getImagePath(): ?string { return $this->image_path; }
     public function setImagePath(?string $image_path): self { $this->image_path = $image_path; return $this; }
 
-    // --- Synchronisation date_fabrication ---
     public function getDateFabrication(): ?\DateTimeInterface { return $this->date_fabrication; }
     public function setDateFabrication(?\DateTimeInterface $date_fabrication): self { $this->date_fabrication = $date_fabrication; return $this; }
 
-    // --- Synchronisation date_peremption ---
     public function getDatePeremption(): ?\DateTimeInterface { return $this->date_peremption; }
     public function setDatePeremption(?\DateTimeInterface $date_peremption): self { $this->date_peremption = $date_peremption; return $this; }
 
-    // --- Synchronisation date_garantie ---
     public function getDateGarantie(): ?\DateTimeInterface { return $this->date_garantie; }
     public function setDateGarantie(?\DateTimeInterface $date_garantie): self { $this->date_garantie = $date_garantie; return $this; }
 
     public function getDetails(): ?string { return $this->details; }
     public function setDetails(?string $details): self { $this->details = $details; return $this; }
 
-    // --- LOGIQUE MÉTIER ---
-    public function getStatut(): array {
+    /**
+     * @return array<string, string>
+     */
+    public function getStatut(): array 
+    {
         $now = new \DateTime();
         
         if ($this->date_peremption && $this->date_peremption < $now) {

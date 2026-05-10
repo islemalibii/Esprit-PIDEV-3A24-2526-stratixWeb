@@ -2,6 +2,7 @@
 
 namespace App\Form;
 
+use App\Entity\Phase;
 use App\Entity\Sprint;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -45,7 +46,7 @@ class SprintType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => Sprint::class,
+            'data_class' => Phase::class,
         ]);
     }
 }

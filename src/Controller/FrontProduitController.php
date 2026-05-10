@@ -13,11 +13,12 @@ class FrontProduitController extends AbstractController
     #[Route('/boutique', name: 'front_produit_index')]
     public function index(ProduitRepository $repository, Request $request): Response
     {
-        // Récupération du terme de recherche
-        $searchTerm = $request->query->get('q', '');
+        // Correction PHPStan : On utilise getString() pour garantir un retour de type string
+        // Cela évite l'erreur "expects string, float|int|string|true given"
+        $searchTerm = $request->query->getString('q');
 
-        // Utilisation du tri par défaut (Nom croissant)
-        if ($searchTerm) {
+        // Utilisation du terme de recherche s'il n'est pas vide
+        if ($searchTerm !== '') {
             $produits = $repository->findBySearch($searchTerm);
         } else {
             // On trie par nom pour que la liste soit plus lisible

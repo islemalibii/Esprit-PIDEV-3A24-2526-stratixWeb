@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Offre;
+use App\Entity\Ressource;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,8 +18,8 @@ class OffreRepository extends ServiceEntityRepository
     }
 
     /**
-     * Optionnel : Une méthode personnalisée pour trouver les offres 
-     * triées par prix pour une ressource donnée
+     * @param \App\Entity\Ressource|int|string $ressource
+     * @return Offre[]
      */
     public function findByRessourceOrderByPrix($ressource): array
     {

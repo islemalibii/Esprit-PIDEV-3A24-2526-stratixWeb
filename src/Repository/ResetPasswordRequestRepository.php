@@ -3,12 +3,16 @@
 namespace App\Repository;
 
 use App\Entity\ResetPasswordRequest;
+use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use SymfonyCasts\Bundle\ResetPassword\Model\ResetPasswordRequestInterface;
 use SymfonyCasts\Bundle\ResetPassword\Persistence\Repository\ResetPasswordRequestRepositoryTrait;
 use SymfonyCasts\Bundle\ResetPassword\Persistence\ResetPasswordRequestRepositoryInterface;
 
+/**
+ * @extends ServiceEntityRepository<ResetPasswordRequest>
+ */
 class ResetPasswordRequestRepository extends ServiceEntityRepository implements ResetPasswordRequestRepositoryInterface
 {
     use ResetPasswordRequestRepositoryTrait;
@@ -24,6 +28,7 @@ class ResetPasswordRequestRepository extends ServiceEntityRepository implements 
         string $selector,
         string $hashedToken
     ): ResetPasswordRequestInterface {
+        assert($user instanceof Utilisateur);
         return new ResetPasswordRequest($user, \DateTimeImmutable::createFromInterface($expiresAt), $selector, $hashedToken);
     }
 }

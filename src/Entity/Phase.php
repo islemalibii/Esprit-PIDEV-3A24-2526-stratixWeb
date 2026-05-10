@@ -10,25 +10,27 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'phase')]
 class Phase
 {
+   /**
+     * @var int
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'integer')]
+    private ?int $id;
 
     #[ORM\Column(length: 255)]
-    private ?string $nom = null;
-
+    private string $nom;
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $objectif = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateDebut = null;
+    private \DateTimeInterface $dateDebut;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateFin = null;
+    private \DateTimeInterface $dateFin;
 
     #[ORM\Column(length: 50)]
-    private ?string $statut = null;
+    private string $statut;
 
     #[ORM\ManyToOne(targetEntity: Projet::class, inversedBy: 'phases')]
     #[ORM\JoinColumn(nullable: false)]
@@ -39,7 +41,7 @@ class Phase
         return $this->id;
     }
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -61,18 +63,18 @@ class Phase
         return $this;
     }
 
-    public function getDateDebut(): ?\DateTimeInterface
+    public function getDateDebut(): \DateTimeInterface
     {
         return $this->dateDebut;
     }
 
-    public function setDateDebut(\DateTimeInterface $dateDebut): static
+    public function setDateDebut(\DateTimeInterface $dateDebut): self
     {
-        $this->dateDebut = $dateDebut;
-        return $this;
+    $this->dateDebut = $dateDebut;
+    return $this;
     }
 
-    public function getDateFin(): ?\DateTimeInterface
+    public function getDateFin(): \DateTimeInterface
     {
         return $this->dateFin;
     }
@@ -83,7 +85,7 @@ class Phase
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }

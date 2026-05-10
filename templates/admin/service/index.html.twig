@@ -87,6 +87,9 @@
                                 <button type="button" class="btn btn-danger-outline flex-grow-1" id="exportPdfBtn">
                                     <i class="fas fa-file-pdf me-2"></i>PDF
                                 </button>
+                                <button type="button" class="btn btn-success-outline" id="exportExcelBtn">
+    <i class="fas fa-file-excel me-2"></i>Excel
+</button>
                                 <button type="button" class="btn btn-outline-secondary" id="insightsBtn">
                                     <i class="fas fa-brain me-1"></i> IA
                                 </button>
@@ -236,6 +239,18 @@
         --gray-700: #404040;
         --gray-800: #262626;
     }
+    .btn-success-outline { 
+    background: transparent; 
+    border: 1px solid #10b981; 
+    color: #10b981; 
+    padding: 0.6rem 1rem; 
+    border-radius: 12px; 
+    transition: all 0.2s; 
+}
+.btn-success-outline:hover { 
+    background: #10b981; 
+    color: white; 
+}
     body { background-color: var(--gray-100); font-family: 'Inter', system-ui, sans-serif; }
     .service-card {
         background: white;
@@ -927,5 +942,8 @@
     
     document.getElementById('exportPdfBtn')?.addEventListener('click', function() { window.open('/admin/services/api/export-pdf', '_blank'); });
     document.getElementById('insightsBtn')?.addEventListener('click', generateInsights);
+    document.getElementById('exportExcelBtn')?.addEventListener('click', function() { 
+    window.open('/admin/services/api/export-excel', '_blank'); 
+});
 </script>
 {% endblock %}

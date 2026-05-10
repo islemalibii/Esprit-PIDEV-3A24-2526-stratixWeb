@@ -85,9 +85,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
     #[Assert\Length(min: 2, max: 50, minMessage: 'Minimum 2 caractères.', maxMessage: 'Maximum 50 caractères.')]
     #[Assert\Regex(pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/', message: 'Le nom ne doit contenir que des lettres.')]
-    private ?string $nom = null;
+    private string $nom = '';
 
-    public function getNom(): ?string
+    public function getNom(): string
     {
         return $this->nom;
     }
@@ -102,9 +102,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Le prénom est obligatoire.')]
     #[Assert\Length(min: 2, max: 50, minMessage: 'Minimum 2 caractères.', maxMessage: 'Maximum 50 caractères.')]
     #[Assert\Regex(pattern: '/^[a-zA-ZÀ-ÿ\s\-]+$/', message: 'Le prénom ne doit contenir que des lettres.')]
-    private ?string $prenom = null;
+    private string $prenom = '';
 
-    public function getPrenom(): ?string
+    public function getPrenom(): string
     {
         return $this->prenom;
     }
@@ -118,9 +118,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'integer', nullable: false)]
     #[Assert\NotBlank(message: 'Le CIN est obligatoire.')]
     #[Assert\Regex(pattern: '/^\d{8}$/', message: 'Le CIN doit contenir exactement 8 chiffres.')]
-    private ?int $cin = null;
+    private int $cin = 0;
 
-    public function getCin(): ?int
+    public function getCin(): int
     {
         return $this->cin;
     }
@@ -146,9 +146,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $role = null;
+    private string $role = '';
 
-    public function getRole(): ?string
+    public function getRole(): string
     {
         return $this->role;
     }
@@ -439,7 +439,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        $role = strtoupper(str_replace(' ', '_', $this->role ?? 'user'));
+        $role = strtoupper(str_replace(' ', '_', $this->role ?: 'user'));
         return ['ROLE_' . $role];
     }
 

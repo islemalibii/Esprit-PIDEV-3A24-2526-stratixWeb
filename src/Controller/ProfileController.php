@@ -41,9 +41,9 @@ class ProfileController extends AbstractController
 
             // Validation
             if (!$nom)    { $errors['nom']    = 'Le nom est obligatoire.'; }
-            if (!$prenom) { $errors['prenom'] = 'Le prénom est obligatoire.'; }
+            if (!$prenom) { $errors['prenom'] = 'Le prÃ©nom est obligatoire.'; }
             if ($tel && !preg_match('/^\d{8}$/', $tel)) {
-                $errors['tel'] = 'Le téléphone doit contenir 8 chiffres.';
+                $errors['tel'] = 'Le tÃ©lÃ©phone doit contenir 8 chiffres.';
             }
 
             // Changement de mot de passe (optionnel)
@@ -51,7 +51,7 @@ class ProfileController extends AbstractController
                 if (!$hasher->isPasswordValid($user, $currentPw)) {
                     $errors['current_password'] = 'Mot de passe actuel incorrect.';
                 } elseif (strlen($newPw) < 8) {
-                    $errors['new_password'] = 'Minimum 8 caractères.';
+                    $errors['new_password'] = 'Minimum 8 caractÃ¨res.';
                 } elseif (!preg_match('/[A-Z]/', $newPw)) {
                     $errors['new_password'] = 'Au moins une majuscule requise.';
                 } elseif (!preg_match('/[0-9]/', $newPw)) {
@@ -73,7 +73,7 @@ class ProfileController extends AbstractController
                 }
 
                 $em->flush();
-                $this->addFlash('success', 'Profil mis à jour avec succès.');
+                $this->addFlash('success', 'Profil mis Ã  jour avec succÃ¨s.');
                 return $this->redirectToRoute('admin_profile');
             }
         }

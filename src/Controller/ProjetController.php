@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Projet;
+use App\Entity\Utilisateur;
 use App\Form\ProjetType;
 use App\Repository\ProjetRepository;
 use App\Service\AiResumeService;
@@ -19,7 +20,6 @@ use App\Entity\Favori;
 use App\Repository\FavoriRepository;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use App\Entity\Phase;
 
 #[Route('/projet')]
 class ProjetController extends AbstractController
@@ -31,21 +31,27 @@ class ProjetController extends AbstractController
     public function index(Request $request, ProjetRepository $repo, PaginatorInterface $paginator, FavoriRepository $favoriRepo): Response
     {
         $search = $request->query->get('search');
+        $search = is_string($search) ? $search : null;
+
         $statut = $request->query->get('statut');
+        $statut = is_string($statut) ? $statut : null;
 
         $query = $repo->findActiveWithFilters($search, $statut);
 
         $pagination = $paginator->paginate(
             $query,
             $request->query->getInt('page', 1),
-            6 
         );
 
         $userFavorisIds = [];
-        if ($this->getUser()) {
-            $favoris = $favoriRepo->findBy(['utilisateur' => $this->getUser()]);
+        $user = $this->getUser();
+        if ($user instanceof Utilisateur) {
+            $favoris = $favoriRepo->findBy(['utilisateur' => $user]);
             foreach ($favoris as $f) {
-                $userFavorisIds[] = $f->getProjet()->getId();
+                $p = $f->getProjet();
+                if ($p) {
+                    $userFavorisIds[] = $p->getId();
+                }
             }
         }
 
@@ -75,7 +81,10 @@ class ProjetController extends AbstractController
             $file = $form->get('cahierDesChargesFile')->getData();
 
             if ($file) {
-                $uploadDir   = $this->getParameter('kernel.project_dir') . '/public/uploads/cahiers';
+                // Correction ligne 85 : Utilisation d'une variable typée
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/uploads/cahiers';
+                
                 $newFilename = uniqid('cdc_') . '_' . time() . '.' . $file->guessExtension();
                 $file->move($uploadDir, $newFilename);
                 $projet->setCahierDesCharges($newFilename);
@@ -115,9 +124,13 @@ class ProjetController extends AbstractController
             $file = $form->get('cahierDesChargesFile')->getData();
 
             if ($file) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/cahiers';
-                if ($projet->getCahierDesCharges()) {
-                    $oldPath = $uploadDir . '/' . $projet->getCahierDesCharges();
+                // Correction ligne 125
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/uploads/cahiers';
+
+                $currentCdc = $projet->getCahierDesCharges();
+                if ($currentCdc) {
+                    $oldPath = $uploadDir . '/' . $currentCdc;
                     if (file_exists($oldPath)) { unlink($oldPath); }
                 }
                 $newFilename = uniqid('cdc_') . '_' . time() . '.' . $file->guessExtension();
@@ -193,14 +206,19 @@ class ProjetController extends AbstractController
         $fileName = $projet->getCahierDesCharges();
         if (!$fileName) return $this->json(['error' => 'Aucun fichier trouvé.'], 404);
 
-        $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads/cahiers/' . $fileName;
+        // Correction ligne 204
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/uploads/cahiers/';
+        $filePath = $uploadDir . $fileName;
+
         if (!file_exists($filePath)) return $this->json(['error' => 'Fichier introuvable.'], 404);
 
         try {
             $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
             $contenu = ($extension === 'pdf') ? (new Parser())->parseFile($filePath)->getText() : file_get_contents($filePath);
             
-            $result = $aiService->generateSummary(mb_substr(trim($contenu), 0, 3000));
+            $safeContent = is_string($contenu) ? $contenu : '';
+            $result = $aiService->generateSummary(mb_substr(trim($safeContent), 0, 3000));
             
             if (preg_match('/\{(?:[^{}]|(?R))*\}/s', $result, $matches)) {
                 $data = json_decode($matches[0], true);
@@ -223,12 +241,15 @@ class ProjetController extends AbstractController
     public function indexEmployee(ProjetRepository $repo, FavoriRepository $favoriRepo): Response
     {
         $user = $this->getUser();
-        if (!$user) return $this->redirectToRoute('app_login');
+        if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
 
         $userFavorisIds = [];
         $favoris = $favoriRepo->findBy(['utilisateur' => $user]);
         foreach ($favoris as $f) {
-            $userFavorisIds[] = $f->getProjet()->getId();
+            $proj = $f->getProjet();
+            if ($proj) {
+                $userFavorisIds[] = $proj->getId();
+            }
         }
 
         return $this->render('employee/projetEmploye.html.twig', [
@@ -241,6 +262,7 @@ class ProjetController extends AbstractController
     public function showEmployee(Projet $projet): Response
     {
         $user = $this->getUser();
+        if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
 
         if (!$projet->getMembres()->contains($user)) {
             $this->addFlash('danger', 'Accès refusé : vous ne faites pas partie de ce projet.');
@@ -249,7 +271,7 @@ class ProjetController extends AbstractController
 
         return $this->render('employee/employeProjetDetails.html.twig', [
             'projet' => $projet,
-            'phases' => $projet->getPhases(), // Changé de getSprints() à getPhases()
+            'phases' => $projet->getPhases(),
         ]);
     }
 
@@ -260,7 +282,7 @@ class ProjetController extends AbstractController
     public function listeFavoris(FavoriRepository $favoriRepo): Response
     {
         $user = $this->getUser();
-        if (!$user) return $this->redirectToRoute('app_login');
+        if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
 
         $favoris = $favoriRepo->findBy(['utilisateur' => $user]);
 
@@ -273,7 +295,7 @@ class ProjetController extends AbstractController
     public function toggleFavori(Projet $projet, EntityManagerInterface $em, FavoriRepository $repo): Response 
     {
         $user = $this->getUser();
-        if (!$user) return $this->json(['message' => 'Non connecté'], 403);
+        if (!$user instanceof Utilisateur) return $this->json(['message' => 'Non connecté'], 403);
 
         $favori = $repo->findOneBy(['utilisateur' => $user, 'projet' => $projet]);
 
@@ -296,7 +318,7 @@ class ProjetController extends AbstractController
     public function favorisEmployee(FavoriRepository $favoriRepo): Response
     {
         $user = $this->getUser();
-        if (!$user) return $this->redirectToRoute('app_login');
+        if (!$user instanceof Utilisateur) return $this->redirectToRoute('app_login');
 
         $favoris = $favoriRepo->findBy(['utilisateur' => $user]);
 
@@ -324,7 +346,8 @@ class ProjetController extends AbstractController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $safeFilename = str_replace([' ', '/', '\\'], '_', $projet->getNom());
+        $nomProjet = $projet->getNom();
+        $safeFilename = str_replace([' ', '/', '\\'], '_', (string)$nomProjet);
         $fileName = 'Stratix_Rapport_' . $safeFilename . '_' . date('Y-m-d') . '.pdf';
 
         return new Response($dompdf->output(), 200, [
@@ -337,28 +360,30 @@ class ProjetController extends AbstractController
     //  CALENDRIER
     // ─────────────────────────────────────────────
     #[Route('/api/projets/calendar', name: 'api_projets_calendar', methods: ['GET'])]
-    public function getCalendarEvents(ProjetRepository $projetRepository): JsonResponse
-    {
-        $projets = $projetRepository->findBy(['isArchived' => false]); 
+public function getCalendarEvents(ProjetRepository $projetRepository): JsonResponse
+{
+    $projets = $projetRepository->findBy(['isArchived' => false]);
 
-        $events = [];
-        foreach ($projets as $projet) {
-            if ($projet->getDateDebut() && $projet->getDateFin()) {
-                $events[] = [
-                    'id' => $projet->getId(),
-                    'title' => $projet->getNom(),
-                    'start' => $projet->getDateDebut()->format('Y-m-d'),
-                    'end' => $projet->getDateFin()->modify('+1 day')->format('Y-m-d'),
-                    'backgroundColor' => $this->getColorByStatut($projet->getStatut() ?? 'default'),
-                    'borderColor' => $this->getColorByStatut($projet->getStatut() ?? 'default'),
-                    'url' => $this->generateUrl('app_projet_show', ['id' => $projet->getId()]),
-                    'allDay' => true
-                ];
-            }
-        }
-        return new JsonResponse($events);
+    $events = [];
+    foreach ($projets as $projet) {
+        $debut = $projet->getDateDebut();
+        $fin   = $projet->getDateFin();
+
+        $endDate  = \DateTime::createFromInterface($fin);
+        $events[] = [
+            'id'              => $projet->getId(),
+            'title'           => $projet->getNom(),
+            'start'           => $debut->format('Y-m-d'),
+            'end'             => $endDate->modify('+1 day')->format('Y-m-d'),
+            'backgroundColor' => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
+            'borderColor'     => $this->getColorByStatut((string)($projet->getStatut() ?? 'default')),
+            'url'             => $this->generateUrl('app_projet_show', ['id' => $projet->getId()]),
+            'allDay'          => true,
+        ];
     }
 
+    return new JsonResponse($events);
+}
     private function getColorByStatut(string $statut): string
     {
         return match ($statut) {

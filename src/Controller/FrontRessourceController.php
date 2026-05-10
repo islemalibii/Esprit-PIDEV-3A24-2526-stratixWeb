@@ -13,11 +13,11 @@ class FrontRessourceController extends AbstractController
     #[Route('/catalogue-ressources', name: 'front_ressource_index')]
     public function index(RessourceRepository $repository, Request $request): Response
     {
-        // Récupération du terme de recherche depuis l'URL
-        $searchTerm = $request->query->get('q', '');
+        // Correction : Utilisation de getString() pour garantir un type string à PHPStan
+        $searchTerm = $request->query->getString('q');
 
-        if ($searchTerm) {
-            // Assure-toi que findBySearch est bien défini dans ton RessourceRepository
+        if ($searchTerm !== '') {
+            // Désormais $searchTerm est garanti d'être une string
             $ressources = $repository->findBySearch($searchTerm);
         } else {
             // Tri par nom ascendant pour une meilleure lisibilité

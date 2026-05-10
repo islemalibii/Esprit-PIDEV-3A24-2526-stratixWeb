@@ -58,9 +58,8 @@ class AuthController extends AbstractController
     #[Route('/emotion/save', name: 'app_emotion_save', methods: ['POST'])]
     public function saveEmotion(Request $request, EntityManagerInterface $em): \Symfony\Component\HttpFoundation\JsonResponse
     {
-        /** @var \App\Entity\Utilisateur $user */
         $user = $this->getUser();
-        if (!$user) return $this->json(['error' => 'Non connecté'], 401);
+        if (!$user instanceof Utilisateur) return $this->json(['error' => 'Non connecté'], 401);
 
         $emotion = (string)$request->request->get('emotion', 'neutral');
         $allowed = ['happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'neutral'];
@@ -74,9 +73,8 @@ class AuthController extends AbstractController
 
     #[Route('/theme/toggle', name: 'app_theme_toggle', methods: ['POST'])]    public function toggleTheme(Request $request, EntityManagerInterface $em): \Symfony\Component\HttpFoundation\JsonResponse
     {
-        /** @var \App\Entity\Utilisateur $user */
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof Utilisateur) {
             return $this->json(['error' => 'Non connecté'], 401);
         }
         $theme = (string)$request->request->get('theme', 'light');

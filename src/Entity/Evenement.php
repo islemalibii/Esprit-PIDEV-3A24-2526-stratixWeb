@@ -13,7 +13,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: EvenementRepository::class)]
 #[ORM\Table(name: 'evenement')]
-#[UniqueEntity(fields: ['titre'], message: "Un événement avec ce titre existe déjà.")]  // 👈 here on the class
+#[UniqueEntity(fields: ['titre'], message: "Un événement avec ce titre existe déjà.")] 
 class Evenement
 {
     #[ORM\Id]
@@ -65,7 +65,7 @@ class Evenement
     )]
     private ?\DateTimeInterface $date_event = null;
 
-    public function getDateEvent(): ?\DateTime
+    public function getDateEvent(): ?\DateTimeInterface
     {
         return $this->date_event;
     }
@@ -138,9 +138,9 @@ class Evenement
         minMessage: "Le titre doit faire au moins {{ limit }} caractères.",
         maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères."
     )]
-    private ?string $titre = null;
+    private string $titre = '';
 
-    public function getTitre(): ?string
+    public function getTitre(): string
     {
         return $this->titre;
     }
@@ -151,7 +151,7 @@ class Evenement
         return $this;
     }
 
-    #[ORM\Column(name: 'isArchived', type: 'boolean', nullable: true)]
+    #[ORM\Column(name: 'is_archived', type: 'boolean', nullable: true)]
     private ?bool $isArchived = null;
 
     public function isIsArchived(): ?bool
@@ -172,34 +172,37 @@ class Evenement
 
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 7, nullable: true)]
-    private ?float $latitude = null;
+    private ?string $latitude = null;
 
-    public function getLatitude(): ?float
+    public function getLatitude(): ?string
     {
         return $this->latitude;
     }
 
-    public function setLatitude(?float $latitude): self
+    public function setLatitude(?string $latitude): self
     {
         $this->latitude = $latitude;
         return $this;
     }
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 7, nullable: true)]
-    private ?float $longitude = null;
+    private ?string $longitude = null;
 
-    public function getLongitude(): ?float
+    public function getLongitude(): ?string
     {
         return $this->longitude;
     }
 
-    public function setLongitude(?float $longitude): self
+    public function setLongitude(?string $longitude): self
     {
         $this->longitude = $longitude;
         return $this;
     }
 
-    #[ORM\OneToMany(targetEntity: EventFeedback::class, mappedBy: 'evenement')]
+    /**
+     * @var Collection<int, EventFeedback>
+     */
+    #[ORM\OneToMany(targetEntity: EventFeedback::class, mappedBy: 'evenement', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $eventFeedbacks;
 
     public function __construct()
@@ -209,7 +212,7 @@ class Evenement
 
 
     #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $recurrence = null; // 'none', 'weekly', 'monthly'
+    private ?string $recurrence = null; 
 
     public function getRecurrence(): ?string
     {
@@ -227,9 +230,6 @@ class Evenement
      */
     public function getEventFeedbacks(): Collection
     {
-        if (!$this->eventFeedbacks instanceof Collection) {
-            $this->eventFeedbacks = new ArrayCollection();
-        }
         return $this->eventFeedbacks;
     }
 

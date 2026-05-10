@@ -37,16 +37,16 @@ class EmployeeProfileController extends AbstractController
             $confirmPw = (string)$request->request->get('confirm_password', '');
 
             if (!$nom)    $errors['nom']    = 'Le nom est obligatoire.';
-            if (!$prenom) $errors['prenom'] = 'Le prénom est obligatoire.';
+            if (!$prenom) $errors['prenom'] = 'Le prÃ©nom est obligatoire.';
             if ($tel && !preg_match('/^\d{8}$/', $tel)) {
-                $errors['tel'] = 'Le téléphone doit contenir 8 chiffres.';
+                $errors['tel'] = 'Le tÃ©lÃ©phone doit contenir 8 chiffres.';
             }
 
             if ($newPw) {
                 if (!$hasher->isPasswordValid($user, $currentPw)) {
                     $errors['current_password'] = 'Mot de passe actuel incorrect.';
-                } elseif (strlen($newPw) < 8) {
-                    $errors['new_password'] = 'Minimum 8 caractères.';
+                } elseif (strlen($newPw) < 8 ){
+                    $errors['new_password'] = 'Minimum 8 caractéres.';
                 } elseif (!preg_match('/[A-Z]/', $newPw)) {
                     $errors['new_password'] = 'Au moins une majuscule requise.';
                 } elseif (!preg_match('/[0-9]/', $newPw)) {
@@ -62,7 +62,7 @@ class EmployeeProfileController extends AbstractController
                     $user->setPassword($hasher->hashPassword($user, $newPw));
                 }
                 $em->flush();
-                $this->addFlash('success', 'Profil mis à jour.');
+                $this->addFlash('success', 'Profil mis Ã  jour.');
                 return $this->redirectToRoute('employee_profile');
             }
         }

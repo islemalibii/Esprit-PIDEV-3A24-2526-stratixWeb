@@ -4,15 +4,17 @@ namespace App\Service;
 
 class MeetingSummaryService
 {
-    public function __construct(private string $apiKey) {}  // 👈 $apiKey
+    public function __construct(private string $apiKey) {}  
 
+    /** @param array<int, \App\Entity\EventFeedback> $feedbacks */
     public function generateSummary(array $feedbacks, string $eventTitle): ?string
     {
         if (empty($feedbacks)) return null;
 
         $feedbackList = '';
         foreach ($feedbacks as $feedback) {
-            $stars       = str_repeat('★', $feedback->getRating()) . str_repeat('☆', 5 - $feedback->getRating());
+            $rating = $feedback->getRating() ?? 0; 
+            $stars  = str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
             $commentaire = $feedback->getCommentaire() ?? 'Aucun commentaire';
             $feedbackList .= "- Note: {$stars} ({$feedback->getRating()}/5) | Commentaire: {$commentaire}\n";
         }
@@ -44,22 +46,34 @@ class MeetingSummaryService
     {
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' . $this->apiKey;        $ch = curl_init($url);
 
+
+        $ch = curl_init($url);
+
+        // 1. On prépare le JSON à l'avance
+        $payload = json_encode([
+            'contents' => [
+                ['parts' => [['text' => $prompt]]]
+            ]
+        ]);
+
+        // 2. On vérifie que l'encodage n'a pas échoué
+        if ($payload === false) {
+            return null;
+        }
+
+
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
             CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false, 
-            CURLOPT_POSTFIELDS     => json_encode([
-                'contents' => [
-                    ['parts' => [['text' => $prompt]]]
-                ]
-            ]),
+            CURLOPT_SSL_VERIFYHOST => 0, 
+            CURLOPT_POSTFIELDS     => $payload,
         ]);
 
         $result = curl_exec($ch);
 
-        if (!$result) {
+        if (!is_string($result)) {
             dump(curl_error($ch));
             curl_close($ch);
             return null;
@@ -67,8 +81,8 @@ class MeetingSummaryService
 
         curl_close($ch);
 
+        /** @var array<mixed> $data */
         $data = json_decode($result, true);
-        dump($data);
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
     }
 }

@@ -58,14 +58,14 @@ class CategorieService
     }
 
     #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_creation = null;
+    private ?\DateTime $date_creation = null;
 
-    public function getDate_creation(): ?\DateTimeInterface
+    public function getDateCreation(): ?\DateTime
     {
         return $this->date_creation;
     }
 
-    public function setDate_creation(?\DateTimeInterface $date_creation): self
+    public function setDateCreation(?\DateTime $date_creation): static
     {
         $this->date_creation = $date_creation;
         return $this;
@@ -85,18 +85,9 @@ class CategorieService
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTime
-    {
-        return $this->date_creation;
-    }
-
-    public function setDateCreation(?\DateTime $date_creation): static
-    {
-        $this->date_creation = $date_creation;
-        return $this;
-    }
-
-    
+    /**
+     * @var Collection<int, Service>
+     */
     #[ORM\OneToMany(targetEntity: Service::class, mappedBy: 'categorie')]
     private Collection $services;
 
