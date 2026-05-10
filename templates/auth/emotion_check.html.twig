@@ -199,20 +199,22 @@
 <div class="d-flex align-items-center justify-content-center min-vh-100 p-3">
     <div style="width:100%; max-width: 520px; margin: 1.5rem;">
         <div class="welcome-card p-4 p-md-5" style="text-align: center;">
-
+           
             <h2 class="fw-bold mb-2" style="color: #0F172A; font-size: 1.8rem; letter-spacing: -0.02em;">
-                Bonjour, {{ app.user.prenom }} 
+                Bonjour, {{ app.user.prenom }} 👋
             </h2>
             <p class="text-secondary mb-4" style="font-size: 0.9rem;">Analyse de votre humeur en cours...</p>
 
+            {# Webcam #}
             <div class="webcam-container">
                 <video id="video" autoplay muted playsinline class="webcam-video"></video>
                 <canvas id="overlay" class="webcam-overlay"></canvas>
 
+                {# Cercle de progression SVG #}
                 <svg class="progress-ring" viewBox="0 0 232 232">
                     <circle cx="116" cy="116" r="110" fill="none" stroke="#E2E8F0" stroke-width="5"/>
                     <circle id="progress-circle" cx="116" cy="116" r="110" fill="none"
-                            stroke="#b94b10" stroke-width="5"
+                            stroke="#10B981" stroke-width="5"
                             stroke-dasharray="691" stroke-dashoffset="691"
                             stroke-linecap="round"
                             transform="rotate(-90 116 116)"
@@ -235,7 +237,7 @@
 
             <div id="loading-text" class="loading-text">
                 <span class="spinner-border spinner-border-sm me-1" style="width:0.8rem; height:0.8rem;"></span>
-                
+                Chargement du modèle IA...
             </div>
 
         </div>
@@ -262,7 +264,7 @@
     };
 
     const MODEL_URL = '/models';
-    loadingText.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:0.8rem; height:0.8rem;"></span>';
+    loadingText.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:0.8rem; height:0.8rem;"></span>Chargement du modèle IA...';
 
     let hasExpressionModel = false;
     try {
@@ -280,6 +282,7 @@
 
     loadingText.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>✓ Modèle prêt — regardez la caméra</span>';
 
+    // Activer la webcam
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
@@ -323,6 +326,7 @@
                         emotion = dominant[0];
                         confidence = dominant[1];
                     } else {
+                        // Fallback : visage détecté mais pas d'expression → neutre ou aléatoire
                         const fallbacks = ['happy', 'neutral', 'neutral', 'happy', 'surprised'];
                         emotion = fallbacks[Math.floor(Math.random() * fallbacks.length)];
                         confidence = 0.75 + Math.random() * 0.2;
@@ -339,11 +343,11 @@
         }
     }, interval);
 
-    function showResult(emotion, confidence = 0.😎 {
+    function showResult(emotion, confidence = 0.8) {
         const data = messages[emotion] || messages.neutral;
         document.getElementById('emotion-emoji').textContent = data.emoji;
         document.getElementById('emotion-message').textContent = data.msg;
-        document.getElementById('emotion-label').textContent = Émotion détectée : ${data.label} (${Math.round(confidence * 100)}%);
+        document.getElementById('emotion-label').textContent = `Émotion détectée : ${data.label} (${Math.round(confidence * 100)}%)`;
         document.getElementById('emotion-bar').style.width = Math.round(confidence * 100) + '%';
         document.getElementById('emotion-bar').style.background = data.color;
         loadingText.style.display = 'none';
@@ -356,4 +360,4 @@
 })();
 </script>
 </body>
-</html> 
+</html>
